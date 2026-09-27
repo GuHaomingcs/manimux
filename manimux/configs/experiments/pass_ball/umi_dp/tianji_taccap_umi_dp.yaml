@@ -20,12 +20,12 @@ sensors:
 - name: tianji_wrist_history
   driver: manimux.embodiments.sensor.camera_server.timestamped:build_sensor
   options:
-    camera_names: [left_wrist, right_wrist]
+    camera_names: [taccap_left, taccap_right]
     max_frame_age_sec: 0.15
     clock_jump_tolerance_s: 0.02
     output_names:
-      left_wrist: left_wrist_camera
-      right_wrist: right_wrist_camera
+      taccap_left: left_wrist_camera
+      taccap_right: right_wrist_camera
   service: camera
 
 policy:

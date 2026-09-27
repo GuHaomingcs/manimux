@@ -48,6 +48,20 @@ def read_yaml(path: str | Path) -> dict:
         return yaml.safe_load(stream)
 
 
+def _resolve_camera_references(recipe: dict, directory: Path) -> dict:
+    """Resolve each camera's component file relative to its declaring YAML."""
+    result = deepcopy(recipe)
+    for camera in result.get("cameras", {}).values():
+        if "config" in camera:
+            camera["config"] = str((directory / camera["config"]).resolve())
+    return result
+
+
+def read_camera_recipe(path: str | Path) -> dict:
+    source = Path(path).expanduser().resolve()
+    return _resolve_camera_references(read_yaml(source), source.parent)
+
+
 def _merge(base: dict, overrides: dict) -> dict:
     """Merge mappings; replace lists instead of guessing component matches by index."""
     result = deepcopy(base)
@@ -87,16 +101,23 @@ def read_experiment(
     """
     source = Path(path).expanduser().resolve()
     raw = read_yaml(source)
-    from manimux.embodiments.robot import apply_action_contract
     from manimux.embodiments.layout import assembly_action_contract
+    from manimux.embodiments.robot import apply_action_contract
     from manimux.policies.base import backend_identity_from_recipe
 
     backend_identity = None
     for name in ("policy", "inference", "executor", "policy_server", "camera_server"):
         section = raw.get(name, {})
+        if name == "camera_server":
+            section = _resolve_camera_references(section, source.parent)
+            if section:
+                raw[name] = section
         if "config" in section:
             reference = (source.parent / section.pop("config")).resolve()
-            raw[name] = _merge(read_yaml(reference), section)
+            base = (
+                read_camera_recipe(reference) if name == "camera_server" else read_yaml(reference)
+            )
+            raw[name] = _merge(base, section)
         if name == "policy_server" and isinstance(raw.get(name), dict):
             backend_identity = raw[name].pop("backend_identity", None)
     adapter = raw.get("policy", {}).get("adapter", {})
@@ -170,8 +191,9 @@ def bind_station(config: dict, local: str | Path) -> dict:
             raw["policy_server"].update(
                 host=service.get("bind_host", address.hostname), port=address.port
             )
-    if "camera" in services and "camera_server" in raw:
-        service = services["camera"]
+    camera_service = raw.get("camera_server", {}).get("service", "camera")
+    if camera_service in services and "camera_server" in raw:
+        service = services[camera_service]
         raw["camera_server"].update(
             pub_endpoint=service.get("bind_endpoint", service["endpoint"]),
             rep_endpoint=service.get("bind_request_endpoint", service["request_endpoint"]),

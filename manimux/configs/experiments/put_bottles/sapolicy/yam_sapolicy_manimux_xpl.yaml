@@ -4,7 +4,7 @@
 #   1. SpatialAlign venv running:
 #        python manimux/servers/sapolicy.py --config manimux/configs/policy/sapolicy/yam/abc-bottles.yaml
 #   2. camera server at 640x480:
-#        envs/yam/.venv/bin/manimux-camera-server --config manimux/configs/embodiment/sensor/cameras/realsense_3_views_rgbd_standalone.yaml
+#        envs/yam/.venv/bin/manimux-camera-server --config manimux/configs/embodiment/sensor/cameras/realsense_3_views.yaml
 #   3. viewer as in docs/sapolicy-yam-runbook.md
 #
 # Safety: connects paused when viewer.enabled; operator must Start at the robot.
@@ -50,7 +50,7 @@ sensors:
   options:
     request_timeout_ms: 500
     max_frame_age_sec: 0.15
-    camera_names: [front_camera, left_camera, right_camera]
+    camera_names: [d405_front, d405_left, d405_right]
 
 policy:
   worker: xpolicylab_ws
@@ -59,9 +59,9 @@ policy:
     type: manimux.policy_adapter.sapolicy.yam:SAPolicyYamAdapter
     wire_image_hw: [168, 224]
     camera_map:
-      top: front_camera
-      left: left_camera
-      right: right_camera
+      top: d405_front
+      left: d405_left
+      right: d405_right
     model_from_kinematics:
       left_arm:
       - [1.0, 0.0000036732, 0.0000036732, 0.2522021]

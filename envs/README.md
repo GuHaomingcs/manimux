@@ -46,3 +46,32 @@ not declared there. Manage the root development environment through the root pro
 
 Environment locations and all model launchers have not been unified into one layout.
 They should not be confused with the robot's CAN, serial and IP bindings.
+
+## Offline regression tests
+
+Tests, fixtures and test launchers are local development resources and are excluded
+from Git. Keep useful regression checks locally; do not force-add them to commits.
+A fresh clone does not include `tests/`, so the commands below require a local test
+suite. `make lint` and `make format` also work without that directory.
+
+Run runtime and component tests with the runtime interpreter, from the repository root:
+
+```bash
+envs/yam/.venv/bin/python -m pytest tests/unit
+envs/yam/.venv/bin/python -m pytest tests/integration/test_xpolicylab_worker.py
+```
+
+These tests use synthetic observations, fake devices and local test servers. They do
+not establish real-robot readiness. Tests that require the private Tianji SDK or
+TacCap geometry explicitly skip when those resources are absent; generic interface
+tests still run. Use `-rs` to see the missing prerequisites.
+
+Model-side checks need the matching model environment. For example:
+
+```bash
+XPolicyLab/policy/Pi_05/openpi/.venv/bin/python -m pytest tests/unit/test_pi05_yam_eef.py
+```
+
+That module skips in a runtime environment without OpenPI. Installing model packages
+into the hardware environment is not required. Inspect old local tests for obsolete
+interfaces before including them in a regression run.

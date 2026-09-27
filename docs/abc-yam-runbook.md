@@ -26,10 +26,10 @@ envs/abc/.venv/bin/manimux-abc-server \
 若相机服务尚未运行，使用 640×480、与 teleop 一致的 RGB-only 配置启动：
 
 ```bash
-envs/yam/.venv/bin/manimux-camera-server --config manimux/configs/embodiment/sensor/cameras/realsense_3_views_rgb_standalone.yaml
+envs/yam/.venv/bin/manimux-camera-server --config manimux/configs/embodiment/sensor/cameras/realsense_3_views.yaml
 ```
 
-通用 `manimux/configs/embodiment/sensor/cameras/realsense_3_views_standalone.yaml` 此前省略尺寸，默认采集 640×360；现已同步为
+通用 `manimux/configs/embodiment/sensor/cameras/realsense_3_views.yaml` 此前省略尺寸，默认采集 640×360；现已同步为
 640×480 RGB-only。ABC 服务保留自己的 letterbox 预处理，不使用 SA 的裁剪。
 本次准备时，左 D405 在同时启用 RGB/深度时持续等待超时，RGB-only 可正常出帧。
 相机配置新增可选 `enable_depth: false`；其他配置默认仍为 RGB+深度。
@@ -148,7 +148,7 @@ ABC 的任务指令走 CLIP 文本编码器，首次加载会下载 CLIP 资产�
 2. **图像固定 224x224**，letterbox 在服务端做，所以相机给多大分辨率都行。
 3. **相机名是硬绑定的，不只是顺序**：`top` = 前方场景，`left` / `right` = 左右腕。
    权重里的 `apool_queries.{top,left,right}` 按名字索引，接错位置模型直接失效。
-   配置里已经映射好：`top_cam <- front_camera`。
+   配置里已经映射好：`top_cam <- d405_front`。
 
 ## 1. ABC 模型服务
 
@@ -170,7 +170,7 @@ envs/abc/.venv/bin/manimux-abc-server \
 
 ```bash
 cd /home/ubuntu/manimux
-envs/yam/.venv/bin/manimux-camera-server --config manimux/configs/embodiment/sensor/cameras/realsense_3_views_standalone.yaml
+envs/yam/.venv/bin/manimux-camera-server --config manimux/configs/embodiment/sensor/cameras/realsense_3_views.yaml
 ```
 
 ## 3. Viewer

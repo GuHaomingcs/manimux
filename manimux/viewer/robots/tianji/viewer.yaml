@@ -5,9 +5,11 @@ initial_pose: home  # Arm joints come from the referenced assembly's home.joints
 camera_mode: policy
 # No agent/top camera on this station. Add slot: top when one is available.
 cameras:
-  - {source: left_wrist, label: wrist, slot: left}
-  - {source: right_wrist, label: wrist, slot: right}
+  - {source: taccap_left, label: wrist, slot: left}
+  - {source: taccap_right, label: wrist, slot: right}
 camera_aliases:
+  taccap_left: left
+  taccap_right: right
   left_wrist: left
   left_wrist_camera: left
   right_wrist: right

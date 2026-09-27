@@ -21,7 +21,7 @@ from collections.abc import Mapping, Sequence
 
 import numpy as np
 
-from manimux.kinematics.base import ArmKinematics
+from manimux.kinematics.robot import RobotKinematics
 from manimux.policies.base import action_interval
 from manimux.policies.capabilities import PolicyCapabilities
 from manimux.policies.xpolicylab.aac import (
@@ -68,8 +68,12 @@ class XPolicyLabWsPolicyModel:
         # resolved from the first observation and then held fixed.
         self._layout_options = dict(adapter)
         self._horizon_steps = config["horizon_policy_steps"]
-        self._aac_kinematics_name = options.get("aac_kinematics", "yam")
-        self._aac_kinematics: ArmKinematics | None = None
+        if "aac_kinematics" in options:
+            raise ValueError(
+                "AAC geometry comes from robot.config; remove policy.options.aac_kinematics"
+            )
+        self._aac_robot_config: str | None = None
+        self._aac_kinematics: RobotKinematics | None = None
         self._aac_ee_stats: EeActionStats | None = None
         self._aac_ee_stats_path: str | None = None
         self._aac_previous: AacPreviousAction | None = None
@@ -191,10 +195,14 @@ class XPolicyLabWsPolicyModel:
                 raise ValueError(
                     f"AAC expected {int(aac_num_samples)} candidates, got {len(candidates)}"
                 )
-            if self._aac_kinematics is None:
-                from manimux.kinematics import build_kinematics
+            robot_config = getattr(request, "aac_robot_config", None)
+            if not robot_config:
+                raise ValueError("AAC requires the runtime's robot.config")
+            if self._aac_kinematics is None or self._aac_robot_config != robot_config:
+                from manimux.embodiments.robot.base import RobotModel
 
-                self._aac_kinematics = build_kinematics(self._aac_kinematics_name)
+                self._aac_kinematics = RobotModel.from_config(robot_config).kinematics
+                self._aac_robot_config = robot_config
             stats_path = getattr(request, "aac_ee_stats_path", None)
             if not isinstance(stats_path, str) or not stats_path:
                 raise ValueError("AAC requires aac_ee_stats_path")

@@ -9,7 +9,7 @@ from typing import Any
 import numpy as np
 from scipy.spatial.transform import Rotation
 
-from manimux.kinematics.base import ArmKinematics
+from manimux.kinematics.robot import RobotKinematics
 from manimux.policies.xpolicylab.codec import GroupLayout, decode_action_steps
 
 
@@ -132,7 +132,7 @@ def build_ee_candidates(
     *,
     layouts: tuple[GroupLayout, ...],
     current_groups: Mapping[str, np.ndarray],
-    kinematics: ArmKinematics,
+    kinematics: RobotKinematics,
 ) -> tuple[np.ndarray, list[object]]:
     if len(layouts) != 2:
         raise ValueError("dual-arm AAC requires exactly two group layouts")
@@ -149,7 +149,8 @@ def build_ee_candidates(
 
     current_poses: list[np.ndarray] = []
     for layout in layouts:
-        if layout.arm_dofs != kinematics.num_arm_joints or layout.gripper_dofs != 1:
+        model = kinematics.models[layout.group]
+        if layout.dim != model.num_coordinates or layout.gripper_dofs != 1:
             raise ValueError(
                 "AAC FK requires each group to match the kinematics arm width "
                 "and contain exactly one gripper value"
@@ -160,7 +161,7 @@ def build_ee_candidates(
                 f"AAC current group {layout.group!r} must have shape "
                 f"{(layout.dim,)}, got {current.shape}"
             )
-        current_poses.append(kinematics.fk(current[: layout.arm_dofs], float(current[-1])))
+        current_poses.append(model.fk(current))
 
     features = np.empty((len(decoded), horizon, 2, 7), dtype=np.float64)
     for candidate_id, groups in enumerate(decoded):
@@ -168,7 +169,7 @@ def build_ee_candidates(
             trajectory = groups[layout.group]
             previous_pose = current_poses[arm_id]
             for step, action in enumerate(trajectory):
-                pose = kinematics.fk(action[: layout.arm_dofs], float(action[-1]))
+                pose = kinematics.models[layout.group].fk(action)
                 features[candidate_id, step, arm_id, :6] = ee_pose_increment(previous_pose, pose)
                 features[candidate_id, step, arm_id, 6] = action[-1]
                 previous_pose = pose
@@ -287,7 +288,7 @@ def select_ee_chunk(
     *,
     layouts: tuple[GroupLayout, ...],
     current_groups: Mapping[str, np.ndarray],
-    kinematics: ArmKinematics,
+    kinematics: RobotKinematics,
     ee_stats: EeActionStats,
     motion_threshold: float = 3.0,
     chunk_id_selector: str = "0",

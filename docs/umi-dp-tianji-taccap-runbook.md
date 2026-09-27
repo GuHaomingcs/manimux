@@ -82,7 +82,7 @@ The following recipes all support the shared station file:
 | `tianji_umi_dp_default.yaml` | Existing `manimux` recipe and shared control profile |
 | `tianji_umi_dp_rtc.yaml` | RTC recipe with process action decoding |
 
-Each recipe maps camera-server streams `left_wrist` / `right_wrist` to assembly components
+Each recipe maps camera-server streams `taccap_left` / `taccap_right` to assembly components
 `left_wrist_camera` / `right_wrist_camera`. The component-based recipe also renames the
 runtime images to the component names; the other two retain their existing stream names.
 Their `policy.adapter.camera_map` matches the corresponding image names.

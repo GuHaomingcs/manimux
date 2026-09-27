@@ -7,6 +7,9 @@ robot:
     left_camera: {camera_serial: "REPLACE_LEFT_CAMERA"}
     front_camera: {camera_serial: "REPLACE_FRONT_CAMERA"}
     right_camera: {camera_serial: "REPLACE_RIGHT_CAMERA"}
+    # Optional Gemini views; fill these only when using a Gemini recipe.
+    gemini305: {camera_serial: "REPLACE_GEMINI305"}
+    gemini335: {camera_serial: "REPLACE_GEMINI335"}
 services:
   camera:
     endpoint: tcp://127.0.0.1:5555
@@ -25,6 +28,9 @@ services:
     endpoint: http://127.0.0.1:8300
   external_camera:
     endpoint: tcp://127.0.0.1:5575
+    request_endpoint: tcp://127.0.0.1:5575
+    bind_endpoint: tcp://0.0.0.0:5576
+    bind_request_endpoint: tcp://0.0.0.0:5575
 paths:
   # Recipes select paths inside this root. Relative roots are based on station.yaml.
   checkpoints: ../../../checkpoints

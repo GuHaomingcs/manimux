@@ -12,6 +12,8 @@ from typing import Any
 import torch
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+# Validate this checkout even when the model environment has another editable install.
+sys.path.insert(0, str(REPO_ROOT))
 XPOLICY_XR1_ROOT = (
     REPO_ROOT / "XPolicyLab/policy/Xiaomi_Robotics_1/xiaomi_robotics_1/xr1"
 )

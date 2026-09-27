@@ -42,7 +42,7 @@ sensors:
   options:
     request_timeout_ms: 500
     max_frame_age_sec: 0.15
-    camera_names: [front_camera, left_camera, right_camera]
+    camera_names: [d405_front, d405_left, d405_right]
 
 policy:
   worker: abc_http
@@ -50,9 +50,9 @@ policy:
   adapter:
     type: manimux.policy_adapter.abc_yam:AbcYamAdapter
     camera_map:
-      left_cam: left_camera
-      top_cam: front_camera
-      right_cam: right_camera
+      left_cam: d405_left
+      top_cam: d405_front
+      right_cam: d405_right
   action_dt_s: 0.03333333333333333
   timeout_s: 1.0
   horizon_policy_steps: 30

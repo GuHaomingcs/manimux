@@ -50,8 +50,8 @@ absolute EE action shapes, real RTC conditioning, batches and reset. It does not
 provide evidence of robot motion or task success.
 
 The hardware-side configuration uses the existing camera server's PUB endpoint
-(default `tcp://127.0.0.1:5556`) and configured wrist names `left_wrist` and
-`right_wrist`. Start camera/runtime services only as part of the intended hardware
+(default `tcp://127.0.0.1:5556`) and configured wrist names `taccap_left` and
+`taccap_right`. Start camera/runtime services only as part of the intended hardware
 session, using the existing Tianji camera config and the paired runtime config.
 The common Tianji profile remains `execute: false`, `end_effector_control: false` by
 default. No devices are accessed by model validation or binding.

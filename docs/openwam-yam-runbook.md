@@ -176,7 +176,7 @@ envs/yam/.venv/bin/python scripts/validation/xpolicylab_yam_forward_probe.py \
 After the probe succeeds, start the camera service and ManiMux runtime:
 
 ```bash
-envs/yam/.venv/bin/manimux-camera-server --config manimux/configs/embodiment/sensor/cameras/realsense_3_views_standalone.yaml
+envs/yam/.venv/bin/manimux-camera-server --config manimux/configs/embodiment/sensor/cameras/realsense_3_views.yaml
 
 envs/yam/.venv/bin/manimux serve \
   --config manimux/configs/experiments/put_bottles/openwam/yam_openwam_manimux_step30000.yaml

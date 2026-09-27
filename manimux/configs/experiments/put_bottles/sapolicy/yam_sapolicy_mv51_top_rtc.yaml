@@ -39,7 +39,7 @@ sensors:
   options:
     request_timeout_ms: 500
     max_frame_age_sec: 0.15
-    camera_names: [front_camera, left_camera, right_camera]
+    camera_names: [d405_front, d405_left, d405_right]
 
 policy:
   worker: xpolicylab_ws
@@ -50,9 +50,9 @@ policy:
     - 168
     - 224
     camera_map:
-      top: front_camera
-      left: left_camera
-      right: right_camera
+      top: d405_front
+      left: d405_left
+      right: d405_right
     model_from_kinematics:
       left_arm:
       - - 1.0

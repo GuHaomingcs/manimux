@@ -3,16 +3,19 @@ label: YAM
 model: ../embodiment/robot/yam_dual.yaml
 camera_mode: manual
 cameras:
-- source: front_camera
+- source: d405_front
   label: Top (live)
   slot: top
-- source: left_camera
+- source: d405_left
   label: Left wrist (live)
   slot: left
-- source: right_camera
+- source: d405_right
   label: Right wrist (live)
   slot: right
 camera_aliases:
+  d405_front: top
+  d405_left: left
+  d405_right: right
   front_camera: top
   front_camera_rgb: top
   top_camera: top

@@ -35,7 +35,7 @@ The existing Pi05 pure-joint 30k example, assuming its local environments, devic
 checkpoint paths have been prepared, is four separate terminals:
 
 ```bash
-envs/yam/.venv/bin/python -m manimux.servers.camera.server --config manimux/configs/embodiment/sensor/cameras/realsense_3_views_standalone.yaml
+envs/yam/.venv/bin/python -m manimux.servers.camera.server --config manimux/configs/embodiment/sensor/cameras/realsense_3_views.yaml
 ```
 ```bash
 envs/yam/.venv/bin/python -m manimux.viewer.dashboard --robot yam --host 127.0.0.1 --port 8086

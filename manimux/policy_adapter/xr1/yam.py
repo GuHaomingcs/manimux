@@ -47,9 +47,9 @@ log = logging.getLogger("manimux.policies.xr1")
 DEFAULT_SERVER = "http://127.0.0.1:8400"
 DEFAULT_GROUP_ORDER = ("left_arm", "right_arm")
 DEFAULT_CAMERA_MAP = {
-    "top_cam": "front_camera",
-    "left_cam": "left_camera",
-    "right_cam": "right_camera",
+    "top_cam": "d405_front",
+    "left_cam": "d405_left",
+    "right_cam": "d405_right",
 }
 ACTION_DIM = 60
 ARM_JOINTS = 6

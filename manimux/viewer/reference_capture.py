@@ -116,7 +116,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--task", help="create/select this task on opening")
     parser.add_argument("--root", type=Path, default=DEFAULT_LAYOUT_ROOT)
-    parser.add_argument("--camera", default="front_camera")
+    parser.add_argument("--camera", default="d405_front")
     parser.add_argument("--camera-endpoint", default="tcp://127.0.0.1:5556")
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8087)

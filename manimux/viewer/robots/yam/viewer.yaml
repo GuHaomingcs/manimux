@@ -3,10 +3,13 @@ label: YAM
 model: ../../../configs/embodiment/robot/yam_dual.yaml
 camera_mode: policy
 cameras:
-  - {source: front_camera, label: Top, slot: top}
-  - {source: left_camera, label: Left wrist, slot: left}
-  - {source: right_camera, label: Right wrist, slot: right}
+  - {source: d405_front, label: Top, slot: top}
+  - {source: d405_left, label: Left wrist, slot: left}
+  - {source: d405_right, label: Right wrist, slot: right}
 camera_aliases:
+  d405_front: top
+  d405_left: left
+  d405_right: right
   front_camera: top
   front_camera_rgb: top
   top_camera: top

@@ -39,7 +39,7 @@ sensors:
   options:
     request_timeout_ms: 500
     max_frame_age_sec: 0.15
-    camera_names: [left_camera, right_camera]
+    camera_names: [d405_left, d405_right]
 - name: external_camera
   driver: camera_server
   service: external_camera
@@ -58,8 +58,8 @@ policy:
     - 224
     camera_map:
       top: gemini335
-      left: left_camera
-      right: right_camera
+      left: d405_left
+      right: d405_right
     model_from_kinematics:
       left_arm:
       - - 1.0

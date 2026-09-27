@@ -7,8 +7,11 @@ from pathlib import Path
 
 import numpy as np
 
-from manimux.embodiments.arm.yam.kinematics import visual_configuration
-from manimux.embodiments.arm.yam.kinematics import DEFAULT_ASSETS_ROOT, YamKinematics
+from manimux.embodiments.arm.yam.kinematics import (
+    DEFAULT_ASSETS_ROOT,
+    YamKinematics,
+    visual_configuration,
+)
 
 from .base import RobotAdapter, RobotGroup, SceneBox, gripper_closed_steps_by_group_at
 
@@ -105,7 +108,10 @@ class YamAdapter(RobotAdapter):
         return np.zeros(8, dtype=np.float64)
 
     def camera_slot(self, source_name: str) -> str:
-        aliases = {"top_camera": "top", "front_camera": "top"}
+        aliases = {
+            "top_camera": "top", "front_camera": "top",
+            "d405_front": "top", "d405_left": "left", "d405_right": "right",
+        }
         normalized = source_name.removesuffix("_rgb")
         return aliases.get(normalized, normalized.removesuffix("_camera"))
 

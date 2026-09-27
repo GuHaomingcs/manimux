@@ -87,7 +87,10 @@ With the RealSense dependency installed, list the visible camera serials:
 envs/yam/.venv/bin/python -c 'from manimux.embodiments.sensor.realsense import get_device_ids; print(get_device_ids())'
 ```
 
-Component keys must match the assembly referenced by the experiment's `robot.config`.
+Robot component keys must match the assembly referenced by the experiment's `robot.config`.
+Camera recipes select station component keys explicitly through `component`; standalone
+external cameras need not appear in a robot assembly. Stream names are separate from these
+bindings; see [camera naming and options](../embodiment/sensor/cameras/README.md).
 Enumeration order does not establish physical left/right placement. Use the station's
 known mapping, or confirm placement before assigning a device. Binding another installation
 requires configuration changes, not edits to SDK code or `self.channel`.
@@ -198,7 +201,8 @@ Binding a station does not switch these experiment settings.
 | Pi05 `--experiment` or `--config` | Uses the selected station's policy service and checkpoint root |
 | UMI_DP `--experiment` | Uses the same policy service and checkpoint binding |
 | XR-1 Tianji launcher | Uses the selected station's policy service, checkpoint, normalization and optional processor bindings |
-| Camera / UMI_DP standalone `--config` | Reads that standalone server configuration; use `--experiment` for shared station bindings |
+| Camera `--config` or `--experiment` | Uses the same camera recipe schema and selected station bindings |
+| UMI_DP standalone `--config` | Reads that standalone server configuration; use `--experiment` for shared station bindings |
 | Viewer process | Still uses its own launch options for network addresses and the web port |
 | Other model launchers | Follow their model runbooks; this change does not add shared station loading to every launcher |
 

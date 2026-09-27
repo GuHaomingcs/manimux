@@ -57,6 +57,8 @@ def executor_parameters(**options) -> dict:
         "command_safety": {},
         **options,
     }
+    if values["type"] not in {"direct", "smooth", "mpc"}:
+        raise ValueError(f"unknown executor type: {values['type']!r}")
     if values.get("motion_limits") is not None:
         values["motion_limits"] = motion_limits_parameters(**values["motion_limits"])
     if values.get("smooth") is not None:

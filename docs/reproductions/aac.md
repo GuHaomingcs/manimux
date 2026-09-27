@@ -252,7 +252,6 @@ policy:
   horizon_policy_steps: 16
   options:
     allow_short_horizon: true
-    aac_kinematics: yam
 
 inference:
   algorithm: aac
@@ -267,6 +266,9 @@ inference:
 
 - `blend_policy_steps=0` prevents Timeline seam blending from rewriting the selected official prefix.
 - `allow_short_horizon=true` permits the bridge to return `2..16` actions.
+- AAC scoring rebuilds the offline model from the runtime's resolved `robot.config`
+  inside the policy worker, using each group's configured FK and TCP. Do not set a
+  separate `policy.options.aac_kinematics` model.
 - selector `"0"` is the official default and removes backward-history behavior from the first test.
 - SmoothExecutor and Safety remain active outer hardware layers; they are not claimed as AAC logic.
 

@@ -68,9 +68,9 @@ def main() -> None:
                 raise ValueError(f"invalid recorded frame index: {index}")
             frames = {}
             for role, name in [
-                ("top", "front_camera"),
-                ("left", "left_camera"),
-                ("right", "right_camera"),
+                ("top", "d405_front"),
+                ("left", "d405_left"),
+                ("right", "d405_right"),
             ]:
                 video = cv2.VideoCapture(str(args.episode / f"{role}-images-rgb.mp4"))
                 try:

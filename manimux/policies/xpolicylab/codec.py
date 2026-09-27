@@ -199,9 +199,9 @@ DEFAULT_SERVER = "ws://127.0.0.1:8500"
 DEFAULT_GROUP_ORDER = ("left_arm", "right_arm")
 DEFAULT_GROUP_PREFIXES = {"left_arm": "left", "right_arm": "right"}
 DEFAULT_CAMERA_MAP = {
-    "cam_head": "front_camera",
-    "cam_left_wrist": "left_camera",
-    "cam_right_wrist": "right_camera",
+    "cam_head": "d405_front",
+    "cam_left_wrist": "d405_left",
+    "cam_right_wrist": "d405_right",
 }
 DEFAULT_GRIPPER_DOFS = 1
 

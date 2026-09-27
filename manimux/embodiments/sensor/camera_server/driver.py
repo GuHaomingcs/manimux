@@ -17,7 +17,7 @@ class CameraServerSensorDriver(SensorBase):
         endpoint = config["options"].get("endpoint", "tcp://127.0.0.1:5555")
         camera_names = config["options"].get(
             "camera_names",
-            ["left_camera", "front_camera", "right_camera"],
+            ["d405_left", "d405_front", "d405_right"],
         )
         if not isinstance(endpoint, str) or not endpoint:
             raise ValueError("sensor.options.endpoint must be a non-empty string")

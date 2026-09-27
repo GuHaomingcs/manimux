@@ -266,9 +266,13 @@ class EdgeRuntime:
             return DirectExecutor(self._config["executor"]["motion_limits"], control_dt_s)
         if self._config["executor"]["type"] == "smooth":
             return SmoothExecutor(self._config["executor"]["smooth"], control_dt_s)
-        if self._config["executor"]["motion_limits"] is not None:
-            raise ValueError("shared motion_limits currently support direct and smooth, not mpc")
-        return MPCExecutor(self._config["executor"]["mpc"], control_dt_s)
+        if self._config["executor"]["type"] == "mpc":
+            if self._config["executor"]["motion_limits"] is not None:
+                raise ValueError(
+                    "shared motion_limits currently support direct and smooth, not mpc"
+                )
+            return MPCExecutor(self._config["executor"]["mpc"], control_dt_s)
+        raise ValueError(f"unknown executor type: {self._config['executor']['type']!r}")
 
     def _build_timeline(self) -> ActionTimeline:
         return ActionTimeline(

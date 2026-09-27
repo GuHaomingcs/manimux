@@ -17,7 +17,7 @@ sensors:
   driver: manimux.embodiments.sensor.camera_server.timestamped:build_sensor
   service: camera
   options:
-    camera_names: [left_wrist, right_wrist]
+    camera_names: [taccap_left, taccap_right]
     max_frame_age_sec: 0.15
     clock_jump_tolerance_s: 0.02
 
@@ -28,10 +28,10 @@ policy:
   adapter:
     type: manimux.policy_adapter.umi_dp.tianji:UmiDpTianjiAdapter
     camera_map:
-      cam_left_wrist: left_wrist
-      cam_right_wrist: right_wrist
-      cam_left_wrist_prev: left_wrist_prev
-      cam_right_wrist_prev: right_wrist_prev
+      cam_left_wrist: taccap_left
+      cam_right_wrist: taccap_right
+      cam_left_wrist_prev: taccap_left_prev
+      cam_right_wrist_prev: taccap_right_prev
     ik_backend: analytic
   action_decoding: process
   horizon_policy_steps: 16

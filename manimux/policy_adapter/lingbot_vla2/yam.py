@@ -25,9 +25,9 @@ ACTION_SEMANTICS = "anchor_relative_arm_absolute_gripper"
 DEFAULT_GROUP_ORDER = ("left_arm", "right_arm")
 DEFAULT_GROUP_PREFIXES = {"left_arm": "left", "right_arm": "right"}
 DEFAULT_CAMERA_MAP = {
-    "cam_head": "front_camera",
-    "cam_left_wrist": "left_camera",
-    "cam_right_wrist": "right_camera",
+    "cam_head": "d405_front",
+    "cam_left_wrist": "d405_left",
+    "cam_right_wrist": "d405_right",
 }
 
 

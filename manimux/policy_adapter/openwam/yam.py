@@ -14,9 +14,9 @@ from manimux.policy_adapter.kinematics import KinematicAdapter
 from manimux.types import ActionChunk, InferenceRequest
 
 DEFAULT_CAMERA_MAP = {
-    "cam_head": "front_camera",
-    "cam_left_wrist": "left_camera",
-    "cam_right_wrist": "right_camera",
+    "cam_head": "d405_front",
+    "cam_left_wrist": "d405_left",
+    "cam_right_wrist": "d405_right",
 }
 
 SEMANTICS = "absolute_per_arm_base_xyz_wxyz"

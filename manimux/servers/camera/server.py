@@ -42,10 +42,15 @@ import time
 from pathlib import Path
 from typing import Any
 
-import yaml
 import zmq
 
-from manimux.cli import read_experiment, read_yaml, resolve_local_path
+from manimux.cli import (
+    bind_station,
+    read_camera_recipe,
+    read_experiment,
+    read_yaml,
+    resolve_local_path,
+)
 from manimux.embodiments.sensor import SensorBase, build_camera
 from manimux.types import SensorFrame
 
@@ -58,22 +63,17 @@ DEFAULT_HEARTBEAT_SEC = 10.0
 
 
 def camera_config(experiment: dict) -> dict:
-    """将实验中的相机流名绑定到整机组件，复用 runtime 的设备参数。"""
-    assembly_path = Path(experiment["robot"]["config"])
-    assembly = read_yaml(assembly_path)
-    overrides = experiment["robot"].get("options", {}).get("component_hardware", {})
+    """Resolve camera components and per-stream overrides without loading a robot."""
+    overrides = experiment.get("robot", {}).get("options", {}).get("component_hardware", {})
     cameras = {}
     for stream_name, camera in experiment["camera_server"]["cameras"].items():
         name = camera["component"]
-        entry = assembly["components"][name]
-        component = read_yaml(assembly_path.parent / entry["config"])
-        # 明确按组件名绑定，不依靠字典顺序或设备扫描顺序推断左右。
+        component = read_yaml(camera["config"])
         cameras[stream_name] = {
             "implementation": component["implementation"],
             **component.get("options", {}),
-            **entry.get("options", {}),
             **component.get("hardware", {}),
-            **entry.get("hardware", {}),
+            **camera.get("options", {}),
             **overrides.get(name, {}),
         }
     return {"sensors": {"cameras": cameras}}
@@ -256,11 +256,12 @@ class CameraServer:
 # --------------------------------------------------------------------------
 
 
-def _build_cameras_from_config(cfg_path: Path) -> dict[str, SensorBase]:
-    """Load standalone camera configuration and start its components."""
-    with Path(cfg_path).open(encoding="utf-8") as handle:
-        cfg = yaml.safe_load(handle)
-    return _build_cameras(cfg)
+def _build_cameras_from_config(cfg_path: Path, local: Path | None = None) -> dict[str, SensorBase]:
+    """Use the same camera recipes and station bindings as experiment startup."""
+    config = bind_station(
+        {"camera_server": read_camera_recipe(cfg_path)}, resolve_local_path(cfg_path, local)
+    )
+    return _build_cameras(camera_config(config))
 
 
 def _build_cameras(cfg: dict) -> dict[str, SensorBase]:
@@ -289,13 +290,12 @@ def main(argv: list[str] | None = None) -> int:
     source.add_argument(
         "--config",
         type=Path,
-        help="Path to a cameras YAML whose sensors.cameras block lists the devices "
-        "(type: realsense by default, or orbbec/taccap).",
+        help="Camera recipe with cameras.<stream>.config, component and options",
     )
     source.add_argument("--experiment", type=Path, help="Experiment with named camera components")
     parser.add_argument(
         "--local", type=Path,
-        help="Station bindings (default with --experiment: manimux/configs/local/station.yaml)",
+        help="Station bindings (default: manimux/configs/local/station.yaml)",
     )
     parser.add_argument("--rep-endpoint")
     parser.add_argument(
@@ -306,15 +306,13 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--heartbeat-sec", type=float, default=DEFAULT_HEARTBEAT_SEC)
     parser.add_argument("--log-level", default="INFO")
     args = parser.parse_args(argv)
-    if args.local is not None and args.experiment is None:
-        parser.error("--local requires --experiment")
-    resolved_cameras = None
-    service = {}
+    local = resolve_local_path(args.experiment or args.config, args.local)
     if args.experiment is not None:
-        local = resolve_local_path(args.experiment, args.local)
         experiment = read_experiment(args.experiment, local=local)
-        resolved_cameras = camera_config(experiment)
-        service = experiment["camera_server"]
+    else:
+        experiment = bind_station({"camera_server": read_camera_recipe(args.config)}, local)
+    resolved_cameras = camera_config(experiment)
+    service = experiment["camera_server"]
     # Explicit CLI addresses override the station's shared service bindings.
     args.rep_endpoint = args.rep_endpoint or service.get("rep_endpoint", DEFAULT_REP_ENDPOINT)
     if args.pub_endpoint is None:
@@ -353,11 +351,7 @@ def main(argv: list[str] | None = None) -> int:
             return 2
         signal.signal(signal.SIGINT, _handle)
         signal.signal(signal.SIGTERM, _handle)
-        server.cameras = (
-            _build_cameras(resolved_cameras)
-            if resolved_cameras is not None
-            else _build_cameras_from_config(args.config)
-        )
+        server.cameras = _build_cameras(resolved_cameras)
         server.run()
     finally:
         server.shutdown()

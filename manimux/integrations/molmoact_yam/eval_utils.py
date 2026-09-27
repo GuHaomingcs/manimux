@@ -195,7 +195,7 @@ class LiveCameraView:
 
     WINDOW_NAME = "YAM Eval"
     OBS_KEYS = ("left_camera_rgb", "front_camera_rgb", "right_camera_rgb")
-    PUB_CAM_NAMES = ("left_camera", "front_camera", "right_camera")
+    PUB_CAM_NAMES = ("d405_left", "d405_front", "d405_right")
     OBS_LABELS = ("LEFT", "FRONT", "RIGHT")
     # Window grows 2x in each linear dimension on first frame -> 4x screen area.
     SCALE = 2

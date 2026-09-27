@@ -315,7 +315,7 @@ envs/yam/.venv/bin/python scripts/validation/xpolicylab_yam_forward_probe.py \
 
 ```bash
 cd /home/ubuntu/manimux
-envs/yam/.venv/bin/manimux-camera-server --config manimux/configs/embodiment/sensor/cameras/realsense_3_views_standalone.yaml
+envs/yam/.venv/bin/manimux-camera-server --config manimux/configs/embodiment/sensor/cameras/realsense_3_views.yaml
 ```
 
 确认三台 RealSense 均已打开，并看到 `REP bound` 与 `PUB bound`。

@@ -101,7 +101,8 @@ one level. `robot.config` refers to the assembled robot configuration.
 
 For example, `camera_server.config: ../../../embodiment/sensor/cameras/realsense_3_views.yaml`
 selects named camera components for a YAM experiment. Device serials still come from the
-station; this component recipe is distinct from `cameras/realsense_3_views_standalone.yaml`.
+station. The same recipe also works with camera-server `--config`; see
+[the camera options and naming guide](embodiment/sensor/cameras/README.md).
 
 Physical runtime startup selects `--local`, then an explicit experiment `local:` reference,
 then the default station file. A CLI path is relative to the working directory; an experiment
