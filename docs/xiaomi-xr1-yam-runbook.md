@@ -4,7 +4,7 @@
 [小米官方 XR-1 源码](https://github.com/XiaomiRobotics/Xiaomi-Robotics-1)，用户不需要
 再 clone 一份官方仓库。这个 adapter 由我们的 XPolicyLab fork 维护，不是上游
 XPolicyLab 原本自带；模型加载、预处理和 denoise 仍完整运行在 XPolicy 标准 server
-内。ManiMux 只负责 wire codec、YAM FK/IK 和执行，不提供平行的 native model server。
+内。ManiMux 只负责 XPolicy wire transport、YAM FK/IK 和执行，不提供平行的 native model server。
 
 该链路运行时，机械臂收到的是官方 `Xiaomi-Robotics-1-5B` 经过完整 forward 和 denoise
 产生的动作，不是启动姿态、预录轨迹或 mock。XPolicy 负责真实模型推理；ManiMux 负责将
@@ -83,15 +83,9 @@ demo stats 反而会把另一台机器的单位送给 YAM。
 
 但这份 stats 只让 YAM state/action 映射在数值上有定义，不是官方 5B checkpoint 的
 配对 post-training statistics。只有用同一份 YAM 数据 fine-tune 并导出权重后，二者才
-真正匹配。重新采集数据或改变 action codec 时再运行：
-
-```bash
-cd /home/ubuntu/manimux
-PYTHONPATH=. envs/yam/.venv/bin/python -m \
-  manimux.integrations.xr1_yam.compute_norm_stats \
-  --episodes /path/to/yam/episodes \
-  --out manimux/integrations/xr1_yam/norm_stats/yam.json
-```
+真正匹配。XR-1 的数据转换和训练入口只在 ManiMux `experiment` 分支维护；当前运行时
+分支只消费已经生成并与 checkpoint 配对的 `norm_stats.json`，不要覆盖仓库中的 base
+projection stats。
 
 ## Base 权重能力测试
 
@@ -196,7 +190,8 @@ XPolicy 输出、再由 YAM FK/IK 转换得到的关节命令。正常停止时�
 先用离线脚本验证 XPolicy 使用的 sampler guidance hook：
 
 ```bash
-envs/xr1/.venv/bin/python scripts/validation/check_xr1_rtc_sampler.py
+envs/xr1/.venv/bin/python \
+  XPolicyLab/policy/Xiaomi_Robotics_1/check_rtc_sampler.py
 ```
 
 它不构造 5B 模型、不访问 GPU。只有 base server 的 ManiMux forward 和默认 runtime
@@ -207,8 +202,8 @@ envs/yam/.venv/bin/manimux run --config manimux/configs/experiments/assemble_scr
 envs/yam/.venv/bin/manimux run --config manimux/configs/experiments/assemble_screwdriver/xiaomi-xr1/yam_xiaomi_xr1_rtc_step15000.yaml
 ```
 
-不要同时运行 ManiMux 与 RTC。相机、Viewer、CAN 检查和停止顺序参考
-[MolmoAct + YAM](molmoact-yam-runbook.md)。
+不要同时运行 ManiMux 与 RTC。相机与 Viewer 操作见 [Viewer](viewer.md)，CAN 检查和
+停止顺序见 [CAN 总线说明](can-bus.md)。
 
 ## 当前边界
 

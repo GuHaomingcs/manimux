@@ -37,108 +37,12 @@ whole chunk. The default action rate is 30 Hz and horizon is 32.
 ARX-X5 simulation remains supported through `arx_x5_sim`; its calibration and
 standard XPolicy batch evaluation are separate from the YAM profile.
 
-## Data and training
+## Training source
 
-Commands under `training/` use the optional private training workspace, which is
-ignored by Git and is not included in a fresh clone. Public data conversion tools
-remain under `scripts/datasets/`; the model trainer belongs to XPolicyLab.
-
-Only pass **training episodes** to data preparation; hold out evaluation
-episodes in another root. The upstream reader computes statistics over all
-tasks in that root. It uses future achieved states as action labels, not the
-recorded controller-command arrays. Do not compare these as interchangeable
-supervision targets.
-
-Convert complete YAM recordings with recorded EE transforms and RGB videos:
-
-```bash
-python scripts/datasets/prepare_openwam_yam_dataset.py \
-  --episodes /path/to/training_episodes --output /path/to/openwam_train \
-  --task assemble_the_screwdriver --instruction 'Assemble the screwdriver.' \
-  --frequency 30
-export OPENWAM_DATASET_DIR=/path/to/openwam_train
-bash training/scripts/train_openwam_yam_cluster.sh prepare screwdriver-v1
-```
-
-This writes native `<root>/<task>/yam_dual/data/episode_*.hdf5`, validates
-the reader, builds its real-YAM EEF20 statistics, and inspects a training
-sample. Conversion does not resample: confirm the recording really is 30 Hz.
-Do not reuse ARX statistics or place validation episodes in the training root.
-
-```bash
-export OPENWAM_FINETUNE_CKPT_PATH=/path/to/openwam_foundation_checkpoint
-export OPENWAM_GPU_IDS=0,1
-bash training/scripts/train_openwam_yam_cluster.sh gate-train screwdriver-v1
-```
-
-`prepare`, `smoke`, `train`, `gate-train` mirror the other cluster launchers.
-The XPolicy `train.sh` accepts the standard six arguments followed by Hydra
-overrides, and invokes the vendored trainer using the selected Python:
-
-```bash
-bash XPolicyLab/policy/OpenWAM/train.sh \
-  RoboDojo_real screwdriver-v1 yam_dual ee 0 0,1 \
-  training.max_steps=3000 training.num_epochs=null
-```
-
-Set `OPENWAM_PYTHON` for an existing interpreter, `OPENWAM_OUTPUT_ROOT` for
-cluster outputs, and `OPENWAM_RESUME_CKPT_PATH` for full-state resume (unset
-`OPENWAM_FINETUNE_CKPT_PATH`). Fresh runs refuse nonempty outputs. Resume needs
-upstream optimizer/scheduler/RNG state, not just safetensors. A standalone
-deployment bundle contains `config.yaml`, `checkpoint_step_*.safetensors`,
-`normalization_stats.npy` and any upstream-required tokenizer/model assets.
-
-Logs append to `data/training/openwam/logs/<run>-<mode>.log`; override the
-directory with `OPENWAM_LOG_DIR`. Resume is permitted only in `train` mode:
-both training and the post-training artifact check use the resume directory.
-`smoke` and `gate-train` reject inherited resume parameters before any work.
-No environment installation is performed. Select an existing interpreter with
-`OPENWAM_PYTHON`; a missing executable fails before data preparation.
-
-### QZ hdd3 put-bottles profile
-
-The fixed, non-submitting QZ profile is
-`training/scripts/train_openwam_yam_bottles_cluster.sh`. It uses the 50-episode,
-35,118-frame, 30 Hz `put_bottles_into_the_bin` dataset, four visible GPUs,
-30,000 OpenWAM global/micro-steps, and checkpoints every 5,000 global steps.
-Per-GPU batch is 1 with gradient accumulation 8 (effective optimizer batch 32),
-so 30,000 global steps correspond to 3,750 optimizer updates. W&B is disabled
-through both the environment and Hydra; stdout/checkpoints remain the source of
-truth.
-
-Before any job is created, run its CPU-only readiness gate on a QZ notebook:
-
-```bash
-bash training/scripts/setup_openwam_qz_env.sh
-bash training/scripts/train_openwam_yam_bottles_cluster.sh ready
-```
-
-The QZ setup script creates an isolated venv but deliberately inherits the
-CUDA/Torch stack supplied by the QZ image. It pins NumPy 1.x for that Torch
-ABI, uses headless OpenCV (no `libGL.so.1` dependency), and ends with both
-`pip check` and an import check. It does not install another CUDA wheel.
-
-`ready` verifies the exact dataset manifest/counts, hashes the 24 GB foundation
-weight, requires its self-contained tokenizer, runs the native OpenWAM dataset
-preparation/statistics/sample check, and prints the exact four-GPU command via
-`--dry-run`. It does not initialize CUDA, create a QZ job, or start training.
-
-After resource/job approval, the command used inside the allocated job is:
-
-```bash
-bash training/scripts/train_openwam_yam_bottles_cluster.sh gate-train
-```
-
-`gate-train` first produces a one-step smoke checkpoint and only then enters the
-30k run. Do not call it from a login/notebook shell.
-
-The prepared QZ request is
-`.local/training/openwam/put-bottles-4xh200.json`. It pins the `embodied-world-model`
-project, its private training workspace, the official PyTorch 25.06 image, and
-the predefined 4xH200/80-CPU/900-GiB specification. Keeping the JSON in the
-repository does not submit it. Re-check identity, duplicate job names, hashes,
-and resource availability, then obtain explicit approval before invoking
-`qz train CreateJob`.
+ManiMux runtime branches do not include OpenWAM dataset conversion, cluster
+launchers, or QZ training recipes. Those files are maintained on the
+`experiment` branch. This runbook covers deployment of an already prepared
+checkpoint and its matching `normalization_stats.npy`.
 
 ## Inference and evaluation
 

@@ -33,7 +33,7 @@
 | `embodiments/arm/tianji/arm.py` | 官方控制 SDK 连接、反馈、批量命令 |
 | `embodiments/arm/tianji/kinematics.py` | 原有 Tianji 数值算法及官方法兰接口 |
 | `kinematics/composed.py` | 通用 arm + end effector 的 TCP 变换组合 |
-| `integrations/umi_dp_tianji/policy_plugin.py` | UMI 观测与动作格式、时间语义及 FK/IK 调用 |
+| `policy_adapter/umi_dp/tianji.py`、`policy_adapter/umi_dp/history.py` | UMI 观测与动作格式、历史窗口、时间语义及 FK/IK 调用 |
 
 SDK 和 assets 随所属组件存放。旧 `kinematics/tianji.py` 保留旧参数和 TCP 接口的兼容封装，
 数值求解算法只有 arm 目录中的一份。`TianjiSDKKinematics` 和旧入口共同继承

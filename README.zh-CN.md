@@ -96,19 +96,14 @@ Executor 将目标动作变成机器人命令。
 flowchart LR
     OBS["<b>OBSERVE</b><br/>Cameras · robot state<br/>Build policy inputs"]:::stage
 
-    subgraph THINK["<b>PREDICT</b>"]
-        direction TB
-        XPOLICY["<b>XPolicyLab</b><br/>Pi05 · XR-1 · GR00T<br/>LingBot · OpenWAM"]:::xpolicy
-        NATIVE["<b>Legacy native</b><br/>MolmoAct2 · ABC"]:::native
-        XPOLICY ~~~ NATIVE
-    end
+    XPOLICY["<b>PREDICT · XPolicyLab</b><br/>Pi05 · XR-1 · GR00T<br/>LingBot · OpenWAM"]:::xpolicy
 
     PLAN["<b>ADAPT & SCHEDULE</b><br/>Async · RTC · PAINT<br/>Serial · adaptive<br/><br/>Adapter → Timeline"]:::handoff
     ACT["<b>EXECUTE</b><br/>Direct · Smooth · MPC<br/><br/>Executor + Safety<br/>Control profile"]:::stage
     ROBOT(["<b>ROBOT</b><br/>RobotBase<br/>Hardware"]):::robot
     REVIEW(["<b>REVIEW</b><br/>Robo GUI · records<br/>Human labels<br/>PRM-as-a-Judge"]):::side
 
-    OBS --> THINK --> PLAN --> ACT --> ROBOT
+    OBS --> XPOLICY --> PLAN --> ACT --> ROBOT
     ACT -.-> REVIEW
 
     classDef stage fill:#F6F8FA,stroke:#8C959F,stroke-width:1px,color:#1F2328
@@ -116,8 +111,6 @@ flowchart LR
     classDef side fill:#FFFFFF,stroke:#8C959F,stroke-dasharray:4 3,color:#57606A
     classDef robot fill:#1F2328,stroke:#1F2328,color:#FFFFFF
     classDef xpolicy fill:#8957E5,stroke:#6633B8,color:#FFFFFF
-    classDef native fill:#2F6FEB,stroke:#1B4DB1,color:#FFFFFF
-    style THINK fill:#FFFFFF,stroke:#8C959F,stroke-dasharray:5 4,color:#1F2328
 ```
 
 模型 server 不直接控制硬件。ManiMux 保留推理运行记录和离线回放。

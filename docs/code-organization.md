@@ -88,8 +88,8 @@ ManiMux 中的模型服务脚本只负责读取配置和启动它。相机服务
 - 实验入口归 `manimux/configs/experiments/<task>/<model>/`，server 配置归 `manimux/configs/policy/<model>/`。
   算法使用 `inference.algorithm`，执行器使用 `executor.type`，adapter 使用
   `policy.adapter.type`；adapter 参数直接写在实验中。
-- `integrations/` 仍有旧 native 模型源码与工具；HTTP 客户端已归入 `policies/`。此次 adapter 迁移未宣称这些
-  学习模型已迁入 XPolicyLab。`plugins.py` 与公共 `kinematics/` 保持各自职责。
+- 旧 `integrations/` 目录以及 ABC/MolmoAct 的原生服务、HTTP 客户端和 adapter 已删除。
+  学习模型实现统一归入 XPolicyLab；`plugins.py` 与公共 `kinematics/` 保持各自职责。
 - Tianji 和 YAM Viewer 均通过 `RobotView` 使用 `RobotModel`，显示配置位于
   `viewer/robots/{tianji,yam}/viewer.yaml`；消息直接保留组名。旧 YAM 显示适配仍供历史调用使用。
   入口与配置见 [Viewer](viewer.md)。

@@ -107,6 +107,5 @@ envs/isaac-0.5/.venv/bin/python scripts/validation/isaac05_forward_probe.py \
 ## 已验证证据
 
 - 官方源码 revision、checkpoint manifest、deployment adapter 和 native stats 能静态对齐。
-- ManiMux wire codec 的 `2 camera + 8D state -> 8 x 7 action` 单元测试通过。
-- XPolicy observation/action adapter 单元测试通过。
+- XPolicy observation/action adapter 的 `2 camera + 8D state -> 8 x 7 action` 单元测试通过。
 - 当前未完成完整权重下载、GPU model load、真实 forward、仿真或真机验证。

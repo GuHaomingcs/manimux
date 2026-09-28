@@ -1,13 +1,14 @@
 ---
 name: manimux-development
-description: Integrate or review ManiMux arms, grippers, cameras, robot assemblies, policy clients, action adapters, inference strategies, executors and Viewer features. Use to follow existing component interfaces, configuration ownership and offline validation instead of adding a parallel integration stack.
+description: Develop or review ManiMux components, embodiments, policy integrations, runtimes, executors and experiment interfaces. Use to inspect the current architecture, determine which layer a request actually changes, route to the relevant protocol, and present a reviewable staged plan before editing. Use station setup instead for binding an already supported system to local devices and addresses.
 ---
 
 # ManiMux Development
 
-Read the repository `AGENTS.md` and relevant nested instructions first. Code paths
-below are relative to the repository root; `references/` links are relative to this
-skill. This skill guides implementation and interface review, not hardware startup.
+Read the repository `AGENTS.md` and relevant nested instructions first. Paths below
+are relative to the repository root; `references/` links are relative to this skill.
+This skill governs development and integration. It does not authorize hardware
+startup or replace the user's review of a proposed change.
 
 ## What following the protocol means
 
@@ -23,46 +24,116 @@ Do not fix this by adding another registry, configuration framework, generic wra
 or repeated validation in every layer. Use existing loaders and check a constraint
 where the corresponding data enters or changes meaning.
 
-## Locate the extension before editing
+## Inspect before classifying
 
-1. Inspect the current working tree and the selected configuration. Follow its
-   actual loader, interface and one relevant implementation; old examples can use
-   compatibility paths. Preserve other developers' work.
-2. Identify what is new: a physical component, an assembly of existing components,
-   a checkpoint, an action representation, a backend framework, or a scheduling
-   algorithm. A new checkpoint or station often needs only YAML changes.
-3. Read only the relevant reference:
-   - [Components](references/components.md): arms, shared controllers, grippers,
-     offline geometry, assembled robots, cameras and runtime sensors.
-   - [Policies](references/policies.md): learned models, backend clients, action
-     adapters, formats and independent decoder processes.
-   - [Runtime and configuration](references/runtime-config.md): inference,
-     timelines, executors, Viewer/replay and where YAML parameters belong.
-4. Before implementation, explain the proposed files, selected interface, important
-   input/output semantics and a focused verification plan. Continue within the
-   user's authorized scope; this is not an extra approval gate.
-5. Implement, wire the real factory/config path, and verify behavior using the
-   actual implementation with a fake SDK or synthetic service response where
-   hardware/model execution is outside scope.
+Do not classify an upstream project from its name, README label or directory shape.
+The same request may mean adding one model to an existing framework, integrating a
+complete peer framework, supporting a new embodiment, or combining several changes.
 
-For an end-to-end worked example, read `docs/component-policy-development.md` and
-`manimux/configs/experiments/put_bottles/pi05/yam_pi05_joint.yaml`. Read the YAML as
-an example, not as permission to execute it or proof that devices are locally bound.
+Before proposing files or editing:
 
-## Keep one chain understandable
+1. Inspect the current branch and working tree. Preserve unrelated work.
+2. Read the selected experiment or nearest relevant configuration and follow its
+   actual loader, factory, public interface, one current implementation, callers and
+   focused tests.
+3. Inspect the upstream runtime boundary when one is involved: determine who loads
+   models, owns dependencies and sessions, exposes inference and supports multiple
+   models or tasks.
+4. Trace the task's real data and control path through current code. Old runbooks,
+   compatibility paths and synthetic tests are evidence, not automatic templates.
+5. Separate facts found in code from assumptions and decisions needed from the user.
+
+Use this compact map for orientation, then show the user only the levels relevant to
+the request:
 
 ```text
-component YAML -> robot assembly -> RobotState / SensorFrame
-  -> ObservationSnapshot -> InferenceRequest
-  -> policy client / model service -> adapter -> ActionChunk
-  -> inference strategy / ActionTimeline -> ActionHorizon
-  -> executor -> RobotCommand -> robot assembly -> hardware components
+Model / Policy Framework
+          <->
+      Policy Client
+          <->
+      Policy Adapter
+          <->
+     ManiMux Runtime
+          <->
+    Executor / Safety
+          <->
+      Robot Assembly
+          <->
+ Arm / End Effector / Sensor
+          <->
+       Physical Hardware
 ```
 
-Shared structures live in `manimux/types.py`. The client translates the backend's
-wire format; the adapter handles robot action meaning and necessary FK/IK; the
-strategy controls requests and chunk handoff; the executor generates commands;
-the driver alone handles hardware. Viewer and recording consume runtime evidence.
+Configuration composes these layers. A private station binds an already supported
+composition to one machine. Viewer and recording observe runtime evidence without
+owning inference or robot control.
+
+## Resolve the development dimension with the user
+
+After inspection, state the most likely classification and the evidence for it. When
+two interpretations lead to different ownership or directories, present those concrete
+alternatives and ask the user to choose. In particular, never guess whether an upstream
+project is one learned model or a reusable framework: explain how the implementation
+would differ under each interpretation before requesting confirmation.
+
+If the request is already unambiguous, state the classification and proceed to the
+plan; do not ask the user to repeat established facts. If it spans multiple dimensions,
+identify the primary boundary, dependent boundaries and implementation order instead
+of forcing the whole request into one category.
+
+Current dimensions include physical components, robot assembly and geometry, learned
+models, peer policy frameworks, policy clients, observation/action adapters, inference
+scheduling, timelines, executors, safety, Viewer/recording and configuration. This is
+orientation, not a closed taxonomy.
+
+## Present a concrete plan before editing
+
+Give the user a task-specific plan containing:
+
+- the requested outcome, proposed classification and supporting evidence;
+- a small architecture or call-flow diagram for the affected path;
+- existing interfaces and configuration selectors that will be reused;
+- files or directories expected to change, with each one's responsibility;
+- input/output semantics, timing, reset behavior and resource ownership as relevant;
+- an explicit scope lock: what will change and which established layers, deployments
+  and semantics will remain unchanged;
+- staged implementation order for a composite request;
+- focused validation per stage and evidence that will remain unavailable.
+
+Wait for the user's confirmation of this concrete plan before editing. If later
+inspection changes the classification, file scope or protocol, update the plan and
+confirm the changed scope before continuing.
+
+## Route to the confirmed protocol
+
+Read only the reference needed for the confirmed stage:
+
+- [Components](references/components.md): arms, shared controllers, end effectors,
+  offline geometry, robot assemblies, cameras and runtime sensors.
+- [Policies](references/policies.md): learned models, peer frameworks, backend clients,
+  action formats, policy adapters and independent decoding.
+- [Runtime and configuration](references/runtime-config.md): inference strategies,
+  timelines, executors, safety, Viewer/replay/recording and YAML ownership.
+
+For device, endpoint and local path binding of an existing integration, use
+`.agents/skills/manimux-station-setup/SKILL.md` instead. A development request may
+include a station-template change, but real device values remain private station data.
+
+The references describe protocols that exist today. Verify them against current code
+before relying on exact signatures or behavior, and update a reference when its public
+contract changes.
+
+## Handle a genuinely new dimension openly
+
+When the requested capability does not fit an existing layer, say so explicitly.
+Do not force it into the nearest directory or invent compatibility with an unrelated
+interface. Trace how it exchanges data with the current system, propose a small number
+of ownership and boundary options with tradeoffs, and let the user select the design.
+
+After that choice, define the new protocol before implementation. At minimum establish
+inputs and outputs, semantics and timing, lifecycle and resource ownership, configuration
+selection, failure behavior, compatibility boundary and validation. These requirements
+make the design reviewable without prescribing what the new capability must be.
 
 ## Review the integration, not just whether it runs
 
@@ -89,28 +160,36 @@ a successful integration.
 
 ## Compatibility is not a template
 
-Tianji controller/session work may change independently: read the current shared
-interfaces and selected implementation, and keep session changes with their owner.
-Do not duplicate Tianji internals into a new component or claim YAM/Tianji have been
-fully validated as interchangeable. SAPolicy's existing bounded IK path and some
-native payload paths are not yet migrated; preserve them unless migration is in
-scope. Do not silently replace constrained IK with ordinary IK to unify signatures.
+Describe compatibility paths when they affect the task, but do not copy them before
+tracing why they exist. Preserve specialized semantics, constraints and failure behavior
+unless their migration is part of the confirmed plan. Do not expand a new integration
+into unrelated cleanup. A directory or passing mock test alone does not prove a backend,
+robot or sampling mode is supported.
 
-Describe remaining compatibility paths when they affect the task. Do not expand a
-new integration into their cleanup. A directory or passing mock test alone does not
-prove a backend, robot or sampling mode is supported.
+## Implement composite work in reviewable stages
+
+Derive stages from actual dependencies rather than imposing one fixed sequence. A common
+shape is to establish the boundary and contract, implement the lowest independent layer,
+connect one real caller and callee, add configuration, validate offline, then add user
+documentation and environment-specific verification.
+
+For each stage:
+
+1. Restate the agreed files, protocol and scope lock.
+2. Implement only that stage while preserving unrelated changes.
+3. Exercise the real loader or public interface with the smallest meaningful check.
+4. Report what changed, what passed and what remains unverified.
+5. Pause for review before the next stage unless the user explicitly requested all
+   remaining agreed stages to proceed continuously.
 
 ## Development versus use
 
-For device binding use `.agents/skills/manimux-station-setup/SKILL.md`; for paired
-server/runtime configs and startup commands use
-`.agents/skills/manimux-experiment/SKILL.md`; for saved rollout evidence use
-`.agents/skills/manimux-result-analysis/SKILL.md`. Do not invent a second startup
-workflow here. Teleoperation/demonstration collection is outside this repository;
-retain runtime recording and offline replay.
+For device binding use `.agents/skills/manimux-station-setup/SKILL.md`.
+Teleoperation/demonstration collection is outside this repository; retain runtime
+recording and offline replay.
 
-Deliver a short explanation of the extension point, configuration, focused checks
-and remaining limitations. Update the relevant component documentation when its
-public interface changes. Write new comments and general documentation in English.
-Commit/push only when requested; documentation work does not authorize services or
-physical motion.
+Deliver a short explanation of the extension point, configuration, focused checks and
+remaining limitations. Update the relevant protocol reference when its public interface
+changes, and update user documentation only after the supported path is concrete. Write
+new comments and general documentation in English. Commit or push only when requested;
+development work alone does not authorize starting services or moving hardware.

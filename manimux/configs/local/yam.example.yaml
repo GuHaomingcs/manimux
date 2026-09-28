@@ -22,10 +22,6 @@ services:
     endpoint: ws://127.0.0.1:8501
   policy_sapolicy:
     endpoint: ws://127.0.0.1:8510
-  policy_molmoact:
-    endpoint: http://127.0.0.1:8202
-  policy_abc:
-    endpoint: http://127.0.0.1:8300
   external_camera:
     endpoint: tcp://127.0.0.1:5575
     request_endpoint: tcp://127.0.0.1:5575

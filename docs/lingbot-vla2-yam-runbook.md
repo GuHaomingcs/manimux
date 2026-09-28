@@ -96,7 +96,7 @@ audit:   scripts/validation/lingbot_vla2_yam_audit.py
 prepare: scripts/datasets/prepare_lingbot_vla2_base_assets.py
 joint+EEF train: training/scripts/train_lingbot_vla2_yam_joint_ee_cluster.sh
 joint+EEF profile: training/configs/lingbot-vla2/yam_dual_joint_ee_relative.yaml
-stats:   manimux/integrations/lingbot_vla2_yam/norm_stats/yam_60ep.json
+stats:   manimux/configs/policy/lingbot-vla2/yam/assets/base_projection_norm_stats.json
 ```
 
 The `training/` entries above belong to the optional private workspace, which is
@@ -211,7 +211,8 @@ envs/yam/.venv/bin/python scripts/validation/lingbot_vla2_yam_audit.py
 
 LingBot 不能复用 XR-1 的 stats。XR-1 是 `30 x 60` anchor-relative EE delta；LingBot
 在本实验中使用 `12` 个 absolute arm joints 加 `2` 个归一化 gripper。仓库内的
-`yam_60ep.json` 由 `60` 个完整 YAM episode、`25,743` 条 transition 计算，分别包含：
+`base_projection_norm_stats.json` 由 `60` 个完整 YAM episode、`25,743` 条 transition
+计算，分别包含：
 
 - `observation.state.arm.position[12]`；
 - `observation.state.effector.position[2]`；
@@ -220,15 +221,9 @@ LingBot 不能复用 XR-1 的 stats。XR-1 是 `30 x 60` anchor-relative EE delt
 
 四组特征均使用官方 real-robot config 的 `meanstd`。这让 state 输入和 action 输出具有
 正确的 YAM 单位，但它们**不是 foundation checkpoint 的配对 post-training stats**，
-因此只用于 base 权重能力诊断。换数据集或正式 finetune 时必须重新统计：
-
-```bash
-cd /home/ubuntu/manimux
-PYTHONPATH=. envs/yam/.venv/bin/python -m \
-  manimux.integrations.lingbot_vla2_yam.compute_norm_stats \
-  --episodes /path/to/yam/episodes \
-  --out /path/to/norm_stats.json
-```
+因此只用于 base 权重能力诊断。换数据集或正式 finetune 时，使用
+`XPolicyLab/policy/LingBot_VLA2/lingbot_vla_v2/scripts/compute_norm_stats.py`
+按训练数据配置重新统计，并把生成的 `norm_stats.json` 与 checkpoint 放在一起。
 
 ### 准备 Base 资产
 

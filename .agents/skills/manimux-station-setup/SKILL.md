@@ -78,6 +78,6 @@ uses a 30 Hz command loop and can move during Prepare; the generic YAM assembly 
 has different execution settings. Do not substitute one for the other without saying so.
 
 Hand off the chosen experiment, interpreter, station file and resolved device/service
-bindings. Continue with `manimux-experiment` for startup commands. Address inspection and
-requests for commands do not authorize starting services or moving hardware; avoid an
-unsolicited home/reconnect workflow. Offline inspection is not proof of device connection.
+bindings. Address inspection and requests for commands do not authorize starting services
+or moving hardware; avoid an unsolicited home/reconnect workflow. Offline inspection is
+not proof of device connection.

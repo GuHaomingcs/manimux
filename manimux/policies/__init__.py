@@ -20,8 +20,6 @@ def _fake_model_factory(config: dict) -> PolicyModel:
 
 _MODEL_BUILTINS: dict[str, PolicyModelFactory | str] = {
     "fake": _fake_model_factory,
-    "molmoact_http": "manimux.policies.molmoact:build_model",
-    "abc_http": "manimux.policies.abc:build_model",
     "xpolicylab_ws": "manimux.policies.xpolicylab.client:build_model",
 }
 

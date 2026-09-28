@@ -3,17 +3,34 @@
 Paths are relative to the repository root. Read
 `docs/component-policy-development.md` for payload examples and migration limits.
 
+## Classify the integration first
+
+Do not infer the integration layer from an upstream repository name or from the fact
+that it contains model code. Establish which of these changes is being introduced:
+
+1. A task, checkpoint or embodiment for an existing model: change its recipe and
+   experiment; do not add another Python backend.
+2. A learned model supported by an existing framework: implement the model adapter in
+   that framework and reuse its ManiMux client.
+3. A reusable algorithm or serving framework: keep the framework peer to XPolicyLab
+   and add a `PolicyModel` client under `manimux/policies/<framework>/`.
+4. Backend-independent scheduling or chunk handoff: implement it in the ManiMux runtime.
+
+A framework owns a reusable runtime boundary, such as its dependency environment,
+model registry, lifecycle, sampler interface or wire protocol. A repository containing
+one model, a checkpoint loader or a thin server wrapper remains a model integration.
+Do not create a peer backend for a task, checkpoint, embodiment or convenience launcher.
+
 ## A new checkpoint or learned model
 
 A checkpoint/task change normally selects a recipe and experiment, not another
-Python integration. For a new learned model, follow `XPolicyLab/AGENTS.md`,
-`XPolicyLab/CONTRIBUTING.md` and
-`XPolicyLab/.agents/skills/xpolicylab-model-integration/SKILL.md`. For a requested
-model-adapter review, use `XPolicyLab/.agents/skills/xpolicylab-adapter-check/SKILL.md`.
-Reuse an existing
-`XPolicyLab/policy/<POLICY>/` implementation when available. Model loading,
-preprocessing, normalization, sampling and training live there. Use the shared
-server and ManiMux's existing `xpolicylab_ws` client.
+Python integration. When XPolicyLab is the model's owning framework, follow
+`XPolicyLab/AGENTS.md`,
+`XPolicyLab/CONTRIBUTING.md` and the reference adapter under
+`XPolicyLab/policy/demo_policy/`.
+Reuse an existing `XPolicyLab/policy/<POLICY>/` implementation when available.
+Model loading, preprocessing, normalization, sampling and training live there.
+Use the shared server and ManiMux's existing `xpolicylab_ws` client.
 
 Do not put torch/JAX, model weights or another model server into ManiMux. A launcher
 that loads deployment config is different from a second inference implementation.
@@ -32,13 +49,21 @@ The client owns transport, backend wire encoding/decoding and capability/identit
 exchange. It does not own cameras, robot sessions, IK, motion smoothing or chunk
 handoff. Preserve reset behavior and response metadata across the wire boundary.
 
-RLinf/StarVLA as peer serving frameworks are a different scope from adding one
-model. Current repository policy requires learned-model integration in XPolicyLab;
-the technical plugin mechanism is not permission to bypass that rule. If the user
-explicitly requests a peer framework, make that architectural scope clear and
-keep its client under `policies/<framework>/`, reusing the adapter/runtime interfaces.
+When inspection shows that the requested integration owns a reusable runtime and
+serving contract, propose it as a peer framework and ask the user to confirm that
+scope. Keep a confirmed peer framework in an independently versioned top-level
+repository or submodule, alongside `XPolicyLab/`. Keep its ManiMux client under
+`manimux/policies/<framework>/`, reusing the adapter and runtime interfaces.
+
+Do not copy an entire framework into `XPolicyLab/policy/<POLICY>/` merely to satisfy
+the XPolicyLab model template. Conversely, do not label a single model wrapper as a
+framework just because upstream ships a server. Record the ownership decision in the
+integration documentation: framework source, model adapter, serving process, transport,
+ManiMux client, action adapter and runtime strategy must each have one clear owner.
+
 Do not claim a real framework integration exists because a synthetic client passes
-the interface test.
+the interface test. Verify its native lifecycle, identity/capability exchange, reset
+behavior and response decoding through the public client boundary.
 
 The grouped payload reader is `manimux/policies/actions.py`; the XPolicyLab codec
 in `manimux/policies/xpolicylab/codec.py` selects grouped or native output:

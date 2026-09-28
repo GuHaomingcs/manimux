@@ -95,7 +95,5 @@ robot commands. Copy only the relevant choices when adding an experiment.
 
 Load the changed YAML through the real loader and inspect its resolved values
 without constructing devices or starting services. Check reference paths relative
-to their containing file, client/adapter pairing and declared group layout. For
-actual usage/commands follow `.agents/skills/manimux-experiment/SKILL.md`, which
-owns the existing startup workflow. Do not treat config loading as SDK, model or
-hardware validation.
+to their containing file, client/adapter pairing and declared group layout. Do not
+treat config loading as SDK, model or hardware validation.

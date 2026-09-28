@@ -204,7 +204,7 @@ data/archive/pre-campaign-20260824/root-runs/run-20260820T061701Z-8cfd2e00/episo
 ```
 
 记录中 143 次推理提交、141 个 plan 接受，常见 stale-prefix 只有 2–3 步，说明 16-step
-horizon 没有被推理延迟耗尽。当前 ManiMux infra 配置使用与 MolmoAct 相同的 `smooth` executor
+horizon 没有被推理延迟耗尽。当前 ManiMux infra 配置使用共享的 `smooth` executor
 参数：8Hz cutoff、`0.25 rad/s`、`0.5 rad/s²`。Pi05 只保留模型契约要求的 30Hz
 和 16-step horizon。这些是执行器
 跟踪上限，不是模型动作好坏的阈值判定。
@@ -317,8 +317,8 @@ plan 接受都正常，但 replanning 明显变慢，操作者观察到“向前
 关节；只增加诊断记录，不改变动作、速度或拼接算法。即使按 `Ctrl-C`，记录也会保留在
 `.partial` episode 中。
 
-完成一次 Pi05 和一次 MolmoAct2 短 rollout 后，只需告知“跑完了”；分析端会自动选择两种
-policy 最新的有效 episode。也可以手动离线查看：
+完成两种待比较 policy 的短 rollout 后，分析端会自动选择不同 policy 最新的有效 episode。
+也可以通过 `--episode` 明确指定记录，或手动离线查看：
 
 ```bash
 cd /home/ubuntu/manimux

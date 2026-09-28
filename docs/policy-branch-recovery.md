@@ -15,8 +15,8 @@ standalone OpenWAM WebSocket path.
   for YAM packed observations and relative-action checkpoints. Absolute RTC
   conditions subtract the observation anchor before normalization; native
   relative outputs are re-anchored only by ManiMux, not twice.
-- XR1: correct the relocated `scripts/datasets/prepare_xr1_yam_dataset.py`
-  entry. Accept nonempty datasets of different sizes; optional
+- XR1: the `experiment` branch owns the YAM dataset conversion entry. Accept
+  nonempty datasets of different sizes; optional
   `XR1_EXPECTED_EPISODES` / `XR1_EXPECTED_FRAMES` assert a specific manifest.
 - LingBot/XR1 `gate-train`: preserve the requested formal step/save count
   after the small smoke run instead of forcing 3000/500.

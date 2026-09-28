@@ -120,8 +120,9 @@ is declared in the experiment, while command frequency is `robot.control_hz`. Co
 deployment choose their executors and filters separately. The YAM profile is
 `embodiment/robot/yam_control.yaml`.
 
-Model services run in separate environments. Legacy native ABC/MolmoAct experiments also
-use this directory layout; that move does not mean their models have migrated to XPolicyLab.
+Model services run in separate environments. The former native and external-HTTP
+ABC/MolmoAct compatibility paths have been removed; learned-policy integrations use
+XPolicyLab and ManiMux's shared `xpolicylab_ws` worker.
 
 The Xiaomi Robotics 1 pass-ball checkpoint on Tianji-TacCap uses
 `experiments/pass_ball/xiaomi-xr1/tianji_taccap_xiaomi_xr1_step50000.yaml` and the policy recipe at

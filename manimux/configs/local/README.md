@@ -55,7 +55,7 @@ configuration directory.
 | TacCap gripper | `robot.components.<component>.serial` | Gripper serial number |
 | Component using a serial port | `robot.components.<component>.port` | The component's `/dev/tty…` or stable device path |
 | Policy client | `services.policy.endpoint` | Reachable server address, such as `ws://127.0.0.1:8500` |
-| Additional policy clients | `services.policy_secondary`, `policy_sapolicy`, `policy_molmoact`, `policy_abc` | Endpoints selected by an experiment's `policy.service` |
+| Additional policy clients | `services.policy_secondary`, `services.policy_sapolicy` | Endpoints selected by an experiment's `policy.service` |
 | Camera clients/server | `services.camera` | Request, subscription and bind addresses, as below |
 | Additional camera client | `services.external_camera.endpoint` | Endpoint selected by a sensor's `service` field |
 | Pi05 checkpoint root | `paths.checkpoints` | Local root containing the checkpoint/stat subpaths selected by the experiment |

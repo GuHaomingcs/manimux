@@ -2,7 +2,7 @@
 
 This package owns observation preparation and conversion of policy-service actions
 into ManiMux `ActionChunk`s. Experiments select an actual Python implementation;
-there is no model-name registry or forwarding package in `integrations/`.
+there is no parallel model-specific integration package.
 
 ```yaml
 policy:
@@ -39,8 +39,6 @@ by this directory migration; consolidating them must preserve their TCP/IK behav
   IK or smoothing is performed here.
 - `sapolicy/`, `openwam/`, `umi_dp/`, `xr1/`, `lingbot_vla2/`: specialized pose,
   observation history and action conversion implementations.
-- `abc_yam.py`, `molmoact_yam.py`: existing native-backend matrix decoders. Their
-  relocation does not migrate or validate those legacy model servers.
 
 One model may select multiple adapters when its service exposes different contracts.
 Multiple models may share an adapter when their contracts agree. A new checkpoint

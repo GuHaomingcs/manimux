@@ -119,7 +119,7 @@ Viewer 直接位于 `manimux/viewer/`，不再依赖另一个 checkout：
 - policy/runtime 发布通用 `PolicyPlan`、`RobotSnapshot` 和 `RuntimeEvent`；
 - robot adapter 负责关节拆分、FK、模型和场景，不把 Viewer 写死为 YAM；
 - YAM 是首个内置 adapter，模型资源随 `manimux` 一起发布；
-- edge 可读取 pause/resume/home/step/finish，MolmoAct 集成当前采用 observe 模式；
+- edge 可读取 pause/resume/home/step/finish 等 Viewer 控制意图；
 - Viewer 缺席或断开时默认 pause；
 - Viewer 命令只是 intent，edge safety state 决定是否接受；
 - Viewer/Recorder 都是 best-effort 旁路，不得阻塞 control loop。

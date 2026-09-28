@@ -16,8 +16,6 @@ repository root. They describe existing code and workflows, not permission to ru
 |---|---|
 | Integrate or review a component, policy client/adapter, runtime or Viewer feature | [Development](.agents/skills/manimux-development/SKILL.md) |
 | Bind an installation to local robots, cameras and SDKs | [Station setup](.agents/skills/manimux-station-setup/SKILL.md) |
-| Select configs, give startup commands or run an experiment | [Experiment](.agents/skills/manimux-experiment/SKILL.md) |
-| Analyze recorded rollouts, chunks, tracking or video | [Result analysis](.agents/skills/manimux-result-analysis/SKILL.md) |
 
 For a new integration, the Development skill maps each extension to its existing
 interface, owning directory, configuration and focused validation. Read its relevant
@@ -41,42 +39,60 @@ when binding another installation of the same robot model.
 Write new code comments and general `README.md` documentation in English. Keep the Chinese
 homepage in `README.zh-CN.md`; historical Chinese runbooks can be translated separately.
 
-## Model integration: XPolicyLab only
+## Learned models and backend frameworks
 
-**Every new learned-policy integration or model reproduction must be implemented inside
-`XPolicyLab/policy/<POLICY>/`, using the XPolicyLab adapter and serving conventions.**
-Do not add another standalone native model implementation to ManiMux.
+Classify an integration before choosing its directory. A learned model and a reusable
+algorithm or serving framework are different extension types:
+
+- Add a model, checkpoint or model reproduction to the framework that owns its runtime.
+  When that framework is XPolicyLab, implement it under `XPolicyLab/policy/<POLICY>/`
+  using the XPolicyLab adapter and serving conventions.
+- Keep a distinct upstream framework with its own reusable runtime, dependency stack,
+  model registry or serving contract peer to XPolicyLab. Do not nest the framework under
+  `XPolicyLab/policy/` merely to reuse XPolicyLab's transport. Put its ManiMux client under
+  `manimux/policies/<framework>/` and implement the existing `PolicyModel` contract.
+- A new task, checkpoint, embodiment or one-model wrapper is not a new framework. Reuse
+  the selected framework and change recipes or experiments instead of adding a backend.
+
+Do not add model implementations or framework runtimes inside the ManiMux Python package.
+
+For models owned by XPolicyLab:
 
 - Read [XPolicyLab/AGENTS.md](XPolicyLab/AGENTS.md),
   [the contribution standard](XPolicyLab/CONTRIBUTING.md) and
   [the reference adapter](XPolicyLab/policy/demo_policy/) before implementation.
-- Reuse an existing policy directory when the model is already integrated. A new task,
-  checkpoint or embodiment is not a reason to duplicate the model implementation.
+- Reuse an existing policy directory when an XPolicyLab model is already integrated.
 - Keep upstream model source and reproduction changes under that policy directory,
   following XPolicyLab's vendored-source or pinned-submodule conventions. Preserve upstream
   licenses and attribution; document the upstream URL and revision in the policy README.
   Do not depend on an unrelated local checkout, absolute developer path or untracked symlink.
 - Implement the actual model loading, preprocessing, normalization, sampling and output
   conversion there. A `model.py` that merely forwards to a legacy ManiMux native server,
-  or imports its model implementation from `manimux/integrations/`, is not a migration.
+  or imports its model implementation from elsewhere in ManiMux, is not a migration.
 - Do not add model weights, network implementations, processors, training pipelines or
   model-specific inference servers under ManiMux's `manimux/`, `scripts/` or `envs/`.
   Lightweight launchers that load config and start the XPolicyLab server are allowed.
-- Use ManiMux's existing `xpolicylab_ws` worker. Do not introduce another per-model HTTP/TCP
-  protocol or register a new native model worker to bypass the shared policy interface.
+- Use ManiMux's existing `xpolicylab_ws` worker for XPolicyLab models. Do not introduce
+  another per-model HTTP/TCP protocol or native worker for a model already served by a
+  supported framework. A peer framework may retain its native transport behind its
+  `PolicyModel` client; capability, identity and reset behavior must remain explicit.
 
-This rule concerns learned models. Robot drivers, embodiment/action adapters, runtime
-strategies, executors and mock policies still belong in ManiMux.
-An isolated model environment or process is expected; a parallel native integration stack is not.
+Robot drivers, embodiment/action adapters, runtime strategies, executors and mock policies
+still belong in ManiMux. Model and framework environments may remain isolated; all backends
+must reuse ManiMux's adapter, scheduling and execution layers instead of duplicating them.
 
 ## Required structure and boundaries
 
 ```text
-XPolicyLab/policy/<POLICY>/
+XPolicyLab/policy/<POLICY>/  # when XPolicyLab owns the model
     model.py + deploy.yml + deploy.py
     upstream model source / pinned source submodule
     installation, data, training and evaluation entry points
     README.md
+<FRAMEWORK>/                 # when adding a peer framework
+    independently versioned framework source and deployment entry points
+manimux/policies/<framework>/
+    PolicyModel client + framework wire codec
 manimux/configs/policy/<model>/<embodiment>/<task>/
 manimux/configs/experiments/<task>/<model>/<embodiment>_<model>_<variant>.yaml
 manimux/configs/inference/
@@ -85,20 +101,22 @@ docs/<model>-<embodiment>-runbook.md
 training/  # Private configurations, launchers and notes; ignored by Git
 ```
 
-Policy recipes select deployment artifacts and inference parameters. XPolicyLab owns
-model defaults and the shared server; complete runtime choices live in experiments.
+Policy recipes select deployment artifacts, backend workers and inference parameters.
+Each framework owns its model defaults and serving process; complete ManiMux runtime
+choices live in experiments.
 Keep policy recipes free of `server/`, `infra/` and `training/` subdirectories. Put
 installation-specific training work in the root `training/` workspace; deployment
 metadata needed for inference remains with the checkpoint and policy recipe.
 
-The policy files and scripts must follow the full XPolicyLab contribution standard,
+XPolicyLab policy files and scripts must follow the full XPolicyLab contribution standard,
 including `Model(ModelTemplate)`, observation/action/batch/reset interfaces, standard
 action dictionaries and `policy_name` matching the directory. Declare unsupported stages;
 do not substitute fake training, dummy actions or silent fallbacks for an implementation.
 
 | Layer | Responsibility |
 |---|---|
-| XPolicyLab model adapter | Model source, checkpoint loading, model transforms and sampler hooks |
+| Model framework adapter | Model source, checkpoint loading, model transforms and sampler hooks |
+| ManiMux `policies/` client | Backend transport, wire codec, identity and capabilities |
 | ManiMux `policy_adapter/` | Observation mapping, robot groups, action semantics and necessary FK/IK |
 | ManiMux runtime | Inference scheduling, chunk handoff, timelines and rollout lifecycle |
 | Executor / RobotBase | Command generation, configured limits and hardware communication |
@@ -109,7 +127,8 @@ must not acquire model dependencies such as torch/JAX just to use a new policy.
 Keep task, checkpoint, cameras, embodiment and runtime choices in configuration rather
 than hard-coding one task or station into a model wrapper.
 
-Reuse XPolicyLab's shared image, dimension and checkpoint helpers; do not duplicate them.
+Within an XPolicyLab policy, reuse its shared image, dimension and checkpoint helpers;
+do not duplicate them.
 Preserve the checkpoint's RGB convention, joint order, gripper convention, absolute/delta
 semantics, normalization, horizon and action interval across data conversion and inference.
 Shared embodiment control profiles should align collection and deployment timing and motion
@@ -119,11 +138,13 @@ RTC, PAINT and other specialized sampling modes may be advertised only when thei
 hooks are actually implemented in the model sampler. Keep capability negotiation and backend
 identity checks; never disable them to make a mismatched checkpoint or unsupported mode run.
 
-## Existing native integrations
+## Removed native and compatibility paths
 
-`molmoact_http` and `abc_http` are legacy compatibility paths, not templates for new work.
-The target for both is XPolicyLab. Check and reuse `XPolicyLab/policy/MolmoACT2/` for MolmoAct2;
-do not assume that an existing directory already covers the local checkpoint and action contract.
+The built-in MolmoAct2 and ABC model servers, HTTP clients, ManiMux action adapters and
+experiments have been removed. Reuse `XPolicyLab/policy/MolmoACT2/` for MolmoAct2. Any future
+ABC integration must also use XPolicyLab rather than restoring the deleted native or HTTP path.
+Do not assume that an existing policy directory already covers a local checkpoint and action
+contract.
 
 When migrating a legacy model:
 
@@ -140,7 +161,7 @@ Fixing a legacy bug does not authorize migrating unrelated models or stopping li
 
 ## Validation and delivery
 
-- Start with the XPolicyLab static/interface checks and relevant ManiMux unit tests.
+- Start with the selected framework's static/interface checks and relevant ManiMux unit tests.
   Verify camera mapping, action keys/shapes, reset behavior, paired backend identity and
   sampling capabilities before declaring an integration ready.
 - Distinguish static checks, offline forward, server readiness and real-robot task success.
@@ -149,7 +170,7 @@ Fixing a legacy bug does not authorize migrating unrelated models or stopping li
   Model integration work alone does not authorize physical robot motion.
 - Keep weights, datasets, videos generated by validation, local source manifests, credentials
   and machine-specific experiment artifacts out of commits. Preserve useful reusable tests.
-- `XPolicyLab` is a separate Git repository. When publishing a model integration, publish its
-  changes to the user-confirmed submodule remote/branch before publishing the parent gitlink.
-  Never publish an unreachable submodule revision or assume a developer branch.
+- `XPolicyLab` and peer framework submodules are separate Git repositories. Publish framework
+  changes to the user-confirmed remote/branch before publishing a parent gitlink. Never publish
+  an unreachable submodule revision or assume a developer branch.
 - Commit or push only when requested. Keep unrelated edits and submodule pointers unchanged.

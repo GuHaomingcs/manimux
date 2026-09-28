@@ -37,7 +37,6 @@ does not mean every checkpoint or inference-method combination has passed a real
 - [Pi05 / OpenPI](pi05-yam-runbook.md), including paired put-bottles joint / joint+EE 30k configurations.
 - [UMI DP on Tianji–TacCap](umi-dp-tianji-taccap-runbook.md), including checkpoint binding,
   TacCap camera service, Viewer and hardware runtime commands.
-- [MolmoAct2](molmoact-yam-runbook.md) · [ABC](abc-yam-runbook.md).
 - [GR00T N1.7](gr00t-yam-runbook.md) · [LingBot-VLA2](lingbot-vla2-yam-runbook.md).
 - [Xiaomi XR-1](xiaomi-xr1-yam-runbook.md) · [OpenWAM](openwam-yam-runbook.md).
 - [Xiaomi XR-1 on Tianji–TacCap](xiaomi-xr1-tianji-taccap-runbook.md), including the pass-ball step-50000 checkpoint and synthetic black ego view.
@@ -50,8 +49,8 @@ does not mean every checkpoint or inference-method combination has passed a real
 The README badges count integration coverage, not task success, hardware validation of every
 checkpoint, or support for every policy × embodiment × inference combination.
 
-- **10 policy integrations:** eight model families have YAM deployment configurations:
-  Pi05, MolmoAct2, ABC, GR00T, LingBot-VLA2, Xiaomi XR-1, OpenWAM and SAPolicy.
+- **8 policy integrations:** six model families have YAM deployment configurations:
+  Pi05, GR00T, LingBot-VLA2, Xiaomi XR-1, OpenWAM and SAPolicy.
   Cosmos3 and Isaac 0.5 add two model-only / offline paths, not two more YAM-ready policies.
   Checkpoint variants, the generic XPolicyLab bridge are not counted separately.
 - **Hardware assemblies:** YAM uses the component implementation; Tianji–TacCap migration
