@@ -47,7 +47,7 @@ control loop. `serve` does not start camera or model servers for you.
 Under `serve`, Prepare normal / Prepare experiment chooses the mode for each rollout:
 
 - Normal: no human evaluation is required before preparing the next rollout.
-- Experiment: after finishing, save task result, smoothness and other evaluation fields,
+- Experiment: after finishing, save the task result, failure tags and notes,
   or click `Skip evaluation` to continue without a label. Either choice enables the next
   Prepare once the runtime service is ready. Skipping does not write a human-label file.
 

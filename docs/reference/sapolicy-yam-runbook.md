@@ -5,7 +5,7 @@
 MV51 RAW 通过 `XPolicyLab/policy/SAPolicy` 和共享 `xpolicylab_ws` 接入。
 模型源码、依赖安装、数据与训练入口均在该 policy 目录中；ManiMux 负责相机、
 观测映射、YAM FK/IK、调度、执行与记录。完整安装和资源准备见
-[SAPolicy README](../XPolicyLab/policy/SAPolicy/README.md)。
+[SAPolicy README](../../XPolicyLab/policy/SAPolicy/README.md)。
 
 支持 `yam_dual / ee`。模型返回标准动作字典：双臂绝对末端位姿采用
 `[x,y,z,qw,qx,qy,qz]`，夹爪连续开度 0 闭合、1 张开。YAM 适配器转换为

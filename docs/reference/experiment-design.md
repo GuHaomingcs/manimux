@@ -2,6 +2,8 @@
 
 > 状态：研究协议草案。先在双臂 YAM 上完成指标校准和小规模 pilot，再冻结正式协议。
 
+> 当前任务选择、逐任务结果表及 setting 确认统一维护在 [实验登记](../experiments.md)。本文中的旧 pilot 参数和模型覆盖表是历史草案，不作为当前冻结配置。
+
 ## 1. 立意
 
 ManiMux 的第一目标是成为面向真机部署的 policy-free inference infrastructure：模型、推理
@@ -123,10 +125,11 @@ pilot 方差、置信区间或 sequential comparison 再决定。
 受控扰动必须写入 task protocol，例如“EE 进入指定区域后，将目标沿 x 方向移动 5 cm”，并保存
 扰动时间戳。不能由操作者临场决定。
 
-## 6. 三项正式结果指标
+## 6. 三类结果指标
 
-主表只保留三项指标。延迟、hold、tracking error 和 CBA 分解仍计算，但只作为诊断列或附录，
-避免用大量相关指标挑选对自己有利的结果。
+当前主表列与聚合口径以 [实验登记](../experiments.md#2-主表列定义) 为准：人工任务成功率、
+左右臂参考轨迹接缝 Mean/P95/Max、PRM 全部 11 项指标。人工平滑度评分已取消。逐条曲线与诊断明细单独保存，
+不把尚未实现的计算或未冻结的指标当作正式结果。
 
 ### 6.1 Task Success Rate，TSR
 
@@ -135,29 +138,21 @@ pilot 方差、置信区间或 sequential comparison 再决定。
 - UI 的 task success 与 runtime 的正常退出分开保存。
 - 正式视频复核时隐藏 Policy 和算法名称；至少抽取一部分由第二位评审者复标。
 
-### 6.2 Human Smoothness Score，HSS
+### 6.2 Chunk seam
 
-人工对完整视频打 1–5 分，使用固定锚点：
+分别报告左、右臂有效交接处的末端位置接缝，单位 mm；每条 episode 计算 Mean/P95/Max，
+主表对 episode Mean/P95 等权平均，Max 取本组最大交接值。P95 使用线性插值，不是置信区间。
+现有画图脚本提供候选交接值；执行边界筛选和统一聚合仍需补齐，不能把参考轨迹接缝称为实测跳变。
 
-| 分数 | 定义 |
-|---:|---|
-| 1 | 危险跳变、长时间卡住或频繁明显回拉 |
-| 2 | 多次停顿/回拉，明显影响任务执行 |
-| 3 | 可完成动作，但 chunk 接缝或抖动清晰可见 |
-| 4 | 只有少量轻微接缝，不影响任务 |
-| 5 | 连续、自然，肉眼几乎看不到 chunk 切换 |
+### 6.3 PRM
 
-操作者可以在 rollout 后立即打分，作为工程反馈；论文主结果优先使用随机化、隐藏方法名的视频复评分。
-
-### 6.3 自动运动指标暂不冻结
-
-第一轮 pilot 只固定保存完整轨迹、chunk 边界、命令、真机状态、推理耗时和人工标签，不预先把
-“反向、停顿或高频运动”定义成坏行为。叠衣服等任务可能先夹取、后摇动；同一种运动模式在不同
-任务阶段具有不同语义。自动指标必须先在 matched rollout 上与人工标签和视频逐条对齐，再冻结公式。
+主表横向列出 M25/M50/M75、SR、MP、PPL、CRA、STR、DRR、FNS、SQS；
+完整进度曲线及逐条分析输出保留为证据，条件指标分别登记适用样本数。
+先冻结 judge profile，再回填正式结果。PRM 不替代人工任务成功判定。
 
 ## 7. 诊断量：不进入主排行榜
 
-当 TSR、HSS 或 CRR 出现差异时，再用以下量解释原因：
+当任务成功率、接缝或 PRM 进度出现差异时，再用以下量解释原因：
 
 | 诊断量 | 作用 |
 |---|---|
@@ -169,7 +164,7 @@ pilot 方差、置信区间或 sequential comparison 再决定。
 | Inference Cost | round-trip latency、model evaluations、显存和 gap 次数，表示获得效果的代价 |
 
 这些量目前只是候选分析方向，不写入主排行榜。先完成每种算法五次 pilot，再根据轨迹、视频、成功
-标签、人工流畅度和 failure tags 检查哪些量真正对应人看到的问题。
+标签和 failure tags 检查哪些量真正对应人看到的问题。
 
 ## 8. 推理算法调参协议
 
@@ -197,17 +192,17 @@ pilot 方差、置信区间或 sequential comparison 再决定。
 
 1. 每种算法使用相同数量的 dev blocks 和同一组 dev layouts。
 2. 先排除不安全、持续 gap 或无法稳定运行的配置。
-3. 在剩余配置中优先选择 dev success 更高的 preset；成功相近时，再选择 HSS 更高、CRR 更低者。
+3. 在剩余配置中优先选择 dev success 更高的 preset；成功相近时，按预先冻结的接缝与成本口径选择。
 4. 将最终 YAML、git revision 和参数 hash 冻结后，才进入 test layouts。
 5. latency 和 model evaluations 作为成本同时报告；不能用无限计算换质量而不说明。
 
 ### 8.4 调参表
 
-| Policy | Algorithm | Candidate preset | 关键参数 | Dev blocks | TSR | HSS | CRR | Cost | 决定 |
-|---|---|---|---|---:|---:|---:|---:|---:|---|
-| Pi05 | ACT | `act-q3` | `query_interval=3` | TBD | TBD | TBD | TBD | TBD | TBD |
-| Pi05 | IT-RTC | `rtc-default` | delay/prefix settings | TBD | TBD | TBD | TBD | TBD | TBD |
-| Pi05 | PAINT | `paint-3n` | inversion/repaint settings | TBD | TBD | TBD | TBD | TBD | TBD |
+| Policy | Algorithm | Candidate preset | 关键参数 | Dev blocks | TSR | CRR | Cost | 决定 |
+|---|---|---|---|---:|---:|---:|---:|---|
+| Pi05 | ACT | `act-q3` | `query_interval=3` | TBD | TBD | TBD | TBD | TBD |
+| Pi05 | IT-RTC | `rtc-default` | delay/prefix settings | TBD | TBD | TBD | TBD | TBD |
+| Pi05 | PAINT | `paint-3n` | inversion/repaint settings | TBD | TBD | TBD | TBD | TBD |
 
 ## 9. Policy 与算法矩阵
 
@@ -266,7 +261,6 @@ Start/Resume、Pause/Hold、Finish & Home、相机、预测轨迹和 achieved tr
 │ achieved EE trail                  │ safety / recorder      │
 ├ Post-rollout Annotation ────────────┴────────────────────────┤
 │ success: yes / no / invalid                                │
-│ smoothness: 1 2 3 4 5                                      │
 │ failure tags + operator note                               │
 ├ Results ─────────────────────────────────────────────────────┤
 │ rollout table / grouped summary / video review / PRM        │
@@ -301,7 +295,7 @@ session-*/
   rollout-001/
     meta.json                    # task、layout、algorithm、Policy Server fingerprint
     data.zarr/
-      ticks/                     # state、reference、executor output、command
+      ticks/                     # state、scheduled reference、command（executor output）
       plans/000000/
         canonical_raw/           # canonical policy chunk before strategy
         infra_output/            # chunk after inference strategy
@@ -322,12 +316,11 @@ session-*/
 ```json
 {
   "task_result": "success",
-  "smoothness_score": 4,
   "failure_tags": [],
   "operator_note": "minor seam near placement",
   "reviewer_id": "operator-01",
   "review_mode": "live",
-  "label_schema": "human-label-v1",
+  "label_schema": "human-label-v2",
   "created_at": "ISO-8601"
 }
 ```
@@ -339,15 +332,15 @@ automatic metrics 和 PRM；缺失值保持空，不猜测为失败或零分。
 
 ### 13.1 Rollout-level Table
 
-| Experiment | Block | Seed | Task | Policy | Algorithm | Valid | Success | HSS | Latency | Failure tag | Rollout |
-|---|---|---:|---|---|---|---|---|---:|---:|---|---|
-| TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD |
+| Experiment | Block | Seed | Task | Policy | Algorithm | Valid | Success | Latency | Failure tag | Rollout |
+|---|---|---:|---|---|---|---|---|---:|---|---|
+| TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD |
 
 ### 13.2 Main Summary Table
 
-| Task | Policy | Demos | Algorithm | Preset | N valid | TSR ↑ | HSS ↑ | Latency/Cost | Learned metric TBD |
-|---|---|---:|---|---|---:|---:|---:|---:|---:|
-| TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD |
+| Task | Policy | Demos | Algorithm | Preset | N valid | TSR ↑ | Latency/Cost | Learned metric TBD |
+|---|---|---:|---|---|---:|---:|---:|---:|
+| TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD |
 
 主表必须带置信区间或 bootstrap interval，不只写平均值。失败、invalid 和安全停止分别计数。
 
@@ -374,7 +367,7 @@ processed progress curve。可参考 [PRM-as-a-Judge](https://github.com/Yuheng2
 - [ ] 为 Pi05 的 Default、ACT、IT-RTC、PAINT 建立等预算 dev tuning 表。
 - [ ] 冻结四套 `algorithm × Pi05 × YAM` preset 和 config hash。
 - [ ] 定义 5 个红球任务 layout seeds，随机化 40 条 pilot 的运行顺序。
-- [x] 实现 Viewer 的 post-rollout `success / smoothness / tags` 标注面板。
+- [x] 实现 Viewer 的 post-rollout `task result / tags / note` 标注面板。
 - [x] 实现 rollout human-label sidecar writer。
 - [x] 实现实验模式 ON/OFF、task/layout 冻结和 reward gating。
 - [x] 保存 canonical raw、infra output、committed horizon 与异步多相机视频证据。

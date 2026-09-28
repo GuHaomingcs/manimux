@@ -128,7 +128,7 @@ ManiMux 输出：   [1,    2,   2]  # 逐关节截断
 显式配置加速度限制时，isotropic 的两阶段分别整体缩放速度向量、速度变化向量；
 此时不能再声称最终位置增量一定保持原目标方向。默认 per_joint 的计算路径保留。
 Smooth 的滤波/制动、位置边界和夹爪配置继续独立生效。用法见
-[配置说明](../manimux/configs/README.md#选择手臂命令的削减方式)。
+[配置说明](../../manimux/configs/README.md#选择手臂命令的削减方式)。
 
 ## Current configuration sources
 

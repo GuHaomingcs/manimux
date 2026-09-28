@@ -6,17 +6,17 @@
 Policy × Runtime × Embodiment
 
 [![Platform](https://img.shields.io/badge/Platform-7C3AED?style=flat-square)](#features)
-[![Robo GUI](https://img.shields.io/badge/Robo%20GUI-0891B2?style=flat-square)](docs/viewer-tutorial.html)
+[![Robo GUI](https://img.shields.io/badge/Robo%20GUI-0891B2?style=flat-square)](docs/reference/viewer-tutorial.html)
 <br/>
 [![组件：XPolicyLab](https://img.shields.io/badge/Component-XPolicyLab-4F46E5?style=flat-square&logo=github&logoColor=white)](XPolicyLab/)
 [![组件：PRM-as-a-Judge](https://img.shields.io/badge/Component-PRM--as--a--Judge-9333EA?style=flat-square&logo=github&logoColor=white)](PRM-as-a-Judge/)
 [![Python 3.11 和 3.12](https://img.shields.io/badge/Python-3.11%20%7C%203.12-3776AB?style=flat-square&logo=python&logoColor=white)](pyproject.toml)
 <br/>
-[![Policy：10 个接入，含 2 个仅模型路径](https://img.shields.io/badge/Policies-10%20Integrations-2EA043?style=flat-square)](docs/README.md#support-counts)
-[![本体：硬件组件](https://img.shields.io/badge/Embodiments-Hardware%20Components-2563EB?style=flat-square)](docs/README.md#support-counts)
-[![推理：8 种模式](https://img.shields.io/badge/Inference-8%20Modes-F97316?style=flat-square)](docs/README.md#support-counts)
+[![Policy：10 个接入，含 2 个仅模型路径](https://img.shields.io/badge/Policies-10%20Integrations-2EA043?style=flat-square)](docs/reference/README.md#support-counts)
+[![本体：硬件组件](https://img.shields.io/badge/Embodiments-Hardware%20Components-2563EB?style=flat-square)](docs/reference/README.md#support-counts)
+[![推理：8 种模式](https://img.shields.io/badge/Inference-8%20Modes-F97316?style=flat-square)](docs/reference/README.md#support-counts)
 <br/>
-[![评测：人工反馈与 LLM Judge](https://img.shields.io/badge/Evaluation-Human%20%2B%20LLM%20Judge-DB2777?style=flat-square)](docs/prm-as-a-judge.md)
+[![评测：人工反馈与 LLM Judge](https://img.shields.io/badge/Evaluation-Human%20%2B%20LLM%20Judge-DB2777?style=flat-square)](docs/reference/prm-as-a-judge.md)
 
 [English](README.md) · [简体中文](README.zh-CN.md)
 
@@ -35,7 +35,7 @@ Executor 与本体**。标准接口分离模型推理与硬件控制，让接入
 
 **范围：** ManiMux 负责策略部署、运行记录、回放与评测；遥操作和示范数采不再放在本仓库。
 
-> 📖 想把自己的 YAM 或 Tianji–TacCap 接到 ManiMux？第一步看[本地工位接入](manimux/configs/local/README.md)。安装与启动见[使用指南](docs/guideline.md)，模型、算法与接口细节见[文档索引](docs/README.md)。
+> 📖 想把自己的 YAM 或 Tianji–TacCap 接到 ManiMux？第一步看[本地工位接入](manimux/configs/local/README.md)。安装与启动见[使用指南](docs/reference/guideline.md)，模型、算法与接口细节见[文档索引](docs/README.md)。
 
 ## 第一步：接入自己的同型号真机
 
@@ -72,7 +72,7 @@ Viewer 的网络选项和其他模型启动器仍有独立入口，具体范围�
 | 实验评测 | ✅ | 人工标注 + 离线 PRM / LLM Judge |
 
 ✅ 表示已有实现，不代表所有模型 / 本体组合均已验证。
-[接入数量](docs/README.md#support-counts)也包含仅模型路径。
+[接入数量](docs/reference/README.md#support-counts)也包含仅模型路径。
 
 <a id="demo"></a>
 
@@ -124,8 +124,8 @@ flowchart LR
 ## 🚀 快速启动 · Pi05 on YAM
 
 以下示例使用 **Pi05 纯 joint、step-30000、放瓶子任务与 RTC**。
-需要先准备好 YAM / OpenPI 环境、checkpoint 和本机设备配置，见[环境指南](docs/guideline.md#pi05-30k-on-yam)。
-没有硬件可先运行 [Viewer 演示](docs/guideline.md#hardware-free-start)。
+需要先准备好 YAM / OpenPI 环境、checkpoint 和本机设备配置，见[环境指南](docs/reference/guideline.md#pi05-30k-on-yam)。
+没有硬件可先运行 [Viewer 演示](docs/reference/guideline.md#hardware-free-start)。
 
 先完成[本地工位接入](manimux/configs/local/README.md)。下列相机、Pi05 和 runtime 命令
 使用同一份实验配置，并默认读取同一份 local。该 RTC 配方的下发频率为 **30 Hz**，
@@ -158,10 +158,10 @@ server 与 runtime 的配置必须配套：这里是 **joint**，不是 **joint+
 
 ## 📚 使用指南
 
-- **开始运行：**[完整指南](docs/guideline.md) · [配置说明](manimux/configs/README.md)。
-- **模型与算法：**[组件和模型手册](docs/README.md) · [推理方法](docs/README.md#inference-and-execution)。
-- **评测：**[实验流程](docs/experiment-infra.md) · [PRM 评测](docs/prm-as-a-judge.md)。
-- **扩展开发：**[架构与接口](docs/architecture.md)。
+- **开始运行：**[完整指南](docs/reference/guideline.md) · [配置说明](manimux/configs/README.md)。
+- **模型与算法：**[组件和模型手册](docs/README.md) · [推理方法](docs/reference/README.md#inference-and-execution)。
+- **评测：**[实验流程](docs/reference/experiment-infra.md) · [PRM 评测](docs/reference/prm-as-a-judge.md)。
+- **扩展开发：**[架构与接口](docs/reference/architecture.md)。
 
 <a id="citation"></a>
 

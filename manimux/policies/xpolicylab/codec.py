@@ -113,7 +113,7 @@ def encode_observation(
         "instruction": instruction,
         "state": state,
         # The environment owns the control rate; the policy is told what it is
-        # rather than deciding it. See docs/xpolicylab-runbook.md.
+        # rather than deciding it. See docs/reference/xpolicylab-runbook.md.
         "additional_info": {"frequency": float(frequency)},
         "data_format_version": DATA_FORMAT_VERSION,
         "env_idx": 0,

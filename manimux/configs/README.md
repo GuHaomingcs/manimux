@@ -128,7 +128,7 @@ The Xiaomi Robotics 1 pass-ball checkpoint on Tianji-TacCap uses
 `experiments/pass_ball/xiaomi-xr1/tianji_taccap_xiaomi_xr1_step50000.yaml` and the policy recipe at
 `policy/xiaomi-xr1/tianji/pass_ball/step50000.yaml`. Its Cartesian action adapter is selected
 by the experiment and performs inline FK/IK using the assembled Tianji robot kinematics.
-See the [XR-1 Tianji-TacCap runbook](../../docs/xiaomi-xr1-tianji-taccap-runbook.md).
+See the [XR-1 Tianji-TacCap runbook](../../docs/reference/xiaomi-xr1-tianji-taccap-runbook.md).
 
 ## Arm motion limiting
 
@@ -172,7 +172,7 @@ acceleration setting; position, velocity and finite-value checks still apply.
 
 Without a shared profile, Direct takes the mode from `executor.motion_limits.arm`, while
 Smooth takes `mode` / `max_step_dt_s` under `executor.smooth`. Local and profile values must
-not conflict. See [Tianji motion-limit provenance](../../docs/tianji-motion-limits-provenance.md).
+not conflict. See [Tianji motion-limit provenance](../../docs/reference/tianji-motion-limits-provenance.md).
 
 ## Common experiment fields
 
@@ -238,7 +238,7 @@ where they do not apply. Strategies share the robot, timeline and executor infra
 
 | Algorithm section | Main fields |
 | --- | --- |
-| `rtc` | Initial delay, delay history, guidance and chunk execution threshold; see [RTC](../../docs/xpolicylab-runbook.md#rtc-规则). |
+| `rtc` | Initial delay, delay history, guidance and chunk execution threshold; see [RTC](../../docs/reference/xpolicylab-runbook.md#rtc-规则). |
 | `temporal_ensemble` | `coefficient: 0.01`; `query_interval_policy_steps: 1`. |
 | `aac` | `num_samples: 20`, `motion_threshold`, required `ee_stats_path`, `chunk_id_selector`, `backward_beta: 0.99`. |
 | `paint` | `execution_policy_steps: 10`, `initial_delay_policy_steps: 4`, `delay_buffer_size: 10`. |
@@ -246,28 +246,28 @@ where they do not apply. Strategies share the robot, timeline and executor infra
 
 ACT uses official exponential weights `w_i ∝ exp(-coefficient × i)` from commit `742c753`.
 Its queries are asynchronous; `blend_policy_steps: 0` prevents an extra seam blend after aggregation.
-See [ACT temporal ensembling](../../docs/act-temporal-ensemble.md).
+See [ACT temporal ensembling](../../docs/reference/act-temporal-ensemble.md).
 
 AAC requires short-horizon support and `blend_policy_steps: 0`. The YAM recipes adapt its scoring
 to 14D absolute joints: shared FK produces per-arm EE increments, matched fixed statistics
 normalize those increments, and the arm scores are averaged. The selected joint chunk
 remains the executed representation. These are YAM adaptations, not official Pi05/YAM
-recipes. See [AAC](../../docs/reproductions/aac.md) and [Pi05 AAC](../../docs/reproductions/aac-pi05.md).
+recipes. See [AAC](../../docs/reference/reproductions/aac.md) and [Pi05 AAC](../../docs/reference/reproductions/aac-pi05.md).
 
 PAINT requires `d <= s <= H-d` and `blend_policy_steps: 0`. ManiMux submits the old chunk's
 `A[s:s+d]` prefix; the model sampler implements the repaint sequence. Responses are rejected
-when delay would discard more than the anchored prefix. See [PAINT](../../docs/reproductions/paint-pi05.md).
+when delay would discard more than the anchored prefix. See [PAINT](../../docs/reference/reproductions/paint-pi05.md).
 
 AutoHorizon has no configurable method parameters: the Pi05 sampler selects an execution
 prefix from the action expert's third denoising-step self-attention. It requires
 `blend_policy_steps: 0` and synchronous prefix execution. The JAX port uses upstream commit
 `c7504f1`; numerical parity with the upstream PyTorch implementation remains a separate
-validation boundary. See [AutoHorizon](../../docs/reproductions/autohorizon-pi05.md).
+validation boundary. See [AutoHorizon](../../docs/reference/reproductions/autohorizon-pi05.md).
 
 DVAC synchronously executes the server's stable prefix, with `blend_policy_steps: 0`.
 The Pi05/YAM implementation initializes the rolling buffer from the first request and
 scores the 14 effective normalized action dimensions, excluding OpenPI padding.
-See the [DVAC audit](../../docs/reproductions/dvac-pi05.md) for the paper/implementation boundary.
+See the [DVAC audit](../../docs/reference/reproductions/dvac-pi05.md) for the paper/implementation boundary.
 
 ### Executors
 

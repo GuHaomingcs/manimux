@@ -25,7 +25,6 @@ class _TickRecord:
     monotonic_ns: int
     state: GroupVector
     scheduled: GroupVector
-    optimized: GroupVector
     command: GroupVector
     plan_id: str | None
     inference_ms: float | None
@@ -128,7 +127,6 @@ class EpisodeRecorder:
         monotonic_ns: int,
         state: RobotState,
         scheduled: GroupVector,
-        optimized: GroupVector,
         command: GroupVector,
         plan_id: str | None,
         inference_ms: float | None,
@@ -140,7 +138,6 @@ class EpisodeRecorder:
                 monotonic_ns=monotonic_ns,
                 state={name: value.copy() for name, value in state.groups.items()},
                 scheduled={name: value.copy() for name, value in scheduled.items()},
-                optimized={name: value.copy() for name, value in optimized.items()},
                 command={name: value.copy() for name, value in command.items()},
                 plan_id=plan_id,
                 inference_ms=inference_ms,
@@ -168,7 +165,7 @@ class EpisodeRecorder:
         )
         plan_ids = ["" if record.plan_id is None else record.plan_id for record in self._ticks]
         ticks.create_dataset("plan_id", data=np.asarray(plan_ids, dtype="U64"))
-        for stage in ("state", "scheduled", "optimized", "command"):
+        for stage in ("state", "scheduled", "command"):
             stage_group = ticks.create_group(stage)
             for name, dim in self._group_dims.items():
                 stage_values = [getattr(record, stage)[name] for record in self._ticks]

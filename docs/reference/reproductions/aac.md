@@ -201,6 +201,10 @@ reproducible first hardware-test value, not a claim of optimality or official YA
 hardware run must retain `chunk_size`, `entropy_elbow`, `motion_floor` and motion traces so later changes
 are evidence-led.
 
+The runtime records numeric `chunk_id`, `entropy_elbow` and `motion_floor` in each AAC
+`plan_accepted` event when supplied by the policy response. These diagnostics explain the
+adaptive choice and do not participate in action decoding.
+
 The 50-step Pi05 distribution contains 22,911 windows with median `0.34782` and 75th percentile
 `0.55810`. The initial 50-step config deliberately keeps the same physical `0.2` crossing threshold:
 the selector still asks for the first prefix reaching the same motion, while the longer horizon only
@@ -357,7 +361,7 @@ Pass criteria:
 ### 12.3 Real-robot gate
 
 Only the operator runs hardware after the normal GR00T/YAM camera, achieved-state and emergency-stop
-checks in `docs/gr00t-yam-runbook.md`:
+checks in `docs/reference/gr00t-yam-runbook.md`:
 
 ```bash
 cd /home/ubuntu/manimux

@@ -19,7 +19,7 @@ from manimux.embodiments.sensor.camera_server.client import CameraSubscriber
 
 from .reference_layouts import DEFAULT_LAYOUT_ROOT, REFERENCE_SLOTS, ReferenceLayouts
 
-EMPTY_TASK = "（请创建 Task）"
+EMPTY_TASK = "(Create a task)"
 
 
 class ReferenceCapture:
@@ -30,17 +30,20 @@ class ReferenceCapture:
         self._live: np.ndarray | None = None
         self._timestamp = 0.0
         tasks = layouts.tasks()
-        gui.add_markdown("## Top 参考图采集\n只读取相机；每个 Task 保存 01–10 共十个布局。")
+        gui.add_markdown(
+            "## Top reference capture\n"
+            "Camera only. Save ten layouts per task, numbered 01–10."
+        )
         self.task = gui.add_dropdown("Task", tasks or (EMPTY_TASK,))
-        self.new_task = gui.add_text("新 Task 名称", "")
-        self.create = gui.add_button("创建 Task")
-        self.slot = gui.add_dropdown("参考图编号", REFERENCE_SLOTS)
-        self.preview = gui.add_image(np.zeros((480, 640, 3), np.uint8), label="Top 实时画面")
-        self.save = gui.add_button("保存到选中编号（已有图片会替换）", disabled=True)
-        self.status = gui.add_markdown("等待相机服务。")
+        self.new_task = gui.add_text("New task name", "")
+        self.create = gui.add_button("Create task")
+        self.slot = gui.add_dropdown("Reference slot", REFERENCE_SLOTS)
+        self.preview = gui.add_image(np.zeros((480, 640, 3), np.uint8), label="Live Top view")
+        self.save = gui.add_button("Save to slot (replace existing image)", disabled=True)
+        self.status = gui.add_markdown("Waiting for camera service.")
         self.inventory = gui.add_markdown("")
         self.saved_preview = gui.add_image(
-            np.zeros((480, 640, 3), np.uint8), label="选中编号的已保存参考"
+            np.zeros((480, 640, 3), np.uint8), label="Saved reference for selected slot"
         )
 
         @self.create.on_click
@@ -65,18 +68,18 @@ class ReferenceCapture:
         def _save(_event: Any) -> None:
             with self._lock:
                 if not self._fresh():
-                    self.status.content = "没有新鲜的相机画面，未保存。"
+                    self.status.content = "No fresh camera frame. Image not saved."
                     return
                 if self.task.value == EMPTY_TASK:
-                    self.status.content = "请先创建 Task。"
+                    self.status.content = "Create a task first."
                     return
                 try:
                     assert self._live is not None
                     layouts.save(self.task.value, self.slot.value, self._live)
-                    self.status.content = f"已保存 {self.task.value}/{self.slot.value}.png"
+                    self.status.content = f"Saved {self.task.value}/{self.slot.value}.png"
                     self._selection()
                 except (OSError, ValueError) as exc:
-                    self.status.content = f"保存失败：{exc}"
+                    self.status.content = f"Save failed: {exc}"
 
         self._selection()
 
@@ -85,14 +88,14 @@ class ReferenceCapture:
 
     def _selection(self) -> None:
         slots = self.layouts.slots(self.task.value) if self.task.value != EMPTY_TASK else ()
-        self.inventory.content = f"已采集 **{len(slots)}/10**：{', '.join(slots) or '无'}"
+        self.inventory.content = f"Captured **{len(slots)}/10**: {', '.join(slots) or 'None'}"
         self.saved_preview.visible = self.slot.value in slots
         if self.saved_preview.visible:
             try:
                 self.saved_preview.image = self.layouts.load(self.task.value, self.slot.value)
             except (OSError, ValueError) as exc:
                 self.saved_preview.visible = False
-                self.status.content = f"参考图读取失败：{exc}"
+                self.status.content = f"Could not load reference: {exc}"
         self.save.disabled = not self._fresh() or self.task.value == EMPTY_TASK
 
     def update(self, bundle: dict[str, Any] | None) -> None:
@@ -107,9 +110,11 @@ class ReferenceCapture:
             fresh = self._fresh()
             self.save.disabled = not fresh or self.task.value == EMPTY_TASK
             if not fresh:
-                self.status.content = f"等待 {self.camera} 新鲜画面；请检查相机服务。"
-            elif self.status.content.startswith("等待"):
-                self.status.content = "摆好场景，选择 01–10 中的编号后保存。"
+                self.status.content = (
+                    f"Waiting for a fresh {self.camera} frame. Check camera service."
+                )
+            elif self.status.content.startswith("Waiting"):
+                self.status.content = "Arrange the scene, select a slot from 01–10, then save."
 
 
 def main() -> None:

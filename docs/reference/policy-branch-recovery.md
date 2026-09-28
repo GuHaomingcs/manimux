@@ -1,5 +1,9 @@
 # Policy regression recovery after the kaifeng update
 
+> Historical recovery record (2026-09-09). The validation results below describe that
+> revision. The regression runner still references a root `tests/` directory that is no
+> longer present in this checkout; its command is not a current runnable validation guide.
+
 Recovery baseline: XPolicyLab `e78d1bf`, current parent `4f3f9bf` and
 XPolicyLab `3fb19ef`. The OpenWAM XPolicy implementation and its YAM
 data/training/deployment refactor are retained, not replaced by the old

@@ -1,7 +1,7 @@
 # Policies: model, client and robot adapter are separate
 
 Paths are relative to the repository root. Read
-`docs/component-policy-development.md` for payload examples and migration limits.
+`docs/reference/component-policy-development.md` for payload examples and migration limits.
 
 ## Classify the integration first
 

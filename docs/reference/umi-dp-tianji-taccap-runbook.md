@@ -1,6 +1,6 @@
 # UMI Diffusion Policy on Tianji–TacCap
 
-Start with the [local station guide](../manimux/configs/local/README.md) when connecting
+Start with the [local station guide](../../manimux/configs/local/README.md) when connecting
 another Tianji–TacCap installation. One private station file supplies the controller IP,
 gripper and camera serials, service addresses and local artifact paths. The experiment
 selects the robot assembly, policy adapter, inference algorithm and execution settings.
@@ -8,7 +8,7 @@ selects the robot assembly, policy adapter, inference algorithm and execution se
 ## Prepare the environments
 
 Run the commands below from the repository root. Hardware and model processes use
-separate Python environments; see [Python environments](../envs/README.md).
+separate Python environments; see [Python environments](../../envs/README.md).
 
 - Install this ManiMux checkout and its `xpolicylab` extra in the Tianji hardware
   environment. The commands below use `envs/tianji/.venv/bin/python`.
@@ -19,7 +19,7 @@ separate Python environments; see [Python environments](../envs/README.md).
   installed by filling a station file and is absent from a clean checkout.
 - Install the TacCap native package `xense.taccap` into the hardware environment,
   following the SDK's installation instructions. Both the gripper and wrist camera
-  use this dependency; see the [TacCap component](../manimux/embodiments/end_effector/taccap/README.md).
+  use this dependency; see the [TacCap component](../../manimux/embodiments/end_effector/taccap/README.md).
 - Initialize the repository's XPolicyLab submodule and use its UMI_DP installation
   entry point in a separate model environment:
 

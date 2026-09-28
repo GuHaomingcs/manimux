@@ -267,7 +267,7 @@ class CameraPanel:
         )
         with self.diagnostics_folder:
             self.details = self._gui.add_html("")
-            self.extra_folder = self._gui.add_folder("更多输入相机", visible=False)
+            self.extra_folder = self._gui.add_folder("Additional input cameras", visible=False)
             with self.extra_folder:
                 while len(self.images) < len(self._views):
                     self.images.append(self._add_image())
@@ -405,21 +405,23 @@ class CameraPanel:
         if self.panel.content != panel_html:
             self.panel.content = panel_html
         if self._config.get("camera_mode", "policy") == "manual":
-            title = "手动预览 · 不改变模型输入"
+            title = "Manual preview · Model inputs unchanged"
         elif self._policy_map:
-            title = "模型输入相机 · 实时预览"
+            title = "Model input cameras · Live preview"
         elif self._invalid_map:
-            title = "默认预览 · 模型输入映射无效"
+            title = "Default preview · Invalid model input mapping"
         else:
-            title = "默认预览 · 尚未获取模型输入配置"
+            title = "Default preview · Waiting for model input configuration"
         rows = []
         for index, view in enumerate(self._views):
             if view is None:
-                rows.append(f"<tr><td>{self._slots[index]}</td><td>—</td><td>未配置</td></tr>")
+                rows.append(
+                    f"<tr><td>{self._slots[index]}</td><td>—</td><td>Not configured</td></tr>"
+                )
                 continue
             name, source = view
             source = self._sources.get(index, source)
-            status = "预览中" if index in self._received else "等待图像"
+            status = "Live" if index in self._received else "Waiting for image"
             rows.append(
                 f"<tr><td>{html.escape(name)}</td><td>{html.escape(source)}</td>"
                 f"<td>{status}</td></tr>"
@@ -428,19 +430,19 @@ class CameraPanel:
                 self.images[index].label = f"{name} ← {source} · {status}"
         rows.extend(
             f"<tr><td>{html.escape(name)}</td><td>{html.escape(source)}</td>"
-            "<td>时序输入 · 复用物理相机</td></tr>"
+            "<td>Temporal input · Shared physical camera</td></tr>"
             for name, source in self._temporal_views
         )
         details = (
             f"<strong>{title}</strong><table><thead><tr>"
-            "<th>输入 / 预览位</th><th>相机来源</th><th>状态</th>"
+            "<th>Input / Preview</th><th>Camera source</th><th>Status</th>"
             f"</tr></thead><tbody>{''.join(rows)}</tbody></table>"
         )
         if self._config.get("camera_mode", "policy") == "manual":
-            inputs = "；".join(
+            inputs = "; ".join(
                 f"{html.escape(name)} ← {html.escape(source)}"
                 for name, source in self._policy_map.items()
             )
-            details += f"<p>模型输入：{inputs or '尚未获取配置'}</p>"
+            details += f"<p>Model inputs: {inputs or 'Waiting for configuration'}</p>"
         if self.details is not None and self.details.content != details:
             self.details.content = details

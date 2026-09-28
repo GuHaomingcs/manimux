@@ -8,6 +8,7 @@ import threading
 import time
 import uuid
 from collections import deque
+from copy import deepcopy
 from pathlib import Path
 from typing import Any, Literal, cast
 
@@ -15,6 +16,7 @@ import numpy as np
 import viser
 
 from manimux.evaluation import write_manual_evaluation
+from manimux.evaluation.identity import rollout_identity
 from manimux.types import FloatArray, UInt8Array
 
 from .camera_panel import CameraPanel
@@ -78,7 +80,7 @@ def _configure_gui(gui: Any) -> None:
     main_panel = getattr(gui, "main_panel", None)
     gui.configure_theme(
         control_layout="floating" if main_panel is not None else "fixed",
-        control_width="medium",
+        control_width="large",
         dark_mode=False,
         show_logo=False,
         show_share_button=False,
@@ -116,6 +118,7 @@ class PolicyViewer:
         self.finish_home: bool | None = None
         self._clear_recovery()
         self.new_rollout_requested = False
+        self._rollout_request: dict[str, Any] = {}
         self.preparing_rollout = False
         self.service_ready = False
         self.experiment_mode = False
@@ -251,8 +254,8 @@ class PolicyViewer:
                 "⚪ Waiting for a ManiMux runtime service."
             )
             self.task = self.server.gui.add_text("Task command", "", multiline=True, disabled=True)
-            self.layout_id = self.server.gui.add_text(
-                "Experiment layout / condition ID", "default", disabled=True
+            self.repeat_id = self.server.gui.add_dropdown(
+                "Experiment repeat", ("1", "2", "3"), initial_value="1", disabled=True
             )
             self.prepare_normal_btn = self.server.gui.add_button(
                 "Prepare normal rollout", color="blue", disabled=True
@@ -282,6 +285,9 @@ class PolicyViewer:
         self.run_folder = self.server.gui.add_folder("Run", expand_by_default=True)
         with self.run_folder:
             self.robot_name = self.server.gui.add_text("Robot", self.robot.label, disabled=True)
+            self.recorded_layout = self.server.gui.add_text(
+                "Recorded layout / repeat", "—", disabled=True
+            )
             self.policy_name = self.server.gui.add_text("Policy", "waiting", disabled=True)
             self.action_space = self.server.gui.add_text("Action space", "waiting", disabled=True)
             self.chunk_info = self.server.gui.add_text("Chunk", "—", disabled=True)
@@ -301,12 +307,6 @@ class PolicyViewer:
                 "Task result",
                 ("unlabeled", "success", "failure", "invalid"),
                 initial_value="unlabeled",
-                disabled=True,
-            )
-            self.smoothness_score = self.server.gui.add_dropdown(
-                "Smoothness (1-5)",
-                ("1", "2", "3", "4", "5"),
-                initial_value="3",
                 disabled=True,
             )
             self.reviewer_id = self.server.gui.add_text("Reviewer", "operator", disabled=True)
@@ -360,6 +360,7 @@ class PolicyViewer:
                 display_container=self.camera_view.display_container,
             )
         self.camera_view.add_diagnostics(expand_by_default=True)
+        self._set_setup_controls_enabled(False)
         self._set_stage("waiting")
 
         @self.start_btn.on_click
@@ -693,6 +694,7 @@ class PolicyViewer:
         self.finish_requested = False
         self.finish_home = None
         self.new_rollout_requested = False
+        self._rollout_request = {}
         self.evaluation_complete = True
         self._set_policy_controls_enabled(False)
         self._set_evaluation_enabled(False)
@@ -732,7 +734,6 @@ class PolicyViewer:
     def _set_evaluation_enabled(self, enabled: bool) -> None:
         for handle in (
             self.task_result,
-            self.smoothness_score,
             self.reviewer_id,
             self.operator_note,
             *self.failure_tag_inputs.values(),
@@ -755,13 +756,45 @@ class PolicyViewer:
         allowed = enabled and self.evaluation_complete and not self._recovery_pending()
         self.prepare_normal_btn.disabled = not allowed
         self.prepare_experiment_btn.disabled = not allowed
-        self.layout_id.disabled = not allowed
+        self.repeat_id.disabled = not allowed
         self.task.disabled = not allowed
+        if self.top_overlay is not None:
+            self.top_overlay.set_selection_enabled(allowed)
+
+    def _show_recorded_identity(self, identity: dict[str, Any]) -> None:
+        reference = identity.get("reference_layout")
+        self.recorded_layout.value = (
+            f"{reference['task']} / {identity['layout_id']} · repeat {identity['repeat_id']}/3"
+            if reference is not None
+            else "—"
+        )
 
     def _prepare_rollout(self, *, experiment_mode: bool) -> None:
         with self.lock:
             if self._recovery_pending() or not self.service_ready or not self.evaluation_complete:
                 return
+            try:
+                selection = {}
+                repeat_id = None
+                if experiment_mode:
+                    if self.top_overlay is None:
+                        raise ValueError(
+                            "Experiment rollouts require a Top reference layout. "
+                            "Use a Viewer configured with a Top camera."
+                        )
+                    repeat_id = int(self.repeat_id.value)
+                    selection = self.top_overlay.freeze_selection()
+                identity = rollout_identity({
+                    "experiment_mode": experiment_mode,
+                    "repeat_id": repeat_id,
+                    **selection,
+                })
+            except (OSError, TypeError, ValueError) as exc:
+                self.rollout_setup_status.content = f"🔴 Prepare was not submitted: {exc}"
+                self._update_prepare_enabled()
+                return
+            self._rollout_request = {"task_command": self.task.value.strip(), **identity}
+            self._show_recorded_identity(identity)
             self._set_experiment_mode(experiment_mode)
             self.new_rollout_requested = True
             self.preparing_rollout = True
@@ -796,7 +829,6 @@ class PolicyViewer:
         self.evaluation_complete = not self.experiment_mode
         self.episode_path.value = episode_dir or "not published"
         self.task_result.value = "unlabeled"
-        self.smoothness_score.value = "3"
         self.reviewer_id.value = "operator"
         self.operator_note.value = ""
         for handle in self.failure_tag_inputs.values():
@@ -817,6 +849,7 @@ class PolicyViewer:
         self._clear_recovery()
         self.finish_requested = False
         self.new_rollout_requested = False
+        self._rollout_request = {}
         self.preparing_rollout = False
         self.episode_active = False
         self.current_episode_dir = None
@@ -824,6 +857,7 @@ class PolicyViewer:
         self.evaluation_complete = True
         self.last_state_time = 0.0
         self.executor_info.value = "service idle"
+        self.recorded_layout.value = "—"
         self.evaluation_status.content = "⚪ No completed rollout is awaiting evaluation."
         self._set_policy_controls_enabled(False)
         self._set_evaluation_enabled(False)
@@ -838,6 +872,7 @@ class PolicyViewer:
         self.home_requested = False
         self.finish_requested = False
         self.new_rollout_requested = False
+        self._rollout_request = {}
         self.preparing_rollout = False
         self.service_ready = False
         self.episode_active = False
@@ -864,7 +899,6 @@ class PolicyViewer:
             target = write_manual_evaluation(
                 self.current_episode_dir,
                 task_result=cast(Any, result),
-                smoothness_score=int(self.smoothness_score.value),
                 failure_tags=[
                     name for name, handle in self.failure_tag_inputs.items() if handle.value
                 ],
@@ -903,9 +937,7 @@ class PolicyViewer:
                 "recovery_service_id": getattr(self, "service_id", ""),
                 "recovery_lease": getattr(self, "recovery_lease", False),
                 "new_rollout_requested": self.new_rollout_requested,
-                "task_command": self.task.value.strip(),
-                "experiment_mode": self.experiment_mode,
-                "layout_id": self.layout_id.value.strip(),
+                **deepcopy(self._rollout_request),
             }
             self.home_requested = False
             self.finish_requested = False
@@ -1161,7 +1193,14 @@ class PolicyViewer:
             )
             self.prepare_normal_btn.visible = False
             self.prepare_experiment_btn.visible = False
-            self.layout_id.value = str(metadata.get("layout_id", "")) or "default"
+            self._show_recorded_identity(metadata)
+            if metadata.get("repeat_id") in (1, 2, 3):
+                self.repeat_id.value = str(metadata["repeat_id"])
+            if self.top_overlay is not None and metadata.get("reference_layout") is not None:
+                self.top_overlay.restore_selection({
+                    "layout_id": metadata["layout_id"],
+                    "reference_layout": metadata["reference_layout"],
+                })
             self._set_setup_controls_enabled(False)
             self._set_policy_controls_enabled(True)
             self._set_stage("control")
@@ -1200,7 +1239,7 @@ class PolicyViewer:
                 self.status.content = "🔴 **Rollout finished without a saved path**"
             elif self.experiment_mode:
                 self.evaluation_status.content = (
-                    "🟡 Save a task result and smoothness score, or click Skip evaluation."
+                    "🟡 Save a task result, or click Skip evaluation."
                 )
                 self.status.content = (
                     "⚪ **Rollout finished · save or skip evaluation**"
@@ -1243,10 +1282,9 @@ class PolicyViewer:
             self._update_recovery(metadata)
             self.prepare_normal_btn.visible = True
             self.prepare_experiment_btn.visible = True
-            if first_service_announcement:
-                self.layout_id.value = str(metadata.get("default_layout_id", "")) or "default"
             self.rollout_setup_status.content = (
-                "Choose a normal rollout (no scoring) or an experiment rollout (save or skip evaluation)."
+                "Choose a normal rollout (no scoring) or an experiment rollout "
+                "(save or skip evaluation)."
             )
             if self.current_episode_dir is None or self.evaluation_complete:
                 self.episode_path.value = str(metadata.get("last_episode_dir", "")) or "ready"

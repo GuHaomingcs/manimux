@@ -411,13 +411,14 @@ data/
 
 ### 7.2 必记数据
 
+本节是记录目标；当前字段与尚缺证据以 [recording coverage audit](experiment-infra.md#recording-coverage-audit--2026-09-28) 为准。原始模型输入/输出和完整生命周期时钟尚未全部持久化。
+
 `data.zarr` 至少包含：
 
 - robot state 和 timestamp；
 - raw model action 和 request metadata；
 - scheduled/timeline action；
-- optimized action，以及 `executor_kind = smooth | mpc`；
-- command sent；
+- executor 输出的 command，以及 `executor_kind = smooth | mpc`；
 - 每路 camera frame timestamp；
 - step、chunk index 和 inference latency。
 
@@ -430,13 +431,13 @@ data/
 - safety clamp/fault；
 - recorder/video error。
 
-V1 action lineage 只有五个必需阶段：
+执行器输出与提交的 command 当前是同一数值，持久化合并为一份：
 
 ```text
-raw_model_action -> scheduled_action -> optimized_action -> command_sent -> measured_state
+canonical_plan -> scheduled_action -> command -> measured_state
 ```
 
-`scheduled_action` 对应 executor 输入，`optimized_action` 对应 Smooth/MPC 输出。若以后需要 solver 内部诊断，再追加 named arrays，不改变基础五阶段。
+`scheduled_action` 对应 executor 输入，`command` 对应 Smooth/MPC 输出并在 send 返回后记录。三种 plan 阶段分别保留；`canonical_raw` 已经过动作解码，不是模型原始张量。未来若发送前转换产生不同数值或需要 solver 诊断，再保存语义不同的 named arrays。
 
 ### 7.3 结果与查询
 
@@ -523,7 +524,7 @@ repository/
 7. worker crash 后先消费仍有效 timeline，再 hold，TTL 后 fault；
 8. Viewer crash 后进入预期 pause/hold，不影响 controller tick；
 9. recorder 写失败不影响控制，并留下 incomplete episode/event；
-10. episode 可本地 replay，raw/scheduled/optimized/command/measured 时间轴可对齐；
+10. episode 可本地 replay，plan/scheduled/command/measured 时间轴可对齐；
 11. 第二个 PolicyAdapter 不修改 timeline/executor/controller；
 12. 所有测试除 hardware suite 外均不依赖真机、GPU、网络或云服务。
 

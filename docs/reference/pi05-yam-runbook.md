@@ -26,11 +26,11 @@ RTC 发起下一次推理后，仍会在等待响应时继续执行旧 chunk。
 - server：`manimux/configs/policy/pi05/yam/put-bottles/joint-ee-step30000.yaml`；
 - runtime：`manimux/configs/experiments/put_bottles/pi05/yam_pi05_rtc_joint_ee_step30000.yaml`。
 
-两套 RTC 都显式引用 [`manimux/configs/embodiment/robot/yam_control.yaml`](../manimux/configs/embodiment/robot/yam_control.yaml)，
+两套 RTC 都显式引用 [`manimux/configs/embodiment/robot/yam_control.yaml`](../../manimux/configs/embodiment/robot/yam_control.yaml)，
 与 YAM 数采共享硬件参数、动作间隔和运动限幅；执行器仍为 100 Hz Smooth、8 Hz 滤波。
 公共配置当前不附加手臂速度/加速度限幅，夹爪保留 `1.0 /s` 的闭合目标限速，打开目标直接切换。
 这不等于取消硬件保护，也不保证物理夹爪恰好一秒闭合。
-详见 [共享控制说明](../manimux/configs/README.md#arm-motion-limiting)。其他历史配置不会自动继承这些设置。
+详见 [共享控制说明](../../manimux/configs/README.md#arm-motion-limiting)。其他历史配置不会自动继承这些设置。
 
 遇到 `policy backend identity mismatch`，先检查端口上实际加载的模型与配置是否匹配，
 不要删除 `expected_backend` 来绕过检查。只核对本地路径和契约、不启动服务时，
@@ -354,20 +354,20 @@ envs/yam/.venv/bin/manimux serve \
 data/experiments/pi05-red-ball-box-step1000/rtc/session-*/rollout-*/
 ```
 
-Viser 在 episode 正常落盘后开放 `Task result`、`Smoothness (1-5)`、failure tags 和 note，
+Viser 在 episode 正常落盘后开放 `Task result`、failure tags 和 note，
 保存到 `rollout-*/evaluation/human-label.json`。这里的 task result 与 `result.json` 中表示 runtime
 正常收尾的 `success` 完全分开。
 
 Viewer 通过 Prepare normal / Prepare experiment 选择模式：普通模式不显示评分步骤；实验模式结束后，
 可以保存人工评测，也可以直接点击 `Skip evaluation` 进入下一条。跳过不会生成评分文件。
-正式实验同时填写可读的 `Layout / condition ID`。Prepare
-时页面中的 task command 会真实发送给 Pi05，不只是显示文本。
+正式实验在 Top 参考布局选择 Task 和位置 `01`–`10`，并选择 `Experiment repeat=1/2/3`。
+Prepare 固定位置、重复次数和参考图路径/hash；页面中的 task command 会真实发送给 Pi05，不只是显示文本。
 
 `serve` 不加载模型、不启动相机，也不替代 Viewer。用户先分别启动 camera server、Pi05 model
 server 和 `manimux-viewer`，再启动一次 `serve`。Viser 显示 service ready 后：
 
-1. 选择 Experiment mode，确认 task；正式实验再填写 layout ID。
-2. 点击 `Prepare new rollout`；ManiMux 创建全新 episode、连接机器人并移动到 start pose。
+1. 确认 task；正式实验再选择参考图和重复次数。
+2. 点击 `Prepare normal rollout` 或 `Prepare experiment rollout`；ManiMux 创建全新 episode、连接机器人并移动到 start pose。
 3. 等待页面显示 `PAUSED`，确认真机后点击 `Start rollout`。
 4. 需要保持当前位置时点击 `Pause / Hold`，随后使用 `Resume rollout` 继续。
 5. 完成或失败后点击 `Finish & Home`；等待 Recorder 落盘和机器人 Home。

@@ -6,17 +6,17 @@
 Policy × Runtime × Embodiment
 
 [![Platform](https://img.shields.io/badge/Platform-7C3AED?style=flat-square)](#features)
-[![Robo GUI](https://img.shields.io/badge/Robo%20GUI-0891B2?style=flat-square)](docs/viewer-tutorial.html)
+[![Robo GUI](https://img.shields.io/badge/Robo%20GUI-0891B2?style=flat-square)](docs/reference/viewer-tutorial.html)
 <br/>
 [![Component: XPolicyLab](https://img.shields.io/badge/Component-XPolicyLab-4F46E5?style=flat-square&logo=github&logoColor=white)](XPolicyLab/)
 [![Component: PRM-as-a-Judge](https://img.shields.io/badge/Component-PRM--as--a--Judge-9333EA?style=flat-square&logo=github&logoColor=white)](PRM-as-a-Judge/)
 [![Python 3.11 and 3.12](https://img.shields.io/badge/Python-3.11%20%7C%203.12-3776AB?style=flat-square&logo=python&logoColor=white)](pyproject.toml)
 <br/>
-[![Policies: 10 integrations, including 2 model-only paths](https://img.shields.io/badge/Policies-10%20Integrations-2EA043?style=flat-square)](docs/README.md#support-counts)
-[![Embodiments: hardware components](https://img.shields.io/badge/Embodiments-Hardware%20Components-2563EB?style=flat-square)](docs/README.md#support-counts)
-[![Inference: 8 modes](https://img.shields.io/badge/Inference-8%20Modes-F97316?style=flat-square)](docs/README.md#support-counts)
+[![Policies: 10 integrations, including 2 model-only paths](https://img.shields.io/badge/Policies-10%20Integrations-2EA043?style=flat-square)](docs/reference/README.md#support-counts)
+[![Embodiments: hardware components](https://img.shields.io/badge/Embodiments-Hardware%20Components-2563EB?style=flat-square)](docs/reference/README.md#support-counts)
+[![Inference: 8 modes](https://img.shields.io/badge/Inference-8%20Modes-F97316?style=flat-square)](docs/reference/README.md#support-counts)
 <br/>
-[![Evaluation: human feedback and LLM judge](https://img.shields.io/badge/Evaluation-Human%20%2B%20LLM%20Judge-DB2777?style=flat-square)](docs/prm-as-a-judge.md)
+[![Evaluation: human feedback and LLM judge](https://img.shields.io/badge/Evaluation-Human%20%2B%20LLM%20Judge-DB2777?style=flat-square)](docs/reference/prm-as-a-judge.md)
 
 [English](README.md) · [简体中文](README.zh-CN.md)
 
@@ -38,7 +38,7 @@ support evaluation of the recorded experiments.
 **Scope:** ManiMux owns policy deployment, runtime recording, replay and evaluation.
 Teleoperation and demonstration collection are maintained outside this repository.
 
-> 📖 Connecting your own YAM or Tianji–TacCap? Start with [local station setup](manimux/configs/local/README.md). Installation and launch commands are in the [Guideline](docs/guideline.md); model and method guides are in [Documentation](docs/README.md).
+> 📖 Connecting your own YAM or Tianji–TacCap? Start with [local station setup](manimux/configs/local/README.md). Installation and launch commands are in the [Guideline](docs/reference/guideline.md); model and method guides are in [Documentation](docs/README.md).
 
 ## First step: connect your own robot
 
@@ -76,7 +76,7 @@ explains their scope.
 | Evaluation | ✅ | Human labels + offline PRM / LLM judging |
 
 ✅ denotes implemented functionality, not validation of every model / hardware combination.
-[Support counts](docs/README.md#support-counts) also include model-only paths.
+[Support counts](docs/reference/README.md#support-counts) also include model-only paths.
 
 <a id="demo"></a>
 
@@ -129,8 +129,8 @@ the native paths shown here remain for compatibility pending migration.
 
 This example runs **Pi05 pure-joint, step-30000, put-bottles with RTC**. It assumes the YAM and
 OpenPI environments, checkpoint and local device configuration are already prepared;
-see the [setup guide](docs/guideline.md#pi05-30k-on-yam). For a hardware-free display, use the
-[Viewer preview](docs/guideline.md#hardware-free-start).
+see the [setup guide](docs/reference/guideline.md#pi05-30k-on-yam). For a hardware-free display, use the
+[Viewer preview](docs/reference/guideline.md#hardware-free-start).
 
 Complete [local station setup](manimux/configs/local/README.md) first. The camera, Pi05 and
 runtime commands below use the same experiment and automatically read its station bindings.
@@ -158,15 +158,15 @@ envs/yam/.venv/bin/python -m manimux serve \
 ```
 
 Open **http://127.0.0.1:8086**, then **Prepare → Start rollout → Finish & Home**.
-Normal rollouts need no label; experiment rollouts require a human label before the next trial.
+Normal rollouts need no label; experiment rollouts offer Save evaluation or Skip evaluation.
 Keep the server and runtime configs paired: this example uses **joint**, not **joint+EE**.
 
 ## 📚 Guides
 
-- **Run:** [Guideline](docs/guideline.md) · [Configuration](manimux/configs/README.md).
-- **Integrate:** [Components and policy runbooks](docs/README.md) · [Inference methods](docs/README.md#inference-and-execution).
-- **Evaluate:** [Experiment workflow](docs/experiment-infra.md) · [PRM guide](docs/prm-as-a-judge.md).
-- **Extend:** [Architecture contracts](docs/architecture.md).
+- **Run:** [Guideline](docs/reference/guideline.md) · [Configuration](manimux/configs/README.md).
+- **Integrate:** [Components and policy runbooks](docs/README.md) · [Inference methods](docs/reference/README.md#inference-and-execution).
+- **Evaluate:** [Experiment workflow](docs/reference/experiment-infra.md) · [PRM guide](docs/reference/prm-as-a-judge.md).
+- **Extend:** [Architecture contracts](docs/reference/architecture.md).
 
 <a id="citation"></a>
 

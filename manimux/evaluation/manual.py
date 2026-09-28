@@ -15,7 +15,6 @@ def write_manual_evaluation(
     episode_dir: Path,
     *,
     task_result: TaskResult,
-    smoothness_score: int,
     failure_tags: list[str],
     operator_note: str,
     reviewer_id: str,
@@ -31,8 +30,6 @@ def write_manual_evaluation(
             raise ValueError(f"episode is missing {required}: {episode_dir}")
     if task_result not in {"success", "failure", "invalid"}:
         raise ValueError(f"unsupported task result: {task_result!r}")
-    if not 1 <= smoothness_score <= 5:
-        raise ValueError("smoothness_score must be between 1 and 5")
 
     evaluation_dir = episode_dir / "evaluation"
     evaluation_dir.mkdir(exist_ok=True)
@@ -40,12 +37,11 @@ def write_manual_evaluation(
     temporary = evaluation_dir / f".human-label-{uuid.uuid4().hex}.tmp"
     payload = {
         "task_result": task_result,
-        "smoothness_score": smoothness_score,
         "failure_tags": sorted(set(failure_tags)),
         "operator_note": operator_note.strip(),
         "reviewer_id": reviewer_id.strip() or "operator",
         "review_mode": review_mode,
-        "label_schema": "human-label-v1",
+        "label_schema": "human-label-v2",
         "created_at": datetime.now(UTC).isoformat(),
     }
     try:

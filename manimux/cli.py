@@ -389,6 +389,8 @@ def run_parameters(**options) -> dict:
         "max_control_steps": 500,
         "experiment_mode": False,
         "layout_id": "",
+        "repeat_id": None,
+        "reference_layout": None,
         **options,
     }
     if values.get("output_dir") is not None:

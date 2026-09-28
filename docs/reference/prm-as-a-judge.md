@@ -11,7 +11,7 @@ git submodule update --init PRM-as-a-Judge
 
 The current machine has a dedicated Conda environment named `prm-judge`; do not install the
 judge's vLLM/CUDA dependencies into the ManiMux robot environment. On another machine, follow
-the Dopamine installation instructions in the [upstream README](../PRM-as-a-Judge/README.md)
+the Dopamine installation instructions in the [upstream README](../../PRM-as-a-Judge/README.md)
 and download the judge weights separately. Cloning the submodule does not download weights.
 
 The current CLI **requires `--manifest`; it does not recursively discover a video root**.

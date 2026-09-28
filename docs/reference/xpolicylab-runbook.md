@@ -9,7 +9,7 @@ runbook：
 - [LingBot-VLA2 + YAM](lingbot-vla2-yam-runbook.md)
 
 配置统一按 `configs/<model>/<embodiment>/` 组织，具体命名规则见
-[`manimux/configs/README.md`](../manimux/configs/README.md)。`manimux/configs/experiments/pick_red_object/xpolicylab/yam_xpolicylab_smoke.yaml` 只用于
+[`manimux/configs/README.md`](../../manimux/configs/README.md)。`manimux/configs/experiments/pick_red_object/xpolicylab/yam_xpolicylab_smoke.yaml` 只用于
 通用 WebSocket bridge 冒烟，不代表具体模型实验。
 
 ## 源码关系
@@ -87,8 +87,8 @@ uv pip install --python envs/yam/.venv/bin/python -e ".[xpolicylab]"
 ## 新模型接入清单
 
 **新模型及模型复现统一接入 `XPolicyLab/policy/<POLICY>/`，不再新增独立 native 路径。**
-先阅读仓库级 [AGENTS.md](../AGENTS.md#model-integration-xpolicylab-only) 和
-[XPolicyLab 接入规范](../XPolicyLab/CONTRIBUTING.md)。模型源码、加载、预处理、归一化、
+先阅读仓库级 [AGENTS.md](../../AGENTS.md#model-integration-xpolicylab-only) 和
+[XPolicyLab 接入规范](../../XPolicyLab/CONTRIBUTING.md)。模型源码、加载、预处理、归一化、
 训练适配与 sampler 留在 XPolicyLab；ManiMux 只保留硬件/动作适配、配置、轻量启动入口与
 公共 runtime。不能只在 XPolicyLab 加一个代理壳，仍把真正的模型实现放在 ManiMux native server。
 

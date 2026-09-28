@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-"""Plot adjacent Tianji canonical-chunk handoffs in a recorded rollout.
+"""Plot candidate handoffs between adjacent accepted chunks in a recorded rollout.
 
 The full canonical chunks are aligned on their recorded source clocks.  Seam
-markers use the actual committed Timeline values at the incoming plan's
-start_time_ns, so the two black markers represent the executed handoff rather
-than an approximation from source-row timestamps. Generated PNG, PDF, CSV and
-JSON artifacts are written outside the episode so recordings remain unchanged.
+markers use committed Timeline values at the incoming plan's start_time_ns.
+These are reference seams, not measured motion or verified execution boundaries:
+this exploratory tool does not validate takeover, pause segments or hold classes.
+Generated PNG, PDF, CSV and JSON artifacts are written outside the episode so
+recordings remain unchanged.
 """
 
 from __future__ import annotations
@@ -294,7 +295,7 @@ def plot_handoff(
     subtitle = (
         f"requests {old.request_seq}→{new.request_seq} · "
         f"{old_steps}/{new_steps} source points · "
-        f"incoming trim={new.trim_steps} · actual position seam: "
+        f"incoming trim={new.trim_steps} · committed reference seam: "
         f"L {jumps_mm['left_arm']:.1f} mm, R {jumps_mm['right_arm']:.1f} mm · "
         f"Y grid={Y_GRID_M * 100:.0f} cm × {Y_GRID_INTERVALS} (seam-centred)"
     )

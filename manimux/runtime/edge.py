@@ -15,6 +15,7 @@ import numpy as np
 from manimux.clock import Clock, SystemClock
 from manimux.embodiments.robot import RobotBase, build_robot
 from manimux.embodiments.sensor import build_sensor
+from manimux.evaluation.identity import rollout_identity
 from manimux.policies import ActionDecoderClient, PolicyCapabilities
 from manimux.policies.base import action_interval
 from manimux.policies.worker import PolicyWorkerClient
@@ -172,6 +173,7 @@ class EdgeRuntime:
         strategy: InferenceStrategy | None = None,
         launch_mode: str = "run",
     ) -> None:
+        self._rollout_identity = rollout_identity(config["run"])
         self._config = config
         self._run_dir = run_dir
         self._clock = clock or SystemClock()
@@ -363,8 +365,7 @@ class EdgeRuntime:
                 "max_chunk_steps": self._config["inference"]["max_chunk_policy_steps"],
                 "blend_steps": self._config["inference"]["blend_policy_steps"],
                 "action_start_mode": self._config["inference"]["action_start_mode"],
-                "experiment_mode": self._config["run"]["experiment_mode"],
-                "layout_id": self._config["run"]["layout_id"],
+                **self._rollout_identity,
                 "launch_mode": self._launch_mode,
                 "policy_backend": {},
             },
@@ -433,9 +434,8 @@ class EdgeRuntime:
                 "runtime": self._strategy.name,
                 "executor": self._config["executor"]["type"],
                 "policy_label": self._config["viewer"]["policy_label"],
-                "experiment_mode": self._config["run"]["experiment_mode"],
+                **self._rollout_identity,
                 "camera_map": self._config["policy"]["adapter"].get("camera_map", {}),
-                "layout_id": self._config["run"]["layout_id"],
                 "launch_mode": self._launch_mode,
             }
             # 当前整机未提供手动拖动恢复；Viewer 不展示已退役的驱动能力。
@@ -1116,7 +1116,6 @@ class EdgeRuntime:
                         monotonic_ns=now_ns,
                         state=state,
                         scheduled=scheduled,
-                        optimized=command.groups,
                         command=command.groups,
                         plan_id=command.plan_id,
                         inference_ms=last_inference_ms,

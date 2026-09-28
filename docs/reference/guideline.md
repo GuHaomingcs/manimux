@@ -1,9 +1,9 @@
 # Guideline
 
-[Project overview](../README.md) · [中文首页](../README.zh-CN.md) · [Documentation](README.md)
+[Project overview](../../README.md) · [中文首页](../../README.zh-CN.md) · [Documentation](../README.md)
 
 Run commands from the repository root. For your own installation of a supported robot,
-start with [local station setup](../manimux/configs/local/README.md): fill one private
+start with [local station setup](../../manimux/configs/local/README.md): fill one private
 `manimux/configs/local/station.yaml` with actual CAN/IP/USB and service bindings.
 The runtime, camera and Pi05 commands below read this file automatically. Use the same
 `--local <path>` on each process to select another station.
@@ -29,7 +29,7 @@ This example uses the YAM hardware environment and the OpenPI model environment,
 and weights using the [Pi05 runbook](pi05-yam-runbook.md). Other models have their own
 [deployment runbooks](README.md#policies-and-deployment).
 
-Complete the [station guide](../manimux/configs/local/README.md), including
+Complete the [station guide](../../manimux/configs/local/README.md), including
 `paths.checkpoints`, and inspect the resolved configuration first.
 The checkpoint's model identity and normalization must match this experiment.
 Reuse matching camera/Viewer services when appropriate; collection and inference must
@@ -95,7 +95,7 @@ requires the model dependencies used to resolve that contract.
 The control profile does not set model action spacing or force experiments
 to use the same filtering or command frequency. Those choices remain explicit in each
 experiment. Configuration changes do not update a running process; restart the affected
-process for the next session. See the [configuration reference](../manimux/configs/README.md).
+process for the next session. See the [configuration reference](../../manimux/configs/README.md).
 
 Inference writes session and rollout records under `run.output_dir`. Model targets, executor commands and achieved
 feedback are different measurements; compare matching fields and timestamps.

@@ -16,6 +16,7 @@ repository root. They describe existing code and workflows, not permission to ru
 |---|---|
 | Integrate or review a component, policy client/adapter, runtime or Viewer feature | [Development](.agents/skills/manimux-development/SKILL.md) |
 | Bind an installation to local robots, cameras and SDKs | [Station setup](.agents/skills/manimux-station-setup/SKILL.md) |
+| Track experiment progress, evaluate recorded rollouts, run PRM, or update experiment result tables | [Experiments](.agents/skills/manimux-experiments/SKILL.md) |
 
 For a new integration, the Development skill maps each extension to its existing
 interface, owning directory, configuration and focused validation. Read its relevant
@@ -97,7 +98,7 @@ manimux/configs/policy/<model>/<embodiment>/<task>/
 manimux/configs/experiments/<task>/<model>/<embodiment>_<model>_<variant>.yaml
 manimux/configs/inference/
 manimux/configs/executor/
-docs/<model>-<embodiment>-runbook.md
+docs/reference/<model>-<embodiment>-runbook.md
 training/  # Private configurations, launchers and notes; ignored by Git
 ```
 

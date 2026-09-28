@@ -91,9 +91,9 @@ YAM 实验入口使用 `embodiments.robot.yam.YamRobot`。
 RealSense 的 SDK 实现统一在 `embodiments/sensor/realsense/`，网络服务移到
 `servers/camera/`。示范数采已从仓库移除。安装、生命周期与参数见：
 
-- [YAM 组件](../manimux/embodiments/arm/yam/README.md)
-- [YAM 整机](../manimux/embodiments/robot/yam/README.md)
-- [RealSense](../manimux/embodiments/sensor/realsense/README.md)
+- [YAM 组件](../../manimux/embodiments/arm/yam/README.md)
+- [YAM 整机](../../manimux/embodiments/robot/yam/README.md)
+- [RealSense](../../manimux/embodiments/sensor/realsense/README.md)
 
 策略适配器仍保留各自已配置的运动学选项；一级 `policy_adapter/` 的统一收敛尚未实施。
 

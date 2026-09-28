@@ -584,7 +584,6 @@ class RuntimeSessionService:
             "policy_label": self._config["viewer"]["policy_label"],
             "camera_map": self._config["policy"]["adapter"].get("camera_map", {}),
             "default_experiment_mode": self._config["run"]["experiment_mode"],
-            "default_layout_id": self._config["run"]["layout_id"],
             "last_episode_dir": (
                 "" if self._last_episode_dir is None else str(self._last_episode_dir.resolve())
             ),
@@ -670,17 +669,18 @@ class RuntimeSessionService:
             attempts += 1
             self._last_error = ""
             self._last_failure_id = ""
-            rollout_config = deepcopy(self._config)
-            task_command = str(request.get("task_command", "")).strip()
-            if task_command:
-                rollout_config["run"]["task"] = task_command
-            rollout_config["run"]["experiment_mode"] = bool(
-                request.get("experiment_mode", self._config["run"]["experiment_mode"])
-            )
-            rollout_config["run"]["layout_id"] = str(
-                request.get("layout_id", self._config["run"]["layout_id"])
-            ).strip()
             try:
+                rollout_config = deepcopy(self._config)
+                task_command = str(request.get("task_command", "")).strip()
+                if task_command:
+                    rollout_config["run"]["task"] = task_command
+                # Identity comes only from this Prepare, never the preceding attempt.
+                rollout_config["run"].update(
+                    experiment_mode=request.get("experiment_mode", False),
+                    layout_id=request.get("layout_id", ""),
+                    repeat_id=request.get("repeat_id"),
+                    reference_layout=deepcopy(request.get("reference_layout")),
+                )
                 result = self._runtime_factory(rollout_config, self._run_dir).run()
             except KeyboardInterrupt:
                 raise

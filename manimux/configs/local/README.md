@@ -19,8 +19,8 @@ environment with the selected hardware dependencies installed.
 
 | Robot | Station template | Dependencies and deployment |
 | --- | --- | --- |
-| YAM with integrated grippers | [yam.example.yaml](yam.example.yaml) | [YAM component](../../embodiments/arm/yam/README.md), [RealSense](../../embodiments/sensor/realsense/README.md), [Pi05 runbook](../../../docs/pi05-yam-runbook.md) |
-| Tianji–TacCap | [tianji_taccap.example.yaml](tianji_taccap.example.yaml) | [UMI-DP runbook](../../../docs/umi-dp-tianji-taccap-runbook.md) · [Xiaomi XR-1 runbook](../../../docs/xiaomi-xr1-tianji-taccap-runbook.md) |
+| YAM with integrated grippers | [yam.example.yaml](yam.example.yaml) | [YAM component](../../embodiments/arm/yam/README.md), [RealSense](../../embodiments/sensor/realsense/README.md), [Pi05 runbook](../../../docs/reference/pi05-yam-runbook.md) |
+| Tianji–TacCap | [tianji_taccap.example.yaml](tianji_taccap.example.yaml) | [UMI-DP runbook](../../../docs/reference/umi-dp-tianji-taccap-runbook.md) · [Xiaomi XR-1 runbook](../../../docs/reference/xiaomi-xr1-tianji-taccap-runbook.md) |
 
 Hardware and model environments are separate; see [Python environments](../../../envs/README.md).
 A clone does not install private SDKs, create CAN interfaces or download checkpoints.
@@ -185,7 +185,7 @@ XR-1 Tianji:    python manimux/servers/xiaomi_xr1_tianji_server.py --experiment 
 
 Select the appropriate model server, using its own Python environment. Append
 `--local <path>` to each command when choosing a different station. For complete Pi05
-commands, see the [startup guide](../../../docs/guideline.md#pi05-30k-on-yam).
+commands, see the [startup guide](../../../docs/reference/guideline.md#pi05-30k-on-yam).
 
 The current `yam_pi05_rtc_joint_step30000.yaml` has `execute: true`,
 `move_to_start_on_connect: true` and `control_hz: 30`. The separate assembly example
