@@ -31,7 +31,7 @@ Executor 与本体**。标准接口分离模型推理与硬件控制，让接入
 
 **用 Robo GUI 管理实验，看清每一步执行。** 从准备、启动 rollout，到实时相机、3D 状态、
 轨迹与 chunk 切换，再到回看模型预测、下发命令和机器人反馈，形成统一的实验流程。
-**XPolicyLab** 负责模型接入，人工标注与 **PRM-as-a-Judge** 支持实验记录的评测。
+**XPolicyLab** 和 **StarVLA** 作为并列框架负责模型推理，人工标注与 **PRM-as-a-Judge** 支持实验记录的评测。
 
 **范围：** ManiMux 负责策略部署、运行记录、回放与评测；遥操作和示范数采不再放在本仓库。
 
@@ -98,12 +98,15 @@ flowchart LR
 
     XPOLICY["<b>PREDICT · XPolicyLab</b><br/>Pi05 · XR-1 · GR00T<br/>LingBot · OpenWAM"]:::xpolicy
 
+    STARVLA["<b>PREDICT · StarVLA</b><br/>OFT · PI-v3 · GR00T · FAST"]:::xpolicy
+
     PLAN["<b>ADAPT & SCHEDULE</b><br/>Async · RTC · PAINT<br/>Serial · adaptive<br/><br/>Adapter → Timeline"]:::handoff
     ACT["<b>EXECUTE</b><br/>Direct · Smooth · MPC<br/><br/>Executor + Safety<br/>Control profile"]:::stage
     ROBOT(["<b>ROBOT</b><br/>RobotBase<br/>Hardware"]):::robot
     REVIEW(["<b>REVIEW</b><br/>Robo GUI · records<br/>Human labels<br/>PRM-as-a-Judge"]):::side
 
     OBS --> XPOLICY --> PLAN --> ACT --> ROBOT
+    OBS --> STARVLA --> PLAN
     ACT -.-> REVIEW
 
     classDef stage fill:#F6F8FA,stroke:#8C959F,stroke-width:1px,color:#1F2328
@@ -114,8 +117,9 @@ flowchart LR
 ```
 
 模型 server 不直接控制硬件。ManiMux 保留推理运行记录和离线回放。
-新模型必须走 [XPolicyLab 统一接入路径](AGENTS.md#model-integration-xpolicylab-only)；
-图中的 native 仅为迁移前保留的兼容入口。
+模型实现留在所属框架；并列框架通过现有的 [PolicyModel 接口](docs/reference/component-policy-development.md)接入。
+StarVLA 的 joint/EEF 离线部署见[运行指南](docs/reference/starvla-offline-runbook.md)，
+已验证范围和限制见[验证说明](docs/reference/starvla-validation.md)。
 
 **GitHub：**[ManiMux](https://github.com/SII-LiuLab/manimux) · [XPolicyLab](https://github.com/Cuzyoung/XPolicyLab) · [PRM-as-a-Judge](https://github.com/YuyangLiu2003/PRM-as-a-Judge)
 
