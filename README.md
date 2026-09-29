@@ -32,7 +32,7 @@ across embodiments rather than tied to one model–robot pair.
 
 **One experiment workflow, visible in Robo GUI.** Prepare and run trials, inspect live cameras,
 3D state, trajectories and chunk handoffs, then review predictions, commands and robot feedback.
-**XPolicyLab** provides the model integration boundary; human labels and **PRM-as-a-Judge**
+**XPolicyLab** and **StarVLA** provide independent policy frameworks; human labels and **PRM-as-a-Judge**
 support evaluation of the recorded experiments.
 
 **Scope:** ManiMux owns policy deployment, runtime recording, replay and evaluation.
@@ -102,12 +102,15 @@ flowchart LR
 
     XPOLICY["<b>PREDICT · XPolicyLab</b><br/>Pi05 · XR-1 · GR00T<br/>LingBot · OpenWAM"]:::xpolicy
 
+    STARVLA["<b>PREDICT · StarVLA</b><br/>OFT · PI-v3 · GR00T · FAST"]:::xpolicy
+
     PLAN["<b>ADAPT & SCHEDULE</b><br/>Async · RTC · PAINT<br/>Serial · adaptive<br/><br/>Adapter → Timeline"]:::handoff
     ACT["<b>EXECUTE</b><br/>Direct · Smooth · MPC<br/><br/>Executor + Safety<br/>Control profile"]:::stage
     ROBOT(["<b>ROBOT</b><br/>RobotBase<br/>Hardware"]):::robot
     REVIEW(["<b>REVIEW</b><br/>Robo GUI · records<br/>Human labels<br/>PRM-as-a-Judge"]):::side
 
     OBS --> XPOLICY --> PLAN --> ACT --> ROBOT
+    OBS --> STARVLA --> PLAN
     ACT -.-> REVIEW
 
     classDef stage fill:#F6F8FA,stroke:#8C959F,stroke-width:1px,color:#1F2328
@@ -118,8 +121,10 @@ flowchart LR
 ```
 
 Model servers never command hardware. Runtime recording and offline replay remain part of ManiMux.
-New model integrations must follow the [XPolicyLab-only route](AGENTS.md#model-integration-xpolicylab-only);
-the native paths shown here remain for compatibility pending migration.
+Learned models stay in their owning framework; peer frameworks implement the existing
+[policy client interface](docs/reference/component-policy-development.md). The
+[StarVLA runbook](docs/reference/starvla-offline-runbook.md) covers joint/EEF offline deployment
+and its [validation limits](docs/reference/starvla-validation.md).
 
 **GitHub:** [ManiMux](https://github.com/SII-LiuLab/manimux) · [XPolicyLab](https://github.com/Cuzyoung/XPolicyLab) · [PRM-as-a-Judge](https://github.com/YuyangLiu2003/PRM-as-a-Judge)
 

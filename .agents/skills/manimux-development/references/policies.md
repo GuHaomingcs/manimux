@@ -65,6 +65,13 @@ Do not claim a real framework integration exists because a synthetic client pass
 the interface test. Verify its native lifecycle, identity/capability exchange, reset
 behavior and response decoding through the public client boundary.
 
+The StarVLA peer implementation uses `policy.worker: starvla_ws` and
+`manimux/policies/starvla/`. Its independently versioned `StarVLA/` service owns
+loading, normalization and sampling; the client owns native MessagePack, reset and
+identity checks. See `docs/reference/starvla-offline-runbook.md` for explicit joint/EEF
+contracts and offline examples. AAC selection operates on grouped joint candidates
+in `manimux/policies/aac.py`; each backend converts its own wire format before selection.
+
 The grouped payload reader is `manimux/policies/actions.py`; the XPolicyLab codec
 in `manimux/policies/xpolicylab/codec.py` selects grouped or native output:
 

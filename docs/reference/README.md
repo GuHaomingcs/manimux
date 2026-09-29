@@ -12,16 +12,18 @@
 - [Action replay](action-replay.md): play named joint trajectories in an independent offline Viewer.
 - [Experiment workflow](experiment-infra.md): persistent services, normal/experiment modes and saved evidence.
 - [Architecture](architecture.md): policy, adapter, strategy, executor and robot boundaries.
-- [Agent guide](../../AGENTS.md): XPolicyLab-only model integration, legacy migration and validation rules.
+- [Agent guide](../../AGENTS.md): model integration, peer frameworks, legacy migration and validation rules.
 
 ## Components
 
 - [XPolicyLab](../../XPolicyLab/): model adapters and model-side sampling behind the shared
   policy interface. See the [integration runbook](xpolicylab-runbook.md).
+- [StarVLA](../../StarVLA/): independent policy framework with native model serving.
+  See the [offline runbook](starvla-offline-runbook.md) and [validation limits](starvla-validation.md).
 - [PRM-as-a-Judge](../../PRM-as-a-Judge/): offline model-based evaluation of recorded videos.
   See the [evaluation guide](prm-as-a-judge.md).
 
-Both are version-pinned submodules. They are platform components, not additional policies
+These are version-pinned submodules. They are platform components, not additional policies
 or inference strategies in the support counts below.
 
 ## Scope
@@ -52,7 +54,7 @@ checkpoint, or support for every policy × embodiment × inference combination.
 - **8 policy integrations:** six model families have YAM deployment configurations:
   Pi05, GR00T, LingBot-VLA2, Xiaomi XR-1, OpenWAM and SAPolicy.
   Cosmos3 and Isaac 0.5 add two model-only / offline paths, not two more YAM-ready policies.
-  Checkpoint variants, the generic XPolicyLab bridge are not counted separately.
+  Checkpoint variants and framework clients (XPolicyLab and StarVLA) are not counted separately.
 - **Hardware assemblies:** YAM uses the component implementation; Tianji–TacCap migration
   boundaries are listed in [code organization](code-organization.md). Simulator drivers
   have been retired. A model checkpoint does not itself establish a hardware integration.

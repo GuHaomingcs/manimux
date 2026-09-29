@@ -16,7 +16,7 @@ from manimux.clock import Clock, SystemClock
 from manimux.embodiments.robot import RobotBase, build_robot
 from manimux.embodiments.sensor import build_sensor
 from manimux.evaluation.identity import rollout_identity
-from manimux.policies import ActionDecoderClient, PolicyCapabilities
+from manimux.policies import ActionDecoderClient, PolicyCapabilities, metadata_mismatches
 from manimux.policies.base import action_interval
 from manimux.policies.worker import PolicyWorkerClient
 from manimux.policy_adapter import build_policy_adapter
@@ -133,32 +133,6 @@ def _next_rollout_id(run_dir: Path) -> str:
         if match is not None:
             highest = max(highest, int(match.group(1)))
     return f"rollout-{highest + 1:03d}"
-
-
-def _metadata_mismatches(
-    expected: dict[str, object],
-    actual: dict[str, object],
-    *,
-    path: str = "backend",
-) -> list[str]:
-    mismatches: list[str] = []
-    for key, expected_value in expected.items():
-        field_path = f"{path}.{key}"
-        if key not in actual:
-            mismatches.append(f"{field_path} is missing (expected {expected_value!r})")
-            continue
-        actual_value = actual[key]
-        if isinstance(expected_value, dict):
-            if not isinstance(actual_value, dict):
-                mismatches.append(
-                    f"{field_path} expected a mapping, got {type(actual_value).__name__}"
-                )
-                continue
-            mismatches.extend(_metadata_mismatches(expected_value, actual_value, path=field_path))
-            continue
-        if actual_value != expected_value:
-            mismatches.append(f"{field_path} expected {expected_value!r}, got {actual_value!r}")
-    return mismatches
 
 
 class EdgeRuntime:
@@ -332,7 +306,7 @@ class EdgeRuntime:
         expected_metadata = {
             key: value for key, value in deepcopy(expected).items() if value is not None
         }
-        mismatches = _metadata_mismatches(expected_metadata, capabilities.backend_metadata)
+        mismatches = metadata_mismatches(expected_metadata, capabilities.backend_metadata)
         if mismatches:
             details = "; ".join(mismatches)
             raise RuntimeError(f"policy backend identity mismatch: {details}")

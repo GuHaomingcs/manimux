@@ -6,6 +6,17 @@
 `XPolicyLab/XPolicyLab`. It remains a separately versioned project and retains
 its own license and third-party notices inside the submodule.
 
+## StarVLA
+
+`StarVLA/` is a separately versioned Git submodule tracking the
+`GuHaomingcs/starVLA` fork of `starVLA/starVLA`. The integration is based on upstream
+revision `312fac890ab75b7651d2bc4f8f8c8dbb5e055184`; the parent gitlink identifies
+its exact version. Source and sampler licenses remain in that submodule.
+
+`manimux/policies/starvla/wire.py` implements StarVLA's native array encoding from
+`deployment/model_server/tools/msgpack_numpy.py`. The upstream MIT notice is
+retained in `licenses/starvla-MIT.txt`.
+
 ## PRM-as-a-Judge
 
 `PRM-as-a-Judge/` is a Git submodule tracking
