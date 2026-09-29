@@ -25,7 +25,7 @@ tianji-diff-ik = [
 replay = ["av>=12"]
 
 # Model frameworks run in separate environments; these extras provide transport only.
-starvla = ["msgpack>=1.0.8", "websockets>=14"]
+starvla = ["msgpack>=1.0.8", "websockets>=15"]
 xpolicylab = [
   "msgpack>=1.0.8",
   "msgpack-numpy>=0.4.8",

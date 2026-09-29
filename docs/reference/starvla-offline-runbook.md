@@ -49,6 +49,7 @@ git submodule update --init StarVLA
 Use separate Python environments:
 
 - **ManiMux, Python 3.11–3.12:** `python -m pip install -e '.[starvla,replay]'`.
+  The client requires `websockets>=15` for synchronous connection keepalive options.
   YAM FK/IK examples also need the YAM geometry dependencies described in
   [Python environments](../../envs/README.md).
 - **StarVLA, Python 3.10:** follow its [installation guide](../../StarVLA/docs/starVLA_guideline.md#0-installation).
@@ -200,6 +201,12 @@ existing Pi05 YAM EEF path. Framework integration does not imply every architect
 checkpoint, embodiment and sampler combination is supported.
 
 ## Troubleshooting
+
+An inference error returned in a valid RPC response rejects that observation and
+preserves the connection and episode for the next request. Transport failures or
+invalid response envelopes close the connection and require an explicit reset
+before inference can resume. The client never silently reconnects or resets
+sampler history after a failure.
 
 | Failure | Check |
 | --- | --- |

@@ -92,15 +92,19 @@ class StarVlaPolicyModel:
             result = unpack(self.connection.recv(timeout=self.timeout))
             if result.get("request_id") != request_id:
                 raise ValueError("StarVLA response request_id mismatch")
-            if not result.get("ok"):
-                raise RuntimeError(f"StarVLA request failed: {result.get('error')}")
             expected = "inference_result" if kind == "infer" else kind
             if result.get("type") != expected:
                 raise ValueError("StarVLA response type mismatch")
-            return result
+            if type(result.get("ok")) is not bool:
+                raise ValueError("StarVLA response ok must be a boolean")
         except Exception:
             self.close()
             raise
+        # A valid error response completes this RPC without invalidating the
+        # connection or episode. Let the worker reject only this observation.
+        if not result["ok"]:
+            raise RuntimeError(f"StarVLA request failed: {result.get('error')}")
+        return result
 
     def infer(self, request):
         if self.session_id is None or request.session_id != self.session_id:

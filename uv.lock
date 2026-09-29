@@ -615,7 +615,7 @@ requires-dist = [
     { name = "pyzmq", specifier = ">=26" },
     { name = "scipy", specifier = ">=1.13" },
     { name = "viser", specifier = ">=1.0.30" },
-    { name = "websockets", marker = "extra == 'starvla'", specifier = ">=14" },
+    { name = "websockets", marker = "extra == 'starvla'", specifier = ">=15" },
     { name = "websockets", marker = "extra == 'xpolicylab'", specifier = ">=14" },
     { name = "yourdfpy", specifier = ">=0.0.58" },
     { name = "zarr", specifier = ">=2.18,<3" },
