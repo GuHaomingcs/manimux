@@ -21,7 +21,7 @@ using it for robot motion. Existing experiment settings have not been changed.
 - `executor`: command smoothing and limits.
 - `run`, `viewer`, `recording`: rollout lifecycle, UI and saved evidence.
 
-For example, `inference.action_start_mode: skip_elapsed_steps` makes the action timeline
+For example, `inference.action_start_mode: drop_infer_latency` makes the action timeline
 skip elapsed action points. It does not change the observation's timestamp. The shared
 RTC preset already selects this value; the example repeats it to show an inline override.
 Algorithm-specific prefix handling remains in the inference strategy.

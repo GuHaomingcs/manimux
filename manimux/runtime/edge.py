@@ -16,11 +16,13 @@ from manimux.clock import Clock, SystemClock
 from manimux.embodiments.robot import RobotBase, build_robot
 from manimux.embodiments.sensor import build_sensor
 from manimux.evaluation.identity import rollout_identity
+from manimux.evaluation.rubric import evaluation_parameters
 from manimux.policies import ActionDecoderClient, PolicyCapabilities, metadata_mismatches
 from manimux.policies.base import action_interval
 from manimux.policies.worker import PolicyWorkerClient
 from manimux.policy_adapter import build_policy_adapter
 from manimux.recording import EpisodeRecorder
+from manimux.recording.provenance import state_evidence
 from manimux.runtime.decode_forecast import DecodeForecast
 from manimux.runtime.diagnostics import build_plan_boundary_payload
 from manimux.runtime.executors import DirectExecutor, Executor, MPCExecutor, SmoothExecutor
@@ -28,10 +30,13 @@ from manimux.runtime.inference import (
     DefaultChunkStrategy,
     InferenceStrategy,
     RequestState,
+    build_inference_strategy,
     prepare_strategy_chunk,
+    seed_strategy_warmup,
 )
 from manimux.runtime.safety import RuntimeState, SafetyGuard
 from manimux.runtime.timeline import ActionTimeline, CommitResult
+from manimux.runtime.warmup import PolicyWarmup
 from manimux.types import (
     ActionContext,
     GroupVector,
@@ -148,6 +153,7 @@ class EdgeRuntime:
         launch_mode: str = "run",
     ) -> None:
         self._rollout_identity = rollout_identity(config["run"])
+        self._evaluation = evaluation_parameters(config.get("evaluation"))
         self._config = config
         self._run_dir = run_dir
         self._clock = clock or SystemClock()
@@ -155,13 +161,7 @@ class EdgeRuntime:
         self._robot = self._build_robot()
         self._sensors = [build_sensor(sensor, self._clock) for sensor in config["sensors"]]
         # 运行时直接复用整机的运动学；解码子进程从同一配置加载离线模型。
-        self._adapter = build_policy_adapter(
-            config["robot"],
-            config["policy"],
-            kinematics=self._robot.kinematics,
-            motion_limits=config["executor"]["motion_limits"],
-        )
-        self._adapter.validate(config["robot"], config["policy"])
+        self._adapter = self._build_adapter()
         self._decode_seed_source = getattr(
             self._adapter, "decode_seed_source", "execution_reference"
         )
@@ -236,6 +236,15 @@ class EdgeRuntime:
     def _build_robot(self) -> RobotBase:
         return build_robot(self._config["robot"], self._clock)
 
+    def _build_adapter(self):
+        adapter = build_policy_adapter(
+            self._config["robot"], self._config["policy"],
+            kinematics=self._robot.kinematics,
+            motion_limits=self._config["executor"]["motion_limits"],
+        )
+        adapter.validate(self._config["robot"], self._config["policy"])
+        return adapter
+
     def _build_executor(self) -> Executor:
         control_dt_s = self._control_dt_ns / 1_000_000_000
         if self._config["executor"]["type"] == "direct":
@@ -278,9 +287,8 @@ class EdgeRuntime:
         adapter that decodes the complete observation-anchored source trajectory
         can instead require the exact state captured with that observation.
         """
-        execution = self._config["inference"]
         expected_decode_s = self._decode_forecast.seconds
-        start_ns = now_ns + int((execution["commit_lead_s"] + expected_decode_s) * 1e9)
+        start_ns = now_ns + int(expected_decode_s * 1e9)
         if self._decode_seed_source == "observation_state":
             if observation_state is None:
                 raise ValueError("request observation state is unavailable for action decoding")
@@ -322,6 +330,7 @@ class EdgeRuntime:
                 "episode_id": episode_id,
                 "session_id": self._session_id,
                 "task": self._config["run"]["task"],
+                "evaluation": dict(self._evaluation),
                 "executor_kind": self._config["executor"]["type"],
                 "smooth": (
                     loads(dumps(deepcopy(self._config["executor"]["smooth"]), default=str))
@@ -362,12 +371,20 @@ class EdgeRuntime:
         last_dispatch_plan_id: object = object()
         robot_connected = False
         steps = 0
+        formal_start_recorded = False
         completed = False
         terminal_reason = "completed"
         abort_reason = "runtime_exception"
         abort_detail = ""
         home_on_close = bool(self._config["robot"]["options"].get("home_on_close", False))
+        warmup = None
         try:
+            if self._config["run"].get("warmup_before_start", False):
+                warmup = PolicyWarmup(
+                    self._config, worker=self._worker,
+                    strategy=build_inference_strategy(self._config),
+                    adapter=self._build_adapter(), session_id=self._session_id, clock=self._clock,
+                )
             for sensor in self._sensors:
                 sensor.start()
                 sensor.read()
@@ -394,6 +411,14 @@ class EdgeRuntime:
             self._safety.reset(initial_state)
             self._executor.reset(initial_state)
             self._strategy.reset()
+            recorder.update_metadata(
+                robot_backend=self._robot.runtime_metadata(),
+                initial_state=state_evidence(
+                    initial_state,
+                    targets=self._config["robot"]["options"].get("start_joints"),
+                ),
+                inference_seed=capabilities.backend_metadata.get("model", {}).get("inference_seed"),
+            )
             previous_command = copy_group_vector(initial_state.groups)
             last_command = copy_group_vector(initial_state.groups)
             self._state = RuntimeState.RUNNING
@@ -403,6 +428,7 @@ class EdgeRuntime:
                 "episode_dir": str(recorder.final_dir.resolve()),
                 "run_dir": str(self._run_dir.resolve()),
                 "instruction": self._config["run"]["task"],
+                "evaluation": dict(self._evaluation),
                 "max_steps": self._config["run"]["max_control_steps"],
                 "control_mode": self._strategy.control_mode,
                 "runtime": self._strategy.name,
@@ -411,6 +437,7 @@ class EdgeRuntime:
                 **self._rollout_identity,
                 "camera_map": self._config["policy"]["adapter"].get("camera_map", {}),
                 "launch_mode": self._launch_mode,
+                **({"warmup": warmup.metadata()} if warmup is not None else {}),
             }
             # 当前整机未提供手动拖动恢复；Viewer 不展示已退役的驱动能力。
             viewer_episode_metadata["recovery_available"] = False
@@ -437,6 +464,8 @@ class EdgeRuntime:
 
                 viewer_control = self._viewer.poll_control()
                 if viewer_control.finish_requested:
+                    # Stop model requests before Home/recording cleanup can take time.
+                    self._worker.request_stop()
                     if viewer_control.finish_home is not None:
                         home_on_close = viewer_control.finish_home
                     terminal_reason = "viewer_finish_requested"
@@ -454,8 +483,70 @@ class EdgeRuntime:
                     discard_responses_through = max(discard_responses_through, request_seq)
                     pending_observation_states.clear()
                     self._state = RuntimeState.PAUSED
-                    recorder.event("viewer_home_requested", step=steps)
+                    recorder.event(
+                        "viewer_home_requested", step=steps,
+                        state=state_evidence(
+                            state, targets=self._config["robot"]["options"].get("start_joints")
+                        ),
+                    )
                     next_tick_ns = self._clock.now_ns()
+                    continue
+                if warmup is not None and not warmup.complete:
+                    self._state = RuntimeState.PAUSED
+                    before = warmup.metadata()
+                    warmup.advance(
+                        paused=viewer_control.paused,
+                        snapshot=ObservationSnapshot(state=state, frames=frames),
+                    )
+                    status = warmup.metadata()
+                    preview = warmup.take_preview()
+                    if preview is not None:
+                        preview_chunk, preview_inference_ms, preview_metadata = preview
+                        self._viewer.publish_plan(
+                            preview_chunk, preview_inference_ms,
+                            metadata={
+                                **preview_metadata,
+                                "episode_id": episode_id,
+                                "run_dir": str(self._run_dir.resolve()),
+                                "runtime": self._strategy.name,
+                            },
+                        )
+                    if warmup.complete:
+                        self._validate_policy_capabilities()
+                        self._strategy.reset()
+                        seed_strategy_warmup(self._strategy, latency_ns=list(warmup.latency_ns))
+                        self._timeline = self._build_timeline()
+                        recorder.event(
+                            "formal_rollout_ready",
+                            inference_seed=capabilities.backend_metadata.get("model", {}).get(
+                                "inference_seed"
+                            ), latency_sample_count=len(warmup.latency_ns),
+                        )
+                    for kind, fields in warmup.take_events():
+                        recorder.event(kind, **fields)
+                        logger.info("%s %s", kind, fields)
+                    if status != before:
+                        recorder.update_metadata(warmup=status)
+                    viewer_episode_metadata["warmup"] = status
+                    self._viewer.set_state_metadata(viewer_episode_metadata)
+                    # Preserve the existing paused hold; model output never reaches it.
+                    self._executor.reset(state)
+                    command = self._hold_command(self._clock.now_ns(), state.groups)
+                    self._safety.reset(state)
+                    self._safety.validate_command(command)
+                    self._robot.send_command(command)
+                    previous_command = copy_group_vector(last_command)
+                    last_command = copy_group_vector(command.groups)
+                    self._viewer.publish_state(
+                        state, frames, step=steps,
+                        max_steps=self._config["run"]["max_control_steps"],
+                    )
+                    next_tick_ns = max(
+                        next_tick_ns + self._control_dt_ns,
+                        self._clock.now_ns() + self._control_dt_ns,
+                    )
+                    self._clock.sleep_until_ns(next_tick_ns)
+                    # Even after RESET, reacquire a fresh observation on the next tick.
                     continue
                 if viewer_control.paused and (
                     self._decoder is not None
@@ -472,6 +563,13 @@ class EdgeRuntime:
                 self._state = (
                     RuntimeState.RUNNING if not viewer_control.paused else RuntimeState.PAUSED
                 )
+                if self._state == RuntimeState.RUNNING and not formal_start_recorded:
+                    recorder.update_metadata(
+                        formal_start_state=state_evidence(
+                            state, targets=self._config["robot"]["options"].get("start_joints")
+                        ),
+                    )
+                    formal_start_recorded = True
 
                 if not self._worker.is_alive and not worker_failure_reported:
                     worker_failure_reported = True
@@ -613,10 +711,6 @@ class EdgeRuntime:
                                         created_time_ns=response.finished_time_ns,
                                         execution_time_ns=(
                                             now_ns
-                                            + int(
-                                                self._config["inference"]["commit_lead_s"]
-                                                * 1_000_000_000
-                                            )
                                             if self._strategy.name in {"manimux", "rtc"}
                                             else None
                                         ),
@@ -731,7 +825,6 @@ class EdgeRuntime:
                             chunk.metadata["observation_to_commit_ms"] = (
                                 now_ns - chunk.observation_time_ns
                             ) / 1e6
-                            commit_lead_ns = int(self._config["inference"]["commit_lead_s"] * 1e9)
                             source_end_ns = (
                                 chunk.observation_time_ns
                                 + (chunk.source_offset_steps + chunk.horizon_steps - 1)
@@ -740,15 +833,14 @@ class EdgeRuntime:
                             if (
                                 self._decoder is not None
                                 and self._config["inference"]["action_start_mode"]
-                                == "skip_elapsed_steps"
-                                and now_ns + commit_lead_ns > source_end_ns
+                                == "drop_infer_latency"
+                                and now_ns > source_end_ns
                             ):
                                 result = CommitResult(False, "no_future_horizon")
                             else:
                                 result = self._timeline.commit(
                                     chunk,
                                     now_ns=now_ns,
-                                    commit_lead_ns=commit_lead_ns,
                                     max_plan_age_ns=int(
                                         self._config["inference"]["max_plan_age_s"] * 1_000_000_000
                                     ),
@@ -819,7 +911,6 @@ class EdgeRuntime:
                                         "timeline_latency_ms": (
                                             result.timeline_latency_ns / 1_000_000
                                         ),
-                                        "commit_lead_ms": commit_lead_ns / 1_000_000,
                                         "decode_stage_ms": chunk.metadata.get("decode_stage_ms"),
                                         "previous_chunk_id": previous_chunk_id,
                                         "previous_chunk_index": previous_chunk_index,
@@ -982,11 +1073,8 @@ class EdgeRuntime:
                             plan_id=reference.plan_id,
                             groups=self._executor.gripper_diagnostics,
                         )
-                elif (
-                    self._state == RuntimeState.RUNNING
-                    and self._config["inference"]["inference_schedule"] == "serial"
-                ):
-                    # Keep the last command fixed while waiting for the next chunk.
+                elif self._state == RuntimeState.RUNNING:
+                    # Every strategy holds the last sent command during a timeline gap.
                     # Reset executor velocity history to the held command, so a new
                     # chunk does not resume with velocity left over before the wait.
                     held_state = RobotState(
@@ -1000,31 +1088,10 @@ class EdgeRuntime:
                     else:
                         self._executor.reset(held_state)
                         command = self._hold_command(now_ns, last_command)
-                elif (
-                    self._state == RuntimeState.RUNNING
-                    and isinstance(self._executor, SmoothExecutor)
-                    and self._executor.braking_tracking
-                ):
-                    command = self._executor.brake_hold(now_ns, state)
-                    if self._executor.has_pending_gripper_event:
-                        recorder.event(
-                            "gripper_decision",
-                            step=steps,
-                            monotonic_ns=now_ns,
-                            plan_id=None,
-                            groups=self._executor.gripper_diagnostics,
-                        )
                 else:
-                    if self._state == RuntimeState.RUNNING and isinstance(
-                        self._executor, SmoothExecutor
-                    ):
-                        command = self._executor.hold(now_ns, state)
-                        command.plan_id = self._timeline.active_plan_id
-                    else:
-                        self._executor.reset(state)
-                        command = self._hold_command(now_ns, state.groups)
-                    # Arm holds retain their measured anchor; a latched gripper
-                    # retains its already-sent command, which can differ at contact.
+                    # Pause holds measured state and clears execution history.
+                    self._executor.reset(state)
+                    command = self._hold_command(now_ns, state.groups)
                     self._safety.reset(
                         RobotState(
                             copy_group_vector(command.groups),
@@ -1131,6 +1198,8 @@ class EdgeRuntime:
                     "episode_dir": str(episode_dir.resolve()),
                     "reason": terminal_reason,
                     "launch_mode": self._launch_mode,
+                    "evaluation": dict(self._evaluation),
+                    **self._rollout_identity,
                 },
             )
             completed = True

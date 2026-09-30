@@ -12,7 +12,6 @@ inference:
   algorithm: manimux
   inference_schedule: serial
   chunk_policy_steps: 12
-  commit_lead_s: 0.0
   blend_policy_steps: 0
 ```
 
@@ -20,7 +19,7 @@ inference:
 执行过程中启动下一次推理。推理仍在 worker 中完成，控制线程继续发送保持
 指令并处理 GUI Pause/Finish；这里的串行是任务时序，不是阻塞控制线程。
 
-轨迹从结果提交时开始计时，不按推理延迟跳过前几行。Pi05 模型输出 contract
+轨迹从结果提交时开始计时，准备好后没有额外切换等待，不按推理延迟跳过前几行。Pi05 模型输出 contract
 仍是 50 步，OpenWAM 仍是 32 步；`inference.chunk_policy_steps: 12` 只在 timeline
 commit 边界保留原始前 12 行。
 记录保留真实观测时间，

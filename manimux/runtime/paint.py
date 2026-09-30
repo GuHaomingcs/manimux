@@ -164,8 +164,7 @@ class PaintInferenceStrategy:
         )
 
     def _actual_trimmed_steps(self, chunk: ActionChunk, now_ns: int) -> int:
-        commit_time_ns = now_ns + int(self._config["inference"]["commit_lead_s"] * 1_000_000_000)
-        age_ns = max(0, commit_time_ns - chunk.observation_time_ns)
+        age_ns = max(0, now_ns - chunk.observation_time_ns)
         return int(age_ns // chunk.dt_ns)
 
     def prepare_chunk(

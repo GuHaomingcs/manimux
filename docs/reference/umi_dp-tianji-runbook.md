@@ -172,7 +172,7 @@ steps**, not control ticks. The template uses 4, `min_execute_policy_steps: null
 the source horizon, bounded by feasibility) and PiGDM `beta: 5.0`. Runtime
 forecasting takes the maximum of the recent delay buffer and rounds fractional
 steps upward. It includes observation age, request preparation, transport,
-model inference, both decoders and commit lead. Check `rtc_delay_ms`,
+model inference and both decoders, without an artificial switch delay. Check `rtc_delay_ms`,
 `measured_delay`, `forecast_delay` and `rtc_delay_infeasible`; the feasibility
 window is `d <= executed <= H-d`, requiring `2*d <= H`. Calibrate the initial
 estimate against the deployed latency distribution. At 30 Hz, 7 steps cover

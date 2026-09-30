@@ -11,7 +11,7 @@ UInt8Array: TypeAlias = NDArray[np.uint8]
 GroupVector: TypeAlias = dict[str, FloatArray]
 GroupTrajectory: TypeAlias = dict[str, FloatArray]
 
-ACTION_START_MODES = frozenset({"skip_elapsed_steps", "first_step_when_ready"})
+ACTION_START_MODES = frozenset({"drop_infer_latency", "first_step_when_ready"})
 
 
 def _vector_groups(groups: GroupVector, *, label: str) -> GroupVector:

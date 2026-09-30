@@ -78,7 +78,9 @@ def inference_parameters(*, executor: dict, **options) -> dict:
     from manimux.runtime.rtc.strategy import rtc_parameters
     from manimux.runtime.temporal_ensemble import temporal_ensemble_parameters
 
-    unsupported = {"chunk_steps", "blend_steps", "max_chunk_steps"}.intersection(options)
+    unsupported = {"chunk_steps", "blend_steps", "max_chunk_steps", "commit_lead_s"}.intersection(
+        options
+    )
     if unsupported:
         raise ValueError(f"unsupported inference fields: {sorted(unsupported)}")
     # chunk_policy_steps 只是各调度方式已有步数参数的统一入口。
@@ -111,10 +113,9 @@ def inference_parameters(*, executor: dict, **options) -> dict:
         "chunk_policy_steps": None,
         "inference_schedule": "deadline",
         "refill_threshold_s": 0.4,
-        "commit_lead_s": 0.02,
         "max_plan_age_s": 1.0,
         "blend_policy_steps": 2,
-        "action_start_mode": "skip_elapsed_steps",
+        "action_start_mode": "drop_infer_latency",
         "max_chunk_policy_steps": None,
         "independent_group_decoding": False,
         "decode_budget_ms": 40.0,
@@ -151,6 +152,11 @@ def inference_parameters(*, executor: dict, **options) -> dict:
 
 def validate_runtime_parameters(config: dict) -> None:
     """保留调度、动作解码和执行限位之间的必要约束。"""
+    if config["run"].get("warmup_before_start", False):
+        if not config["viewer"]["enabled"]:
+            raise ValueError("run.warmup_before_start requires Viewer Start control")
+        if config["policy"]["action_decoding"] != "inline":
+            raise ValueError("pre-Start warmup currently requires inline action decoding")
     motion = config["executor"]["motion_limits"]
     if motion is not None:
         for group, index in motion["gripper"]["group_indices"].items():
@@ -209,7 +215,7 @@ def validate_runtime_parameters(config: dict) -> None:
                 )
     if config["inference"]["algorithm"] == "rtc":
         delay = config["inference"]["rtc"]["initial_delay_policy_steps"]
-        if 2 * delay > config["policy"]["horizon_policy_steps"]:
+        if delay is not None and 2 * delay > config["policy"]["horizon_policy_steps"]:
             raise ValueError(
                 "RTC requires 2 * initial_delay_policy_steps "
                 "<= policy.horizon_policy_steps"

@@ -206,6 +206,25 @@ class RobotBase(ABC):
     def home(self) -> None:
         raise NotImplementedError("home trajectory not configured; use the runtime motion planner")
 
+    def runtime_metadata(self) -> dict:
+        """Snapshot optional controller provenance without polling or commanding hardware."""
+        controllers = {}
+        for controller in self._controllers:
+            method = getattr(controller, "runtime_metadata", None)
+            try:
+                controllers[controller] = method() if callable(method) else {
+                    "available": False, "reason": "controller_metadata_not_supported",
+                }
+            except Exception as exc:
+                controllers[controller] = {"available": False, "reason": type(exc).__name__}
+        return {
+            "connected": self._ready,
+            "execute": self._execute,
+            "groups": {
+                name: controllers[arm.controller] for name, arm in self.arm_components.items()
+            },
+        }
+
     def start_sensors(self) -> None:
         """Explicitly start owned sensors; connect() does not claim camera devices."""
         with self._lock:

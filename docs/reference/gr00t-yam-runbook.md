@@ -1,5 +1,69 @@
 # GR00T N1.7 + YAM 运行手册
 
+## Red-ball step10000 with Pi-style RTC
+
+The paired experiment is
+`manimux/configs/experiments/pick_red_object/groot/yam_groot_rtc_joint_step10000.yaml`.
+It selects `ziyang/gr00t-n17-yam-pick-red-ball-box-step10000`, not the robocurve
+baseline described in the historical section below. The recipe uses the
+checkpoint's three RGB views, absolute joint/gripper actions, 16 output steps,
+four denoising iterations and a 1/30-second action interval.
+
+The model implementation lives in `XPolicyLab/policy/GR00T_N17/`; ManiMux reuses
+its existing RTC strategy, WebSocket client, JointAdapter and smooth executor.
+`inference.rtc.beta` controls guided sampling, and
+`inference.rtc.min_execute_policy_steps` controls the execution window. Initial
+settings are beta 9.1, an 8-step window and a 4-step delay estimate. The runtime
+updates its delay estimate from measured request/commit latency. A 16-step
+horizon requires the conservative delay to fit within 8 steps (about 267 ms)
+for the standard RTC overlap condition; inspect runtime delay events if it does
+not. Changing the YAML horizon cannot extend the checkpoint's trained horizon.
+
+Run each service in its own terminal from the repository root. Reuse an already
+running camera service only if it uses the same three-camera configuration.
+
+```bash
+cd /home/ubuntu/manimux
+envs/yam/.venv/bin/python -m manimux.servers.camera.server \
+  --experiment manimux/configs/experiments/pick_red_object/groot/yam_groot_rtc_joint_step10000.yaml
+```
+
+```bash
+cd /home/ubuntu/manimux
+XPolicyLab/policy/GR00T_N17/gr00t_n17/.venv/bin/python -m manimux.servers.groot \
+  --experiment manimux/configs/experiments/pick_red_object/groot/yam_groot_rtc_joint_step10000.yaml
+```
+
+```bash
+cd /home/ubuntu/manimux
+envs/yam/.venv/bin/python -m manimux serve \
+  --config manimux/configs/experiments/pick_red_object/groot/yam_groot_rtc_joint_step10000.yaml
+```
+
+The experiment enables real YAM execution when a rollout is started in the Viewer.
+All three commands resolve the private station's camera and policy endpoints.
+The GR00T model environment uses Python 3.10; its launcher delegates experiment
+resolution to `envs/yam/.venv/bin/python`, then loads the model in its own environment.
+Use `--local /path/to/station.yaml` consistently to select another station.
+Adding `--check` to the model command validates configuration and local assets
+without loading the GPU model or connecting hardware; it does not prove inference.
+
+Validation on 2026-09-28: 14 existing adapter/WS tests and 7 focused offline RTC
+checks passed. A reduced real DiT matched the pre-change sampler exactly for
+ordinary inference, AAC and upstream prefix freezing with fixed seeds. Full
+red-ball step10000 weights ran on an RTX 4090 using synthetic RGB and checkpoint
+mean state: finite `(16, 14)` output, identical zero-mask/default results and
+post-reset results, no accumulated parameter gradients, and changed output under
+nonzero guidance. Four warm RTC calls took 98.7–126.2 ms; these timings exclude
+camera capture, network transport, runtime decoding and execution. The default
+recipe's Cosmos repository ID also loaded successfully. No camera, robot or
+real-task rollout was exercised in these checks.
+
+## Historical robocurve baseline (2026-08-20)
+
+The following records an earlier checkpoint and deployment. Its old experiment
+paths and hardware results are not acceptance evidence for the red-ball RTC recipe.
+
 本文只覆盖 `robocurve/gr00t-n1.7-yam-molmoact2`。它是基于 NVIDIA
 [Isaac-GR00T N1.7](https://github.com/NVIDIA/Isaac-GR00T) 的 YAM 微调权重，不是
 `nvidia/GR00T-N1.7-3B` base 直接零样本上 YAM。
@@ -161,11 +225,11 @@ envs/yam/.venv/bin/manimux run --config manimux/configs/experiments/pick_box/yam
 invalid action，默认 ManiMux、三相机、双臂下发和 Recorder 因此已验收。两次都没有完成
 pick 任务，只能记为当前 checkpoint 的闭环任务失败，不能倒推为 infra 未运行。
 
-当前只提供默认 ManiMux 配置，不提供 GR00T RTC 配置。虽然 Isaac-GR00T N1.7 模型内部有
-自己的 overlap/frozen-step RTC 分支，但当前 XPolicy `GR00T_N17` adapter 没有实现统一的
-`get_action_rtc()` 契约，不能把默认推理包装成 RTC。
+At the time of this baseline, the adapter exposed only ordinary inference and did
+not connect the upstream overlap/frozen-step branch to ManiMux. The new Pi-style
+RTC integration is described above; the old hardware runs did not exercise it.
 
 ## 未验证项
 
 - 该 checkpoint 的任务成功率与跨任务泛化；
-- GR00T sampler-level RTC。
+- Real-robot RTC task success with the red-ball checkpoint.

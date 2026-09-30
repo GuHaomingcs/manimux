@@ -82,6 +82,14 @@ class XPolicyLabWsPolicyModel:
         self._client: XPolicyLabWsClient | None = None
 
     def reset(self, session_id: str) -> None:
+        if self._client is not None:
+            if session_id == self._session_id:
+                # Keep the socket so RESET can fence replies from timed-out
+                # warmup requests before resetting the model's RNG/history.
+                self._client.reset()
+                self._aac_previous = None
+                return
+            self._client.drain()
         self.close()
         client = XPolicyLabWsClient(
             url=self._url,

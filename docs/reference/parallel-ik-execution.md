@@ -47,7 +47,7 @@ By default the measured state at submission seeds IK. The arm keeps following
 the previous plan while decoding runs, so on a fast arm that seed lies behind
 the arm when the new plan is committed. `inference.expected_decode_s` (process
 decoding only, default 0) sets the expected submit-to-commit time. The seed is
-then the active plan's reference at `now + commit_lead_s + expected_decode_s`
+then the active plan's reference at `now + expected_decode_s`
 (or at its end if it finishes earlier), and the adapter's execution time moves
 by the same amount, skipping rows before it. Without an active reference the
 measurement remains the seed. If decoding finishes earlier than expected, the new

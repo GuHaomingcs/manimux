@@ -132,7 +132,7 @@ StarVLA 的 joint/EEF 离线部署见[运行指南](docs/reference/starvla-offli
 没有硬件可先运行 [Viewer 演示](docs/reference/guideline.md#hardware-free-start)。
 
 先完成[本地工位接入](manimux/configs/local/README.md)。下列相机、Pi05 和 runtime 命令
-使用同一份实验配置，并默认读取同一份 local。该 RTC 配方的下发频率为 **30 Hz**，
+使用同一份实验配置，并默认读取同一份 local。该 RTC 配方插值后的下发频率为 **100 Hz**，
 模型动作点间隔为 **1/30 秒**。
 
 从仓库根目录，在**四个独立终端**运行。已有匹配的相机或 Viewer 服务时可复用；

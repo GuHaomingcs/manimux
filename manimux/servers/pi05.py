@@ -116,6 +116,7 @@ def _resolved_contract(config_path: Path, config: dict[str, Any]) -> dict[str, A
         else "absolute_joint_position",
         "action_horizon": horizon,
         "num_steps": num_steps,
+        "inference_seed": config.get("inference_seed", 0),
         "rtc": "unsupported" if config.get("action_type") == "ee" else "pi_guided_v1",
     }
 

@@ -66,11 +66,12 @@ Normal rollouts have no scoring step. Experiment rollouts offer `Save evaluation
 `Skip evaluation` before the next rollout. Skipping writes no human label.
 See the [Viewer tutorial](viewer-tutorial.html) for controls.
 
-The current recipe uses **`robot.control_hz: 30.0`**. Its model horizon is 50, action-point
+The current recipe uses **`robot.control_hz: 100.0`**. Its model horizon is 50, action-point
 spacing is `1/30 s`, and RTC `chunk_policy_steps` is 12. Twelve is the execution threshold for
 requesting another chunk, not a truncation of the model's entire output; the old chunk
-continues while inference finishes. This recipe does not interpolate 30 Hz model points
-into a 100 Hz command stream.
+continues while inference finishes. Timeline linearly interpolates the 30 Hz model points;
+the Direct executor forwards them in the 100 Hz command loop, matching the Serial recipe.
+Filter and motion-limit settings remain separate experiment choices.
 
 The **joint+EE 30k** variant has a separate experiment and checkpoint contract:
 `manimux/configs/experiments/put_bottles/pi05/yam_pi05_rtc_joint_ee_step30000.yaml`.

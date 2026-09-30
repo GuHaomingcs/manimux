@@ -20,7 +20,7 @@ to cameras or the robot, and establishes no pass-ball task success rate.
   Checkpoint/backend identity and sampling capability negotiation remained enabled.
 - Both runs use `manimux/configs/embodiment/robot/tianji_control.yaml`, bound differential IK,
   two decoder processes, smooth execution, continuous grippers, 250 Hz control,
-  30 Hz action knots, H64, and zero commit lead.
+  30 Hz action knots, H64, and no additional delay between commit and execution.
 - RTC starts with a 4-action-step delay estimate and the default half-horizon
   execution window. Ordinary ManiMux uses single-inflight scheduling with a
   250 ms refill threshold.
@@ -64,7 +64,7 @@ bound.
 Latency is measured from the **measured observation**, including UMI's first
 action offset. The legacy event field `observation_to_commit_ms` is based on the
 canonical chunk origin, which already includes that offset; the evaluation
-summary adds `first_action_offset_ns` back. With zero commit lead this agrees
+summary adds `first_action_offset_ns` back. With no additional switch delay this agrees
 with RTC's new `rtc_delay_ms`. In this run the largest RTC delay was 204.87 ms,
 so a 7-step initial forecast (about 233 ms at 30 Hz) would cover the observed
 range. Cold startup, hardware and load variation require separate measurement.
@@ -89,8 +89,10 @@ New regression tests cover:
 - RTC retains the source horizon across adapter and commit trimming, aligns
   weighted conditions to the actual committed trajectory, rejects missing tails
   and partial-arm holds, and restores blending when no valid overlap remains.
-- End-to-end delay includes observation age, decoder work and commit lead, with
-  fractional action steps rounded up.
+- End-to-end delay includes observation age and decoder work, with fractional
+  action steps rounded up. The historical implementation also supported an
+  artificial switch delay, set to zero in these runs; that option has since
+  been removed.
 - CPU-bound decoder processes run alongside the 250 Hz mock loop; pause and
   homing during decoding reject stale results, resume without old conditions,
   and subsequently resume conditioned RTC. Decoder timeout closes the runtime.

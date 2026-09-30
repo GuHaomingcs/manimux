@@ -139,7 +139,7 @@ see the [setup guide](docs/reference/guideline.md#pi05-30k-on-yam). For a hardwa
 
 Complete [local station setup](manimux/configs/local/README.md) first. The camera, Pi05 and
 runtime commands below use the same experiment and automatically read its station bindings.
-This RTC recipe uses a **30 Hz command loop** and model action points spaced **1/30 s** apart.
+This RTC recipe uses a **100 Hz command loop**, interpolating model action points spaced **1/30 s** apart.
 
 From the repository root, run these in **four separate terminals**. Reuse matching camera / Viewer
 services if already running; collection and inference must not control the same robot simultaneously.

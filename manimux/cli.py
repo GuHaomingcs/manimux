@@ -106,8 +106,10 @@ def read_experiment(
     from manimux.policies.base import backend_identity_from_recipe
 
     backend_identity = None
-    for name in ("policy", "inference", "executor", "policy_server", "camera_server"):
+    for name in ("policy", "inference", "executor", "policy_server", "camera_server", "evaluation"):
         section = raw.get(name, {})
+        if name == "evaluation" and section is None:
+            continue
         if name == "camera_server":
             section = _resolve_camera_references(section, source.parent)
             if section:
@@ -255,6 +257,11 @@ def _load_config(
 
 
 def _create_run_dir(config: dict, config_path: Path, *, mode: str) -> Path:
+    from manimux.recording.provenance import (
+        capture_source_provenance,
+        deployment_artifact_provenance,
+    )
+
     timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
     run_id = f"session-{timestamp}-{uuid.uuid4().hex[:8]}"
     run_dir = config["run"]["output_dir"] / run_id
@@ -262,14 +269,22 @@ def _create_run_dir(config: dict, config_path: Path, *, mode: str) -> Path:
     resolved_config = config_path.expanduser().resolve()
     config_sha256 = hashlib.sha256(resolved_config.read_bytes()).hexdigest()
     repository_root = Path(__file__).resolve().parents[1]
+    recipe = config.get("policy_server", {})
+    sources = capture_source_provenance(repository_root, policy_name=recipe.get("policy_name"))
+    repositories = sources["repositories"]
     with (run_dir / "session-manifest.json").open("w", encoding="utf-8") as handle:
         json.dump(
             {
                 "session_id": run_id,
                 "mode": mode,
                 "created_at": datetime.now(UTC).isoformat(),
-                "git_sha": _git_sha(repository_root),
-                "xpolicylab_git_sha": _git_sha(repository_root / "XPolicyLab"),
+                "git_sha": repositories["manimux"].get("head"),
+                "xpolicylab_git_sha": (
+                    repositories["xpolicylab"].get("head") if "xpolicylab" in repositories
+                    else _git_sha(repository_root / "XPolicyLab")
+                ),
+                "source_provenance": sources,
+                "deployment_artifacts": deployment_artifact_provenance(recipe),
                 "config_path": str(resolved_config),
                 "config_sha256": config_sha256,
                 "config": loads(dumps(deepcopy(config), default=str)),
@@ -387,6 +402,7 @@ def run_parameters(**options) -> dict:
     values = {
         "output_dir": Path("data"),
         "max_control_steps": 500,
+        "warmup_before_start": False,
         "experiment_mode": False,
         "layout_id": "",
         "repeat_id": None,
@@ -395,6 +411,8 @@ def run_parameters(**options) -> dict:
     }
     if values.get("output_dir") is not None:
         values["output_dir"] = Path(values["output_dir"])
+    if not isinstance(values["warmup_before_start"], bool):
+        raise ValueError("run.warmup_before_start must be boolean")
     return values
 
 
@@ -423,6 +441,7 @@ def prepare_experiment(**options) -> dict:
     """把各模块处理过的参数组合成实验字典；不创建机器人或连接硬件。"""
     from manimux.embodiments.robot import robot_parameters
     from manimux.embodiments.sensor import sensor_parameters
+    from manimux.evaluation.rubric import evaluation_parameters
     from manimux.policies.base import policy_parameters
     from manimux.recording import recording_parameters
     from manimux.runtime import (
@@ -443,6 +462,7 @@ def prepare_experiment(**options) -> dict:
         "executor": {},
         "viewer": {},
         "recording": {},
+        "evaluation": {},
         **options,
     }
     if values.get("control_profile") is not None:
@@ -458,6 +478,7 @@ def prepare_experiment(**options) -> dict:
         values["viewer"] = viewer_parameters(**values["viewer"])
     if values.get("recording") is not None:
         values["recording"] = recording_parameters(**values["recording"])
+    values["evaluation"] = evaluation_parameters(values["evaluation"])
     values["sensors"] = [sensor_parameters(**sensor) for sensor in values["sensors"]]
     validate_runtime_parameters(values)
     return values

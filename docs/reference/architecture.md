@@ -264,7 +264,6 @@ recording:
   video_codec: h264
 inference:
   refill_threshold_s: 0.4
-  commit_lead_s: 0.02
   max_plan_age_s: 1.0
   underrun_hold_s: 0.5
 executor:
@@ -311,7 +310,7 @@ t2  response N 返回
     - adapter 转成 canonical ActionChunk
     - 根据 observation age 丢弃已过时前缀
     - 与当前 command 做短 continuity blend/限速
-t3  在 now + commit_lead 后原子替换未来 timeline
+t3  准备好后在当前提交时刻原子替换未来 timeline，不增加切换等待
 t4  controller 在每个 tick 采样 timeline
 ```
 

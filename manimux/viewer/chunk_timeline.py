@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import html
+import math
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -20,12 +21,20 @@ class ChunkLane:
     inference_ms: float | None = None
     timeline_latency_ms: float | None = None
     decode_stage_ms: float | None = None
-    commit_lead_ms: float | None = None
     state: str = "empty"
     conditioned: bool = False
     source_chunk_id: int | None = None
     condition_from_index: int | None = None
     latency_from_index: int | None = None
+    gripper_closed_steps_by_group: dict[str, tuple[bool, ...]] = field(default_factory=dict)
+
+
+@dataclass(slots=True)
+class WarmupPreviewLane:
+    chunk_id: int
+    horizon_steps: int
+    branch: str
+    e2e_ms: float | None = None
     gripper_closed_steps_by_group: dict[str, tuple[bool, ...]] = field(default_factory=dict)
 
 
@@ -41,6 +50,13 @@ class ChunkTimelineView:
         self.episode_open = False
         self.service_id = ""
         self._lane_by_chunk: dict[int, int] = {}
+        self.episode_id = ""
+        self.warmup_lanes: list[WarmupPreviewLane] = []
+        self.warmup_samples: tuple[float, ...] = ()
+        self._warmup_phase: str | None = None
+        self._warmup_completed = 0
+        self._warmup_blocked = False
+        self._closed_warmup_episodes: set[tuple[str, str]] = set()
 
     def _lane_index(self, chunk_id: int) -> int:
         existing = self._lane_by_chunk.get(chunk_id)
@@ -60,12 +76,105 @@ class ChunkTimelineView:
         return index
 
     def reset(self, runtime: str = "waiting") -> None:
+        if self.episode_id:
+            self._closed_warmup_episodes.add((self.service_id, self.episode_id))
         self.runtime = runtime
         self.lanes = [ChunkLane(), ChunkLane()]
         self.active_chunk_id = None
         self.pending_chunk_id = None
         self.episode_open = False
         self._lane_by_chunk = {}
+        self.episode_id = ""
+        self.warmup_lanes = []
+        self.warmup_samples = ()
+        self._warmup_phase = None
+        self._warmup_completed = 0
+        self._warmup_blocked = False
+
+    def clear_warmup_preview(self) -> None:
+        """Discard display-only output and block late preview/heartbeat resurrection."""
+        self.warmup_lanes = []
+        self.warmup_samples = ()
+        self._warmup_phase = None
+        self._warmup_completed = 0
+        self._warmup_blocked = True
+        if self.episode_id:
+            self._closed_warmup_episodes.add((self.service_id, self.episode_id))
+
+    @staticmethod
+    def _duration_ms(value: Any) -> float | None:
+        if value is None:
+            return None
+        duration = float(value)
+        return duration if math.isfinite(duration) and duration >= 0 else None
+
+    def _warmup_matches_episode(self, metadata: dict[str, Any]) -> bool:
+        episode_id = str(metadata.get("episode_id", ""))
+        service_id = str(metadata.get("run_dir", self.service_id))
+        return (
+            self.episode_open
+            and not self._warmup_blocked
+            and bool(episode_id)
+            and episode_id == self.episode_id
+            and service_id == self.service_id
+            and (service_id, episode_id) not in self._closed_warmup_episodes
+        )
+
+    def _update_warmup_state(self, metadata: dict[str, Any]) -> None:
+        if "warmup" not in metadata:
+            return
+        episode_id = str(metadata.get("episode_id", ""))
+        service_id = str(metadata.get("run_dir", self.service_id))
+        if self._warmup_blocked and (not self.episode_id or episode_id == self.episode_id):
+            return
+        if (service_id, episode_id) in self._closed_warmup_episodes:
+            return
+        # A state heartbeat can recover a dropped episode_started message.
+        if not self.episode_open and metadata.get("episode_active") and episode_id:
+            self.reset(str(metadata.get("runtime", self.runtime)))
+            self.episode_open = True
+            self.episode_id = episode_id
+            self.service_id = service_id
+        if not self._warmup_matches_episode(metadata):
+            return
+        warmup = metadata.get("warmup") or {}
+        if warmup.get("phase") != "warming":
+            self.clear_warmup_preview()
+            return
+        self._warmup_phase = "warming"
+        self._warmup_completed = int(warmup.get("completed_requests", 0))
+        self.warmup_samples = tuple(
+            duration
+            for value in warmup.get("recent_inference_ms", [])[-10:]
+            if (duration := self._duration_ms(value)) is not None
+        )
+
+    def _update_warmup_plan(self, message: dict[str, Any]) -> None:
+        metadata = message.get("metadata") or {}
+        if not self._warmup_matches_episode(metadata):
+            return
+        chunk_id = int(message.get("chunk_id", 0))
+        if chunk_id >= 0:
+            return
+        horizon = len(next(iter(message.get("groups", {}).values()), []))
+        if horizon <= 0:
+            return
+        branch = str(metadata.get("warmup_branch", ""))
+        if branch not in {"ordinary", "conditioned"}:
+            return
+        lane = WarmupPreviewLane(
+            chunk_id=chunk_id,
+            horizon_steps=horizon,
+            branch=branch,
+            e2e_ms=self._duration_ms(metadata.get("warmup_e2e_ms")),
+            gripper_closed_steps_by_group={
+                str(name): tuple(bool(value) for value in values[:horizon])
+                for name, values in (metadata.get("gripper_closed_steps_by_group") or {}).items()
+            },
+        )
+        self.warmup_lanes = [item for item in self.warmup_lanes if item.chunk_id != chunk_id]
+        self.warmup_lanes = [*self.warmup_lanes, lane][-2:]
+        self._warmup_phase = "warming"
 
     def update(self, message: dict[str, Any]) -> None:
         kind = str(message.get("kind", ""))
@@ -89,13 +198,27 @@ class ChunkTimelineView:
                 self.service_id = incoming_service_id
             return
         if event == "episode_started":
+            episode_id = str(metadata.get("episode_id", ""))
+            service_id = str(metadata.get("run_dir", self.service_id))
+            if (
+                self.episode_open
+                and episode_id
+                and (service_id, episode_id) == (self.service_id, self.episode_id)
+            ):
+                self._update_warmup_state(metadata)
+                return
+            if episode_id and (service_id, episode_id) in self._closed_warmup_episodes:
+                return
             self.reset(str(metadata.get("runtime", self.runtime)))
             self.episode_open = True
+            self.episode_id = episode_id
             incoming_service_id = str(metadata.get("run_dir", ""))
             if incoming_service_id:
                 self.service_id = incoming_service_id
+            self._update_warmup_state(metadata)
             return
         if event == "episode_finished":
+            self.clear_warmup_preview()
             self.episode_open = False
             self.pending_chunk_id = None
             for lane in self.lanes:
@@ -165,6 +288,11 @@ class ChunkTimelineView:
 
     def _update_plan(self, message: dict[str, Any]) -> None:
         metadata = message.get("metadata") or {}
+        if metadata.get("warmup_preview"):
+            self._update_warmup_plan(message)
+            return
+        if self._warmup_phase is not None or self.warmup_lanes:
+            self.clear_warmup_preview()
         chunk_id = int(message.get("chunk_id", 0))
         previous_chunk_id = metadata.get("previous_chunk_id")
         conditioned = bool(metadata.get("conditioned", False))
@@ -238,7 +366,6 @@ class ChunkTimelineView:
             inference_ms=float(message.get("inference_ms", 0.0)),
             timeline_latency_ms=optional_ms("timeline_latency_ms"),
             decode_stage_ms=optional_ms("decode_stage_ms"),
-            commit_lead_ms=optional_ms("commit_lead_ms"),
             state="active",
             conditioned=conditioned,
             source_chunk_id=(None if previous_chunk_id is None else int(previous_chunk_id)),
@@ -251,6 +378,7 @@ class ChunkTimelineView:
         self.runtime = str(metadata.get("runtime", self.runtime))
 
     def _update_state(self, message: dict[str, Any]) -> None:
+        self._update_warmup_state(message.get("metadata") or {})
         active_chunk_id = message.get("active_chunk_id")
         if active_chunk_id is None:
             return
@@ -322,9 +450,96 @@ class ChunkTimelineView:
             details.append(f"Inference: {lane.inference_ms:.1f} ms")
         if lane.decode_stage_ms is not None:
             details.append(f"Decode: {lane.decode_stage_ms:.1f} ms")
-        if lane.commit_lead_ms is not None:
-            details.append(f"Commit lead: {lane.commit_lead_ms:.1f} ms")
         return " · ".join(details)
+
+    def _warmup_sparkline_html(self) -> str:
+        samples = self.warmup_samples
+        if not samples:
+            return (
+                '<div class="manimux-warmup-timing-empty">'
+                "Warmup E2E · waiting for timing samples</div>"
+            )
+        low, high = min(samples), max(samples)
+        points = []
+        markers = []
+        for index, value in enumerate(samples):
+            x = 34 + 224 * index / (len(samples) - 1) if len(samples) > 1 else 258
+            y = 9 + 42 * (high - value) / (high - low) if high > low else 30
+            points.append(f"{x:.2f},{y:.2f}")
+            sample_number = max(1, self._warmup_completed - len(samples) + index + 1)
+            markers.append(
+                f'<circle cx="{x:.2f}" cy="{y:.2f}" r="2.5">'
+                f"<title>Successful request {sample_number}: {value:.1f} ms E2E</title></circle>"
+            )
+        curve = f'<polyline points="{" ".join(points)}"/>' if len(points) > 1 else ""
+        return f"""
+        <div class="manimux-warmup-timing">
+          <div class="manimux-warmup-timing-head">
+            <span>Warmup E2E · last {len(samples)} successful requests</span>
+            <strong>{samples[-1]:.1f} ms</strong>
+          </div>
+          <svg viewBox="0 0 280 62" role="img"
+               aria-label="Measured warmup end-to-end latency in milliseconds">
+            <title>Measured E2E samples; no automatic stability judgment</title>
+            <path class="grid" d="M34 9 H262 M34 51 H262"/>
+            <text x="0" y="12">{high:.0f}</text>
+            <text x="0" y="54">{low:.0f}</text>
+            {curve}{"".join(markers)}
+          </svg>
+        </div>
+        """
+
+    def _warmup_html(self) -> str:
+        lanes = []
+        for index in range(2):
+            lane = self.warmup_lanes[index] if index < len(self.warmup_lanes) else None
+            if lane is None:
+                lanes.append(
+                    '<div class="manimux-chunk-lane manimux-warmup-lane">'
+                    '<div class="manimux-chunk-empty">Waiting for a warmup preview</div></div>'
+                )
+                continue
+            cells = "".join(
+                '<span class="manimux-chunk-cell preview" '
+                f'title="Predicted action {step + 1}; not executed"></span>'
+                for step in range(lane.horizon_steps)
+            )
+            strips = []
+            names = self.gripper_groups or {
+                name: name for name in lane.gripper_closed_steps_by_group
+            }
+            for name, label in names.items():
+                flags = lane.gripper_closed_steps_by_group.get(name)
+                if flags is None:
+                    continue
+                markers = "".join(
+                    '<i class="manimux-gripper-step'
+                    f"{' unknown' if step >= len(flags) else ' closed' if flags[step] else ''}"
+                    '"></i>'
+                    for step in range(lane.horizon_steps)
+                )
+                strips.append(
+                    '<div class="manimux-warmup-gripper" '
+                    f'title="{html.escape(label, quote=True)} predicted gripper; '
+                    f'not executed">{markers}</div>'
+                )
+            duration = "E2E unavailable" if lane.e2e_ms is None else f"{lane.e2e_ms:.1f} ms E2E"
+            lanes.append(f"""
+                <div class="manimux-chunk-lane manimux-warmup-lane">
+                  <div class="manimux-chunk-lane-head">
+                    <strong>Preview #{abs(lane.chunk_id)} · {lane.horizon_steps} actions</strong>
+                    <span>{html.escape(lane.branch)}</span>
+                  </div>
+                  <div class="manimux-chunk-cells">{cells}</div>
+                  {"".join(strips)}
+                  <div class="manimux-warmup-lane-time">{duration}</div>
+                </div>
+            """)
+        return (
+            '<div class="manimux-warmup-notice">Warmup preview · no execution</div>'
+            + '<div class="manimux-chunk-spacer"></div>'.join(lanes)
+            + self._warmup_sparkline_html()
+        )
 
     def _handoff_html(self) -> str:
         target_index = next(
@@ -468,6 +683,30 @@ class ChunkTimelineView:
         )
         runtime = html.escape(self.runtime.upper())
         lanes_with_handoff = lane_html[0] + self._handoff_html() + lane_html[1]
+        legend_html = f"""
+          <div class="manimux-chunk-legend">
+            <span><i style="background:#7c3aed"></i>executed</span>
+            <span><i
+              style="background:#a78bfa;box-shadow:0 0 5px rgba(167,139,250,.9)"
+            ></i>current</span>
+            <span><i
+              style="background:repeating-linear-gradient(135deg,#f59e0b 0 3px,#9a5d08 3px 6px)"
+            ></i>trimmed latency</span>
+            <span><i style="background:#f59e0b"></i>handoff wait</span>
+            <span><i style="border:2px solid #94a3b8;background:transparent"></i>condition</span>
+            <span><i style="border:1px solid #4b5565"></i>future</span>
+            <span class="manimux-gripper-legend">
+              <span class="manimux-gripper-legend-icon"><i></i></span>
+              {gripper_legend}
+            </span>
+          </div>
+        """
+        if self._warmup_phase == "warming":
+            lanes_with_handoff = self._warmup_html()
+            legend_html = (
+                '<div class="manimux-chunk-legend">Predicted actions only · '
+                "red strips indicate predicted gripper closure</div>"
+            )
         return f"""
 <style>
   div:has(> .manimux-chunk-anchor) {{
@@ -519,6 +758,22 @@ class ChunkTimelineView:
   .manimux-chunk-cell.future {{
     border-color:#4b5565; background:transparent;
   }}
+  .manimux-chunk-cell.preview {{ border-color:#47808d; background:#184b59; }}
+  .manimux-warmup-notice {{ color:#8bd7e7; margin:0 0 8px; font-weight:600; }}
+  .manimux-warmup-lane {{ border:1px solid #294553; }}
+  .manimux-warmup-lane-time {{ color:#a4bac8; margin-top:5px; font-size:10px; }}
+  .manimux-warmup-gripper {{ display:flex; gap:1px; height:4px; margin-top:3px; }}
+  .manimux-gripper-step.unknown {{ background:#596273; }}
+  .manimux-warmup-timing {{ margin-top:9px; padding-top:7px; border-top:1px solid #303a4b; }}
+  .manimux-warmup-timing-head {{ display:flex; justify-content:space-between; gap:6px;
+    color:#a4bac8; font-size:10px; }}
+  .manimux-warmup-timing-head strong {{ color:#c5edf5; white-space:nowrap; }}
+  .manimux-warmup-timing svg {{ display:block; width:100%; height:62px; overflow:visible; }}
+  .manimux-warmup-timing .grid {{ fill:none; stroke:#303a4b; stroke-dasharray:3 3; }}
+  .manimux-warmup-timing polyline {{ fill:none; stroke:#67d4e9; stroke-width:1.8; }}
+  .manimux-warmup-timing circle {{ fill:#a2eaf7; }}
+  .manimux-warmup-timing text {{ fill:#8192a8; font:9px system-ui,sans-serif; }}
+  .manimux-warmup-timing-empty {{ color:#8192a8; margin-top:9px; font-size:10px; }}
   .manimux-chunk-cell.executed {{ background:#7c3aed; }}
   .manimux-chunk-cell.current {{
     background:#a78bfa; box-shadow:0 0 7px rgba(167,139,250,.9);
@@ -622,19 +877,6 @@ class ChunkTimelineView:
 <section class="manimux-chunk-panel">
   <div class="manimux-chunk-title"><strong>Action chunks</strong><span>{runtime}</span></div>
   {lanes_with_handoff}
-  <div class="manimux-chunk-legend">
-    <span><i style="background:#7c3aed"></i>executed</span>
-    <span><i style="background:#a78bfa;box-shadow:0 0 5px rgba(167,139,250,.9)"></i>current</span>
-    <span><i
-      style="background:repeating-linear-gradient(135deg,#f59e0b 0 3px,#9a5d08 3px 6px)"
-    ></i>trimmed latency</span>
-    <span><i style="background:#f59e0b"></i>handoff wait</span>
-    <span><i style="border:2px solid #94a3b8;background:transparent"></i>condition</span>
-    <span><i style="border:1px solid #4b5565"></i>future</span>
-    <span class="manimux-gripper-legend">
-      <span class="manimux-gripper-legend-icon"><i></i></span>
-      {gripper_legend}
-    </span>
-  </div>
+  {legend_html}
 </section>
 """

@@ -63,7 +63,8 @@ The Viewer configuration displays current physical camera frames. DP's `_t0`,
 `_t1`, and `_t2` model inputs are temporal aliases assembled separately by the
 adapter and are not physical stream names published to the Viewer.
 The experiment uses the standard ManiMux defaults: deadline scheduling, a
-0.4-second refill threshold, 0.02-second commit lead and two blending steps.
+0.4-second refill threshold and two blending steps. Accepted decoded results take
+effect immediately at commit, without an additional switch delay.
 Inference may overlap execution; the model uses ordinary DDPM sampling, without
 RTC guidance. The six-step chunk is shorter than the observed inference plus IK
 latency, so overlapping requests does not guarantee uninterrupted motion.

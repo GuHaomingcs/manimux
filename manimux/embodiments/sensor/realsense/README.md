@@ -49,3 +49,55 @@ using `null` leaves that device control untouched; it does not restore a factory
 default. Overrides apply when the camera service starts, not while it is running.
 
 See [camera recipes and the full supported option list](../../../configs/embodiment/sensor/cameras/README.md).
+
+## RGB exposure and QR timing diagnostic
+
+From the repository root, run these in separate terminals on the same computer:
+
+```bash
+envs/yam/.venv/bin/python -m scripts.validation.realsense_qr_latency --show-qr
+envs/yam/.venv/bin/python -m scripts.validation.realsense_qr_latency --camera front --csv /tmp/realsense-front.csv
+```
+
+The camera must be released by other applications first. The diagnostic reuses the
+camera recipe and private station, opens one camera, and explicitly disables depth.
+Use `--camera left` or `--camera right` for another station-bound device.
+`--print-config` only resolves settings and does not open a device.
+
+The diagnostic enables `collect_metadata` (off by default for normal capture).
+`read_capture()` returns image, host receipt times, frame number and metadata in one
+snapshot. Actual exposure is reported in microseconds directly from
+`actual_exposure`, without an extra conversion factor. Missing metadata displays
+`N/A` and is blank in CSV; the configured exposure is never used as a substitute.
+Librealsense `rs_frame.h` defines raw `sensor_timestamp` as the exposure midpoint
+and raw `frame_timestamp` as readout/transmission start, both in device microseconds.
+`get_timestamp()` is separately recorded in milliseconds alongside its clock domain.
+Device timestamps are not automatically comparable to Unix host time.
+
+The diagnostic also records `sdk_arrival_unix_ms` from `time_of_arrival`.
+In librealsense 2.58.3, this is host Unix time at entry to the UVC backend
+callback, before subsequent SDK frame allocation/copy and pipeline delivery.
+It is integer milliseconds, with less than 1 ms truncation uncertainty; it is
+not a microsecond field. See the upstream
+[UVC callback](https://github.com/realsenseai/librealsense/blob/v2.58.3/src/uvc-sensor.cpp),
+[metadata registration](https://github.com/realsenseai/librealsense/blob/v2.58.3/src/sensor.cpp),
+[integer metadata parser](https://github.com/realsenseai/librealsense/blob/v2.58.3/src/metadata-parser.h)
+and [host clock](https://github.com/realsenseai/librealsense/blob/v2.58.3/src/core/time-service.h).
+
+For each sampled frame, `sdk_to_python_ms` subtracts SDK arrival from Python
+receipt. When the frame timestamp domain is `global_time`, `global_to_sdk_ms`
+and `global_to_python_ms` also compare the mapped device timestamp against these
+host timestamps. The two segments sum to the total for that same frame. Negative
+values are retained to expose clock mapping errors. Unsupported comparisons stay
+blank in CSV and display as `N/A`. These measurements work without a decoded QR.
+Neither the SDK nor Python receipt measurement includes subsequent preview display.
+
+The host receipt timestamp is taken after the RGB buffer copy and before metadata
+reads. QR-to-host is this host time minus the decoded same-host QR timestamp. It
+includes source display delay and camera delivery, and excludes later QR decoding
+and preview display. The CSV contains one row per decoder-sampled frame, including
+frames without a decoded QR. Capture, preview and decoder use latest snapshots;
+slow decoding can skip frames. Metadata on the preview belongs to its displayed
+frame; the last QR result has its own frame number. Each second the console reports
+a preview-frame metadata snapshot and cumulative QR statistics. Exposure duration
+is not exposure-to-host latency, and no fixed monitor-delay correction is applied.

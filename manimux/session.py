@@ -579,6 +579,7 @@ class RuntimeSessionService:
         return {
             "run_dir": str(self._run_dir.resolve()),
             "task": self._config["run"]["task"],
+            "evaluation": deepcopy(self._config.get("evaluation", {"kind": "binary"})),
             "runtime": self._config["inference"]["algorithm"],
             "executor": self._config["executor"]["type"],
             "policy_label": self._config["viewer"]["policy_label"],

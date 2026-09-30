@@ -17,6 +17,7 @@ import viser
 
 from manimux.evaluation import write_manual_evaluation
 from manimux.evaluation.identity import rollout_identity
+from manimux.evaluation.rubric import count_result, evaluation_parameters
 from manimux.types import FloatArray, UInt8Array
 
 from .camera_panel import CameraPanel
@@ -113,6 +114,11 @@ class PolicyViewer:
         self.running = True
         self.paused = True
         self.rollout_started = False
+        self._warmup: dict[str, Any] | None = None
+        self._warmup_preview_handles: list[Any] = []
+        self._warmup_preview_chunk_id: int | None = None
+        self._warmup_preview_closed = False
+        self._episode_id = ""
         self.finish_requested = False
         self.home_requested = False
         self.finish_home: bool | None = None
@@ -123,6 +129,7 @@ class PolicyViewer:
         self.service_ready = False
         self.experiment_mode = False
         self.evaluation_complete = True
+        self.evaluation_profile = evaluation_parameters()
         self.episode_active = False
         self.launch_mode = "unknown"
         self.service_id = ""
@@ -254,6 +261,7 @@ class PolicyViewer:
                 "⚪ Waiting for a ManiMux runtime service."
             )
             self.task = self.server.gui.add_text("Task command", "", multiline=True, disabled=True)
+            self.scoring_setup = self.server.gui.add_text("Scoring", "General", disabled=True)
             self.repeat_id = self.server.gui.add_dropdown(
                 "Experiment repeat", ("1", "2", "3"), initial_value="1", disabled=True
             )
@@ -267,6 +275,7 @@ class PolicyViewer:
             "② Policy control", expand_by_default=True
         )
         with self.policy_control_folder:
+            self.warmup_status = self.server.gui.add_markdown("", visible=False)
             self.start_btn = self.server.gui.add_button(
                 "Start rollout", color="blue", disabled=True
             )
@@ -303,11 +312,24 @@ class PolicyViewer:
             self.evaluation_status = self.server.gui.add_markdown(
                 "⚪ Finish the rollout before saving an evaluation."
             )
+            self.evaluation_rule = self.server.gui.add_text(
+                "Scoring", "General", disabled=True
+            )
             self.task_result = self.server.gui.add_dropdown(
                 "Task result",
-                ("unlabeled", "success", "failure", "invalid"),
+                ("unlabeled", "Completed", "Not completed"),
                 initial_value="unlabeled",
                 disabled=True,
+            )
+            self.completed_count = self.server.gui.add_dropdown(
+                "Completed items", ("unlabeled",), initial_value="unlabeled",
+                disabled=True, visible=False,
+            )
+            self.completion_score = self.server.gui.add_markdown(
+                "Select a completed count.", visible=False
+            )
+            self.invalid_trial = self.server.gui.add_checkbox(
+                "Invalid trial (exclude from results)", False, disabled=True
             )
             self.reviewer_id = self.server.gui.add_text("Reviewer", "operator", disabled=True)
             self.operator_note = self.server.gui.add_text(
@@ -366,12 +388,7 @@ class PolicyViewer:
         @self.start_btn.on_click
         def _start(_event: Any) -> None:
             with self.lock:
-                if self.start_btn.disabled:
-                    return
-                self.paused = False
-                self.rollout_started = True
-                self._set_policy_controls_enabled(True)
-                self.status.content = "🟢 **Connected · RUNNING**"
+                self._start_rollout()
 
         @self.prepare_normal_btn.on_click
         def _prepare_normal(_event: Any) -> None:
@@ -388,7 +405,7 @@ class PolicyViewer:
                     return
                 self.paused = True
                 self._set_policy_controls_enabled(True)
-                self.status.content = "🟡 **Connected · PAUSED**"
+                self.status.content = self._connected_status()
 
         @self.home_btn.on_click
         def _home(_event: Any) -> None:
@@ -455,6 +472,20 @@ class PolicyViewer:
         def _skip_evaluation(_event: Any) -> None:
             self._skip_manual_evaluation()
 
+        @self.completed_count.on_update
+        def _completed_count(_event: Any) -> None:
+            with self.lock:
+                self._refresh_completion_score()
+
+        @self.invalid_trial.on_update
+        def _invalid_trial(_event: Any) -> None:
+            with self.lock:
+                self._set_evaluation_enabled(
+                    self.episode_finalized and self.experiment_mode
+                    and not self.evaluation_complete
+                )
+                self._refresh_completion_score()
+
         @self.show_plan.on_update
         def _show_plan(_event: Any) -> None:
             self._refresh_plan_visibility()
@@ -499,6 +530,7 @@ class PolicyViewer:
                 return
             self.paused = True
             self.finish_requested = True
+            self._clear_warmup_preview()
             # The new assembly has no Home trajectory. Its primary Finish
             # action must save/close cleanly instead of requesting robot.home().
             self.finish_home = (
@@ -509,6 +541,96 @@ class PolicyViewer:
             self._set_policy_controls_enabled(False)
             self._update_recovery_controls()
             self.status.content = "🟠 **Finishing rollout and saving episode**"
+
+    def _start_rollout(self) -> None:
+        if self.start_btn.disabled:
+            return
+        self.paused = False
+        self.rollout_started = True
+        self._clear_warmup_preview()
+        self._set_policy_controls_enabled(True)
+        self.status.content = self._connected_status()
+
+    def _connected_status(self) -> str:
+        if self.observe_only:
+            return "🔵 **Connected · OBSERVE ONLY**"
+        phase = self._warmup.get("phase") if self._warmup is not None else None
+        if phase == "error":
+            return "🔴 **Warmup / Start error · Pause then Start to retry, or Finish**"
+        if phase == "resetting":
+            return "🟠 **Starting rollout · waiting for backend reset**"
+        if phase == "draining" or (phase == "warming" and not self.paused):
+            return "🟠 **Starting rollout · waiting for warmup inference to finish**"
+        if phase == "warming":
+            return "🟡 **Warmup running · Start when ready**"
+        return (
+            "🟡 **Connected · PAUSED**"
+            if self.paused else "🟢 **Connected · RUNNING**"
+        )
+
+    def _update_warmup(self, metadata: dict[str, Any] | None) -> None:
+        """Keep controls concise; chunks and latency belong to the left panel."""
+
+        self._warmup = dict(metadata) if metadata is not None else None
+        self.warmup_status.visible = self._warmup is not None
+        if not self._warmup_preview_allowed():
+            self._clear_warmup_preview()
+        if self._warmup is None:
+            self.warmup_status.content = ""
+            return
+        phase = str(self._warmup.get("phase", "warming"))
+        title = {
+            "warming": "Warmup running · Start when ready",
+            "draining": "Starting · finishing in-flight warmup",
+            "resetting": "Starting · waiting for backend reset",
+            "complete": "Warmup complete",
+            "error": "Warmup / Start error",
+        }.get(phase, "Warmup")
+        calibrated = bool(self._warmup.get("latency_calibrated", False))
+        if phase == "complete" and not calibrated:
+            title = "Warmup ended · no latency calibration samples"
+        self.warmup_status.content = f"**{title}**"
+        error = str(self._warmup.get("error") or "").strip()
+        if error:
+            self.warmup_status.content += f"\n\nError: {error}"
+        if self.episode_active and not self.finish_requested:
+            self._set_policy_controls_enabled(not self.finish_btn.disabled)
+
+    def _warmup_preview_allowed(self, metadata: dict[str, Any] | None = None) -> bool:
+        if not (
+            self.episode_active
+            and self.paused
+            and not self.rollout_started
+            and not self.finish_requested
+            and not self.finish_btn.disabled
+            and not self._warmup_preview_closed
+            and self._warmup is not None
+            and self._warmup.get("phase") == "warming"
+        ):
+            return False
+        if metadata is None:
+            return True
+        return bool(
+            self._episode_id
+            and str(metadata.get("episode_id", "")) == self._episode_id
+            and str(metadata.get("run_dir", "")) == self.service_id
+        )
+
+    def _clear_warmup_plan(self) -> None:
+        for handle in self._warmup_preview_handles:
+            handle.remove()
+        self._warmup_preview_handles.clear()
+        self._warmup_preview_chunk_id = None
+
+    def _clear_warmup_preview(self) -> None:
+        if self._warmup_preview_closed and not self._warmup_preview_handles:
+            return
+        self._warmup_preview_closed = True
+        self._clear_warmup_plan()
+        timeline = getattr(self, "chunk_timeline", None)
+        if timeline is not None:
+            timeline.clear_warmup_preview()
+            self._refresh_chunk_timeline(force=True)
 
     def _clear_recovery(self) -> None:
         self.recovery_available = False
@@ -684,6 +806,7 @@ class PolicyViewer:
             return False
         self.last_failure_id = failure_id
         self.last_rollout_error = error
+        self._clear_warmup_preview()
         self.episode_active = False
         self.episode_finalized = False
         self.preparing_rollout = False
@@ -710,7 +833,7 @@ class PolicyViewer:
         elif last_error:
             self.status.content = "🔴 **Rollout interrupted · service idle**"
         elif self.evaluation_complete:
-            self.status.content = "🟡 **Runtime service ready · prepare a rollout**"
+            self.status.content = "🟡 **Runtime service ready · ready for next Prepare**"
 
     def _set_instruction(self, instruction: str) -> None:
         self.instruction.content = _instruction_markdown(instruction)
@@ -731,14 +854,60 @@ class PolicyViewer:
             )
             self._update_recovery_controls()
 
+    def _configure_evaluation(self, profile: dict | None) -> None:
+        """Use the rollout's frozen rubric, never its editable instruction text."""
+
+        self.evaluation_profile = evaluation_parameters(profile)
+        counted = self.evaluation_profile["kind"] == "count"
+        self.evaluation_rule.value = (
+            f"Task · {self.evaluation_profile['label']}"
+            if self.evaluation_profile.get("task_id") else "General"
+        )
+        self.scoring_setup.value = self.evaluation_rule.value
+        self.completed_count.value = "unlabeled"
+        self.completed_count.options = (
+            ("unlabeled",) + tuple(
+                str(value) for value in range(self.evaluation_profile["target_count"] + 1)
+            )
+            if counted else ("unlabeled",)
+        )
+        self.completed_count.label = self.evaluation_profile.get(
+            "count_label", "Completed items"
+        )
+        self.task_result.visible = not counted
+        self.completed_count.visible = counted
+        self.completion_score.visible = counted
+        self._refresh_completion_score()
+
+    def _refresh_completion_score(self) -> None:
+        if self.evaluation_profile["kind"] != "count":
+            return
+        if self.invalid_trial.value:
+            self.completion_score.content = "Invalid trial · excluded from results."
+            return
+        if self.completed_count.value == "unlabeled":
+            self.completion_score.content = "Select a completed count."
+            return
+        completed = int(self.completed_count.value)
+        result = count_result(self.evaluation_profile, completed)
+        target = self.evaluation_profile["target_count"]
+        status = "Completed" if result == "success" else "Not completed"
+        self.completion_score.content = (
+            f"**{completed}/{target} · {100 * completed / target:.1f}%** · {status}"
+        )
+
     def _set_evaluation_enabled(self, enabled: bool) -> None:
         for handle in (
-            self.task_result,
+            self.invalid_trial,
             self.reviewer_id,
             self.operator_note,
             *self.failure_tag_inputs.values(),
         ):
             handle.disabled = not enabled
+        score_enabled = enabled and not self.invalid_trial.value
+        counted = self.evaluation_profile["kind"] == "count"
+        self.task_result.disabled = not score_enabled or counted
+        self.completed_count.disabled = not score_enabled or not counted
         self.save_evaluation_btn.disabled = not enabled
         self.skip_evaluation_btn.disabled = (
             self.episode_active or not self.experiment_mode or self.evaluation_complete
@@ -800,6 +969,7 @@ class PolicyViewer:
             self.preparing_rollout = True
             self.service_ready = False
             self.paused = True
+            self._update_warmup(None)
             self._set_setup_controls_enabled(False)
             self.prepare_normal_btn.visible = False
             self.prepare_experiment_btn.visible = False
@@ -809,8 +979,12 @@ class PolicyViewer:
 
     def _set_policy_controls_enabled(self, enabled: bool) -> None:
         allowed = enabled and not self.observe_only
-        self.start_btn.label = "Resume rollout" if self.rollout_started else "Start rollout"
-        self.start_btn.disabled = not allowed or not self.paused
+        phase = self._warmup.get("phase") if self._warmup is not None else None
+        formal_started = self.rollout_started and phase in {None, "complete"}
+        self.start_btn.label = "Resume rollout" if formal_started else "Start rollout"
+        self.start_btn.disabled = (
+            not allowed or not self.paused or phase in {"draining", "resetting"}
+        )
         self.pause_btn.disabled = not allowed or self.paused
         self.home_btn.disabled = (
             not allowed or not self.paused or self.robot.name == "tianji-taccap"
@@ -829,6 +1003,9 @@ class PolicyViewer:
         self.evaluation_complete = not self.experiment_mode
         self.episode_path.value = episode_dir or "not published"
         self.task_result.value = "unlabeled"
+        self.completed_count.value = "unlabeled"
+        self.invalid_trial.value = False
+        self._refresh_completion_score()
         self.reviewer_id.value = "operator"
         self.operator_note.value = ""
         for handle in self.failure_tag_inputs.values():
@@ -853,8 +1030,11 @@ class PolicyViewer:
         self.preparing_rollout = False
         self.episode_active = False
         self.current_episode_dir = None
+        self._episode_id = ""
         self.episode_finalized = False
         self.evaluation_complete = True
+        self._configure_evaluation(None)
+        self._update_warmup(None)
         self.last_state_time = 0.0
         self.executor_info.value = "service idle"
         self.recorded_layout.value = "—"
@@ -876,6 +1056,7 @@ class PolicyViewer:
         self.preparing_rollout = False
         self.service_ready = False
         self.episode_active = False
+        self._clear_warmup_preview()
         self.recovery_lease = False
         self._update_recovery_controls()
         self.camera_view.set_policy_map(None, reset=True)
@@ -891,14 +1072,27 @@ class PolicyViewer:
         if not self.episode_finalized or self.current_episode_dir is None:
             self.evaluation_status.content = "🔴 Episode is not finalized."
             return
-        result = str(self.task_result.value)
-        if result == "unlabeled":
-            self.evaluation_status.content = "🔴 Select success, failure, or invalid."
-            return
         try:
+            completed_count = None
+            if self.invalid_trial.value:
+                result = "invalid"
+            elif self.evaluation_profile["kind"] == "count":
+                if self.completed_count.value == "unlabeled":
+                    self.evaluation_status.content = "🔴 Select a completed count."
+                    return
+                completed_count = int(self.completed_count.value)
+                result = count_result(self.evaluation_profile, completed_count)
+            else:
+                result = {
+                    "Completed": "success", "Not completed": "failure",
+                }.get(str(self.task_result.value))
+                if result is None:
+                    self.evaluation_status.content = "🔴 Select Completed or Not completed."
+                    return
             target = write_manual_evaluation(
                 self.current_episode_dir,
                 task_result=cast(Any, result),
+                completed_count=completed_count,
                 failure_tags=[
                     name for name, handle in self.failure_tag_inputs.items() if handle.value
                 ],
@@ -961,6 +1155,11 @@ class PolicyViewer:
             try:
                 kind = message.get("kind")
                 if kind == "plan":
+                    metadata = message.get("metadata") or {}
+                    if metadata.get("warmup_preview") and not self._warmup_preview_allowed(
+                        metadata
+                    ):
+                        return
                     self._update_plan(message)
                 elif kind == "state":
                     self._update_state(message)
@@ -1005,6 +1204,9 @@ class PolicyViewer:
         start_index = int(message.get("start_index", 0))
         if start_index < 0 or start_index > horizon:
             raise ValueError("plan start_index is outside the action horizon")
+        if metadata.get("warmup_preview"):
+            self._update_warmup_plan(message, grouped_actions, start_index=start_index)
+            return
         chunk_id = int(message.get("chunk_id", 0))
         if self.plan_chunk_id is not None and chunk_id != self.plan_chunk_id:
             self._archive_current_plan()
@@ -1028,6 +1230,51 @@ class PolicyViewer:
                 self._draw_plan(group, np.empty((0, 0)))
             else:
                 self._draw_plan(group, group_actions[start_index:])
+
+    def _update_warmup_plan(
+        self, message: dict[str, Any], grouped_actions: dict[str, FloatArray], *, start_index: int
+    ) -> None:
+        """Render one discarded inference without touching formal or measured motion."""
+
+        metadata = message["metadata"]
+        if not self._warmup_preview_allowed(metadata):
+            return
+        chunk_id = int(message["chunk_id"])
+        if chunk_id >= 0:
+            raise ValueError("Warmup preview requires a negative chunk_id")
+        if self._warmup_preview_chunk_id is not None and chunk_id >= self._warmup_preview_chunk_id:
+            return
+        trajectories = {
+            group.name: self.robot.positions(group.name, grouped_actions[group.name][start_index:])
+            for group in self.robot.groups
+            if group.name in grouped_actions and len(grouped_actions[group.name][start_index:]) > 0
+        }
+        self._clear_warmup_plan()
+        self._warmup_preview_chunk_id = chunk_id
+        visible = bool(self.show_plan.value)
+        color = (14, 165, 233)
+        branch = str(metadata.get("warmup_branch", "ordinary"))
+        for group in self.robot.groups:
+            points = trajectories.get(group.name)
+            if points is None:
+                continue
+            # FK stays local to the group root, just like the formal plan overlay.
+            root = f"{self._root(group)}/warmup_preview"
+            if len(points) > 1:
+                segments = np.stack((points[:-1], points[1:]), axis=1)
+                self._warmup_preview_handles.append(self.server.scene.add_line_segments(
+                    f"{root}/path", segments,
+                    np.broadcast_to(np.asarray(color, dtype=np.uint8), segments.shape).copy(),
+                    line_width=7, visible=visible,
+                ))
+            self._warmup_preview_handles.append(self.server.scene.add_icosphere(
+                f"{root}/end", radius=0.012, color=color,
+                position=points[-1], visible=visible,
+            ))
+            self._warmup_preview_handles.append(self.server.scene.add_label(
+                f"{root}/label", f"Warmup preview · {branch} · no execution",
+                position=points[-1] + np.asarray((0.0, 0.0, 0.04)), visible=visible,
+            ))
 
     def _draw_plan(self, group: RobotGroup, actions: FloatArray) -> None:
         root = f"{self._root(group)}/predicted_ee"
@@ -1104,12 +1351,15 @@ class PolicyViewer:
         for handles in self.current_plan_handles.values():
             for handle in handles:
                 handle.visible = show_current
+        for handle in self._warmup_preview_handles:
+            handle.visible = show_current
         show_history = show_current and self.show_plan_history
         for history in self.plan_history_handles.values():
             for handle in history:
                 handle.visible = show_history
 
     def _reset_plan_overlay(self) -> None:
+        self._clear_warmup_plan()
         for handles in self.current_plan_handles.values():
             for handle in handles:
                 handle.visible = False
@@ -1130,6 +1380,8 @@ class PolicyViewer:
             self.camera_view.set_policy_map(metadata["camera_map"])
         if not self.episode_active and bool(metadata.get("episode_active", False)):
             self._update_event({"event": "episode_started", "metadata": metadata})
+        if "warmup" in metadata:
+            self._update_warmup(metadata["warmup"])
         grouped_positions = self.robot.validate_groups(message.get("groups"))
         self.last_joint_positions = {
             group_name: np.asarray(configuration, dtype=np.float64).copy()
@@ -1139,14 +1391,8 @@ class PolicyViewer:
         self.progress.value = int(message.get("step", 0))
         if not message.get("connected", True):
             self.status.content = "🟠 **Executor disconnected**"
-        elif self.paused:
-            self.status.content = (
-                "🔵 **Connected · OBSERVE ONLY**"
-                if self.observe_only
-                else "🟡 **Connected · PAUSED**"
-            )
         else:
-            self.status.content = "🟢 **Connected · RUNNING**"
+            self.status.content = self._connected_status()
         active_chunk_id = message.get("active_chunk_id")
         action_index = int(message.get("chunk_index", 0))
         if (
@@ -1168,12 +1414,16 @@ class PolicyViewer:
         event = str(message.get("event", "unknown"))
         metadata = message.get("metadata") or {}
         if event == "episode_started":
+            incoming_episode_id = str(metadata.get("episode_id", ""))
+            incoming_service_id = str(metadata.get("run_dir", ""))
+            if (incoming_service_id, incoming_episode_id) != (self.service_id, self._episode_id):
+                self._warmup_preview_closed = False
             self.camera_view.set_policy_map(metadata.get("camera_map"), reset=True)
             self._reset_plan_overlay()
             self._clear_achieved_tails()
             self.episode_active = True
+            self._episode_id = incoming_episode_id
             self.launch_mode = str(metadata.get("launch_mode", "run"))
-            incoming_service_id = str(metadata.get("run_dir", ""))
             if incoming_service_id:
                 self.service_id = incoming_service_id
             self.observe_only = metadata.get("control_mode", "observe") == "observe"
@@ -1184,6 +1434,7 @@ class PolicyViewer:
             self.last_rollout_error = ""
             self.recovery_available = bool(metadata.get("recovery_available", False))
             self._set_experiment_mode(bool(metadata.get("experiment_mode", False)))
+            self._configure_evaluation(metadata.get("evaluation"))
             self.rollout_setup_status.content = (
                 "🟢 **Experiment rollout ready** · press Start rollout below; "
                 "save or skip evaluation after Finish."
@@ -1208,24 +1459,28 @@ class PolicyViewer:
             self.policy_name.value = str(metadata.get("policy_label", "waiting"))
             self.runtime_name.value = str(metadata.get("runtime", "waiting"))
             self._reset_evaluation(str(metadata.get("episode_dir", "")))
+            self._update_warmup(metadata.get("warmup"))
             self.executor_info.value = "observe only" if self.observe_only else "managed"
-            self.status.content = (
-                "🔵 **Connected · OBSERVE ONLY**"
-                if self.observe_only
-                else "🟡 **Connected · PAUSED · press Start rollout**"
-            )
+            self.status.content = self._connected_status()
         elif event == "inference_submitted":
             planned = metadata.get("planned_switch_step")
             suffix = f" → switch {planned}" if planned is not None else ""
             self.executor_info.value = f"chunk #{message.get('chunk_id')} pending{suffix}"
         elif event == "episode_finished":
+            self._clear_warmup_preview()
             self.camera_view.clear_images()
             self.episode_active = False
             self.service_ready = False
+            self.launch_mode = str(metadata.get("launch_mode", self.launch_mode))
+            self._set_experiment_mode(bool(metadata.get("experiment_mode", self.experiment_mode)))
+            self._configure_evaluation(metadata.get("evaluation", self.evaluation_profile))
             self.executor_info.value = str(metadata.get("reason", "finished"))
             episode_dir = str(metadata.get("episode_dir", ""))
             if episode_dir:
-                self.current_episode_dir = Path(episode_dir).expanduser()
+                incoming_episode = Path(episode_dir).expanduser()
+                if incoming_episode != self.current_episode_dir:
+                    self._reset_evaluation(episode_dir)
+                self.current_episode_dir = incoming_episode
                 self.episode_path.value = episode_dir
             self.episode_finalized = self.current_episode_dir is not None
             self.evaluation_complete = not self.experiment_mode
@@ -1251,7 +1506,7 @@ class PolicyViewer:
                     "⚪ Experiment mode was OFF; no human reward is required."
                 )
                 self.status.content = (
-                    "⚪ **Rollout finished · preparing for the next rollout**"
+                    "⚪ **Rollout finished · waiting for runtime service**"
                     if self.launch_mode == "serve"
                     else "⚪ **One-shot run finished · use `manimux serve` for UI rollouts**"
                 )
@@ -1288,6 +1543,7 @@ class PolicyViewer:
             )
             if self.current_episode_dir is None or self.evaluation_complete:
                 self.episode_path.value = str(metadata.get("last_episode_dir", "")) or "ready"
+                self._configure_evaluation(metadata.get("evaluation"))
             self._update_prepare_enabled()
             self._set_stage("setup" if self.evaluation_complete else "evaluation")
             self._idle_status(last_error)
@@ -1534,7 +1790,12 @@ def main() -> None:
     signal.signal(signal.SIGTERM, lambda *_: stop.set())
     print(f"Robot model: {robot.name} ({robot.label})")
     print(f"Viewer camera mode: {viewer_config['camera_mode']}")
-    print(f"Open http://localhost:{args.port}")
+    display_host = {"0.0.0.0": "127.0.0.1", "localhost": "127.0.0.1", "::": "::1"}.get(
+        args.host, args.host
+    )
+    if ":" in display_host:
+        display_host = f"[{display_host}]"
+    print(f"Open http://{display_host}:{args.port}")
     try:
         while not stop.wait(0.25):
             now = time.time()

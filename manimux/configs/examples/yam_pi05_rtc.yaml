@@ -69,7 +69,7 @@ inference:
   algorithm: rtc
   config: ../inference/yam_rtc.yaml
   # Timeline discards elapsed action points without rewriting observation time.
-  action_start_mode: skip_elapsed_steps
+  action_start_mode: drop_infer_latency
 
 # Command smoothing and limits are independent of inference scheduling.
 executor:

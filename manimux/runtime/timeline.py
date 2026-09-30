@@ -60,14 +60,14 @@ def _sample_plan(plan: _ActivePlan, time_ns: int) -> GroupVector | None:
 
 
 class ActionTimeline:
-    """Time-indexed action reference; a commit_lead window still plays the outgoing plan."""
+    """Time-indexed action reference activated immediately on a successful commit."""
 
     def __init__(
         self,
         group_dims: dict[str, int],
         *,
         max_source_steps: int | None = None,
-        action_start_mode: str = "skip_elapsed_steps",
+        action_start_mode: str = "drop_infer_latency",
         hold_last_step: bool = False,
     ) -> None:
         if max_source_steps is not None and max_source_steps < 2:
@@ -79,8 +79,6 @@ class ActionTimeline:
         self._hold_last_step = hold_last_step
         self._group_dims = dict(group_dims)
         self._active: _ActivePlan | None = None
-        # Kept only to cover the commit_lead window before _active starts.
-        self._outgoing: _ActivePlan | None = None
         self._accepted_request_seq = -1
 
     @property
@@ -122,7 +120,6 @@ class ActionTimeline:
         chunk: ActionChunk,
         *,
         now_ns: int,
-        commit_lead_ns: int,
         max_plan_age_ns: int,
         current_command: GroupVector,
         blend_steps: int,
@@ -143,15 +140,13 @@ class ActionTimeline:
                 return CommitResult(False, f"dimension_mismatch:{name}")
 
         # Wall-clock time at which the committed plan starts executing.
-        start_time_ns = now_ns + commit_lead_ns
+        start_time_ns = now_ns
         # Elapsed source-trajectory time when execution starts.
         age_at_commit_ns = max(0, start_time_ns - chunk.observation_time_ns)
-        if self._action_start_mode == "skip_elapsed_steps":
+        if self._action_start_mode == "drop_infer_latency":
             # Keep the first source row whose timestamp has not passed.
             source_cursor = int(
-                (age_at_commit_ns + chunk.dt_ns - 1) // chunk.dt_ns
-                if age_at_commit_ns
-                else 0
+                (age_at_commit_ns + chunk.dt_ns - 1) // chunk.dt_ns if age_at_commit_ns else 0
             )
             trimmed_steps = max(0, source_cursor - chunk.source_offset_steps)
         else:
@@ -189,7 +184,6 @@ class ActionTimeline:
             observation_time_ns=chunk.observation_time_ns,
             hold_last_step=self._hold_last_step,
         )
-        self._outgoing = self._active
         self._active = new_plan
         self._accepted_request_seq = chunk.request_seq
         return CommitResult(
@@ -199,18 +193,8 @@ class ActionTimeline:
             timeline_latency_ns=age_at_commit_ns,
         )
 
-    def _plan_at(self, time_ns: int) -> _ActivePlan | None:
-        """The plan that owns ``time_ns``: the outgoing one until _active starts."""
-        active = self._active
-        if active is not None and time_ns < active.start_time_ns:
-            # With commit_lead > 0 a committed plan starts slightly in the future.
-            # Keep executing the outgoing plan across that window; dropping to a
-            # measured-state hold would yank the command back by the tracking error.
-            return self._outgoing
-        return active
-
     def sample(self, time_ns: int) -> GroupVector | None:
-        plan = self._plan_at(time_ns)
+        plan = self._active
         return None if plan is None else _sample_plan(plan, time_ns)
 
     def reference_horizon(
@@ -220,9 +204,7 @@ class ActionTimeline:
         dt_ns: int,
         horizon_steps: int,
     ) -> ActionHorizon | None:
-        # Report the plan that owns now_ns: across a commit_lead window the
-        # executor is still tracking the outgoing plan, not the committed one.
-        active = self._plan_at(now_ns)
+        active = self._active
         if active is None:
             return None
         samples: dict[str, list[np.ndarray]] = {name: [] for name in self._group_dims}
@@ -253,7 +235,7 @@ class ActionTimeline:
         )
 
     def _tracking_sample(self, now_ns: int) -> GroupVector | None:
-        active = self._plan_at(now_ns)
+        active = self._active
         if active is None or active.unblended_groups is None:
             return None
         position = np.clip(
