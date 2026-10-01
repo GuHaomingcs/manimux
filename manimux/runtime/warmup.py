@@ -12,6 +12,7 @@ from manimux.runtime.inference import (
     build_warmup_submission,
     seed_strategy_warmup,
 )
+from manimux.timing import stage
 from manimux.types import ActionChunk, ActionContext, ObservationSnapshot
 
 
@@ -102,7 +103,8 @@ class PolicyWarmup:
             self._event("warmup_start_requested")
 
         if self._pending is not None:
-            response = self.worker.poll()
+            with stage("worker_poll"):
+                response = self.worker.poll()
             if response is not None:
                 request, started_ns, branch = self._pending
                 self._pending = None
@@ -114,16 +116,17 @@ class PolicyWarmup:
                     error = "Unexpected warmup response identity"
                 if error is None:
                     try:
-                        chunk = self.adapter.decode_action(
-                            response.raw_action,
-                            ActionContext(
-                                request_seq=response.request_seq,
-                                observation_time_ns=response.observation_time_ns,
-                                created_time_ns=response.finished_time_ns,
-                                measured_state=request.observation.state,
-                                max_source_steps=self.config["policy"]["horizon_policy_steps"],
-                            ),
-                        )
+                        with stage("policy_decode"):
+                            chunk = self.adapter.decode_action(
+                                response.raw_action,
+                                ActionContext(
+                                    request_seq=response.request_seq,
+                                    observation_time_ns=response.observation_time_ns,
+                                    created_time_ns=response.finished_time_ns,
+                                    measured_state=request.observation.state,
+                                    max_source_steps=self.config["policy"]["horizon_policy_steps"],
+                                ),
+                            )
                         if chunk.action_space != "joint_position":
                             raise ValueError("Warmup requires canonical joint-position output")
                     except Exception as exc:  # Keep model/adapter failures visible without motion.
@@ -163,7 +166,8 @@ class PolicyWarmup:
 
         if self.phase == "draining" and self._pending is None:
             try:
-                self._reset_seq = self.worker.submit_reset(self.session_id)
+                with stage("worker_submit_reset"):
+                    self._reset_seq = self.worker.submit_reset(self.session_id)
                 self.phase = "resetting"
             except Exception as exc:
                 self.phase = "error"
@@ -171,7 +175,8 @@ class PolicyWarmup:
                 self._event("warmup_reset_failed", error=self.error)
 
         if self.phase == "resetting":
-            result = self.worker.poll_reset()
+            with stage("worker_poll_reset"):
+                result = self.worker.poll_reset()
             if result is not None:
                 error = result.error
                 if result.reset_seq != self._reset_seq or result.session_id != self.session_id:
@@ -187,19 +192,23 @@ class PolicyWarmup:
             try:
                 # Negative IDs cannot be mistaken for a formal rollout request.
                 self._request_seq -= 1
-                submission = build_warmup_submission(
-                    self.strategy, self.config, session_id=self.session_id,
-                    request_seq=self._request_seq, now_ns=started_ns,
-                    snapshot=snapshot, adapter=self.adapter,
-                    conditioned=bool(self.completed_requests % 2),
-                )
-                request = self.adapter.prepare_request(submission.request)
+                with stage("policy_schedule"):
+                    submission = build_warmup_submission(
+                        self.strategy, self.config, session_id=self.session_id,
+                        request_seq=self._request_seq, now_ns=started_ns,
+                        snapshot=snapshot, adapter=self.adapter,
+                        conditioned=bool(self.completed_requests % 2),
+                    )
+                with stage("policy_prepare"):
+                    request = self.adapter.prepare_request(submission.request)
                 branch = "conditioned" if submission.event_fields.get("conditioned") else "ordinary"
-                self.worker.submit_latest(request)
+                with stage("worker_submit"):
+                    self.worker.submit_latest(request)
                 self._pending = (request, started_ns, branch)
                 self.latest_branch = branch
                 self._event(
-                    "warmup_inference_submitted", request_seq=request.request_seq, branch=branch
+                    "warmup_inference_submitted", request_seq=request.request_seq, branch=branch,
+                    horizon_steps=self.config["policy"]["horizon_policy_steps"],
                 )
             except Exception as exc:
                 self.phase = "error"

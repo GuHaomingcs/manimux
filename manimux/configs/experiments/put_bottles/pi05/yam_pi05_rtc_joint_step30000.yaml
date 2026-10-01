@@ -5,6 +5,12 @@ run:
   output_dir: ./data/experiments/pi05-put-bottles-joint-step30000/rtc
   max_control_steps: 12000
   warmup_before_start: true
+  sensor_reading:
+    mode: background
+    poll_hz: 100.0
+    max_frame_age_s: 0.5
+    startup_timeout_s: 5.0
+    shutdown_timeout_s: 2.0
 
 evaluation:
   config: ../../../evaluation/put_bottles.yaml

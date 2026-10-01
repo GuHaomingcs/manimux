@@ -26,4 +26,7 @@ def viewer_parameters(**options) -> dict:
     }
     if values.get("tianji_teleop_root") is not None:
         values["tianji_teleop_root"] = Path(values["tianji_teleop_root"])
+    from .control import control_parameters
+
+    values["control"] = control_parameters(**values.get("control", {}))
     return values

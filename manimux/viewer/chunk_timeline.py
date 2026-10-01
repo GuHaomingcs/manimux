@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import html
 import math
+import time
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -53,6 +54,9 @@ class ChunkTimelineView:
         self.episode_id = ""
         self.warmup_lanes: list[WarmupPreviewLane] = []
         self.warmup_samples: tuple[float, ...] = ()
+        self._warmup_animation: ChunkTimelineView | None = None
+        self._warmup_playback_start = 0.0
+        self._warmup_action_dt = 1.0
         self._warmup_phase: str | None = None
         self._warmup_completed = 0
         self._warmup_blocked = False
@@ -86,6 +90,7 @@ class ChunkTimelineView:
         self._lane_by_chunk = {}
         self.episode_id = ""
         self.warmup_lanes = []
+        self._warmup_animation = None
         self.warmup_samples = ()
         self._warmup_phase = None
         self._warmup_completed = 0
@@ -94,6 +99,7 @@ class ChunkTimelineView:
     def clear_warmup_preview(self) -> None:
         """Discard display-only output and block late preview/heartbeat resurrection."""
         self.warmup_lanes = []
+        self._warmup_animation = None
         self.warmup_samples = ()
         self._warmup_phase = None
         self._warmup_completed = 0
@@ -156,11 +162,16 @@ class ChunkTimelineView:
         chunk_id = int(message.get("chunk_id", 0))
         if chunk_id >= 0:
             return
+        if self.warmup_lanes and chunk_id >= self.warmup_lanes[-1].chunk_id:
+            return
         horizon = len(next(iter(message.get("groups", {}).values()), []))
         if horizon <= 0:
             return
         branch = str(metadata.get("warmup_branch", ""))
         if branch not in {"ordinary", "conditioned"}:
+            return
+        action_dt = float(message.get("action_dt", 0))
+        if not math.isfinite(action_dt) or action_dt <= 0:
             return
         lane = WarmupPreviewLane(
             chunk_id=chunk_id,
@@ -175,6 +186,41 @@ class ChunkTimelineView:
         self.warmup_lanes = [item for item in self.warmup_lanes if item.chunk_id != chunk_id]
         self.warmup_lanes = [*self.warmup_lanes, lane][-2:]
         self._warmup_phase = "warming"
+        animation = self._warmup_animation_view()
+        self._advance_warmup_playback()
+        previous = animation.active_chunk_id
+        previous_lane = (
+            animation.lanes[animation._lane_by_chunk[previous]] if previous is not None else None
+        )
+        # Reuse the formal reducer/renderer, but never feed these display cursors
+        # to the runtime. Warmup conditions are synthetic, not executed prefixes.
+        animation.update({
+            **message,
+            "metadata": {
+                "runtime": self.runtime,
+                "previous_chunk_id": previous,
+                "previous_chunk_index": 0 if previous_lane is None else previous_lane.cursor,
+                "timeline_latency_ms": lane.e2e_ms,
+                "gripper_closed_steps_by_group": metadata.get("gripper_closed_steps_by_group", {}),
+            },
+        })
+        self._warmup_playback_start = time.monotonic()
+        self._warmup_action_dt = action_dt
+
+    def _warmup_animation_view(self) -> ChunkTimelineView:
+        if self._warmup_animation is None:
+            self._warmup_animation = ChunkTimelineView(self.gripper_groups)
+        return self._warmup_animation
+
+    def _advance_warmup_playback(self) -> None:
+        animation = self._warmup_animation
+        if animation is not None and animation.active_chunk_id is not None:
+            animation.update({
+                "kind": "state", "active_chunk_id": animation.active_chunk_id,
+                "chunk_index": int(
+                    max(0, time.monotonic() - self._warmup_playback_start) / self._warmup_action_dt
+                ),
+            })
 
     def update(self, message: dict[str, Any]) -> None:
         kind = str(message.get("kind", ""))
@@ -188,6 +234,27 @@ class ChunkTimelineView:
     def _update_event(self, message: dict[str, Any]) -> None:
         event = str(message.get("event", ""))
         metadata = message.get("metadata") or {}
+        if event in {"warmup_inference_submitted", "warmup_inference_failed"}:
+            if not self._warmup_matches_episode(metadata):
+                return
+            chunk_id = metadata.get("request_seq")
+            if chunk_id is None or int(chunk_id) >= 0:
+                return
+            if self.warmup_lanes and int(chunk_id) >= self.warmup_lanes[-1].chunk_id:
+                return
+            animation = self._warmup_animation_view()
+            animation.update({
+                "kind": "event",
+                "event": (
+                    "inference_submitted" if event.endswith("submitted") else "inference_rejected"
+                ),
+                "chunk_id": int(chunk_id),
+                "metadata": {
+                    "runtime": self.runtime, "horizon_steps": metadata.get("horizon_steps", 1),
+                },
+            })
+            self._warmup_phase = "warming"
+            return
         if event == "runtime_service_ready":
             incoming_service_id = str(metadata.get("run_dir", ""))
             if not self.episode_open or (
@@ -489,58 +556,6 @@ class ChunkTimelineView:
         </div>
         """
 
-    def _warmup_html(self) -> str:
-        lanes = []
-        for index in range(2):
-            lane = self.warmup_lanes[index] if index < len(self.warmup_lanes) else None
-            if lane is None:
-                lanes.append(
-                    '<div class="manimux-chunk-lane manimux-warmup-lane">'
-                    '<div class="manimux-chunk-empty">Waiting for a warmup preview</div></div>'
-                )
-                continue
-            cells = "".join(
-                '<span class="manimux-chunk-cell preview" '
-                f'title="Predicted action {step + 1}; not executed"></span>'
-                for step in range(lane.horizon_steps)
-            )
-            strips = []
-            names = self.gripper_groups or {
-                name: name for name in lane.gripper_closed_steps_by_group
-            }
-            for name, label in names.items():
-                flags = lane.gripper_closed_steps_by_group.get(name)
-                if flags is None:
-                    continue
-                markers = "".join(
-                    '<i class="manimux-gripper-step'
-                    f"{' unknown' if step >= len(flags) else ' closed' if flags[step] else ''}"
-                    '"></i>'
-                    for step in range(lane.horizon_steps)
-                )
-                strips.append(
-                    '<div class="manimux-warmup-gripper" '
-                    f'title="{html.escape(label, quote=True)} predicted gripper; '
-                    f'not executed">{markers}</div>'
-                )
-            duration = "E2E unavailable" if lane.e2e_ms is None else f"{lane.e2e_ms:.1f} ms E2E"
-            lanes.append(f"""
-                <div class="manimux-chunk-lane manimux-warmup-lane">
-                  <div class="manimux-chunk-lane-head">
-                    <strong>Preview #{abs(lane.chunk_id)} · {lane.horizon_steps} actions</strong>
-                    <span>{html.escape(lane.branch)}</span>
-                  </div>
-                  <div class="manimux-chunk-cells">{cells}</div>
-                  {"".join(strips)}
-                  <div class="manimux-warmup-lane-time">{duration}</div>
-                </div>
-            """)
-        return (
-            '<div class="manimux-warmup-notice">Warmup preview · no execution</div>'
-            + '<div class="manimux-chunk-spacer"></div>'.join(lanes)
-            + self._warmup_sparkline_html()
-        )
-
     def _handoff_html(self) -> str:
         target_index = next(
             (
@@ -621,7 +636,7 @@ class ChunkTimelineView:
                 )
         return "".join(ranges)
 
-    def render_html(self) -> str:
+    def _lane_content(self) -> tuple[str, str]:
         lane_html: list[str] = []
         for index, lane in enumerate(self.lanes):
             chunk = "—" if lane.chunk_id is None else f"#{lane.chunk_id}"
@@ -681,7 +696,6 @@ class ChunkTimelineView:
         gripper_legend = " · action · ".join(
             f"{html.escape(label)} gripper state" for label in labels
         )
-        runtime = html.escape(self.runtime.upper())
         lanes_with_handoff = lane_html[0] + self._handoff_html() + lane_html[1]
         legend_html = f"""
           <div class="manimux-chunk-legend">
@@ -701,12 +715,20 @@ class ChunkTimelineView:
             </span>
           </div>
         """
+        return lanes_with_handoff, legend_html
+
+    def render_html(self) -> str:
+        runtime = html.escape(self.runtime.upper())
+        lanes_with_handoff, legend_html = self._lane_content()
         if self._warmup_phase == "warming":
-            lanes_with_handoff = self._warmup_html()
-            legend_html = (
-                '<div class="manimux-chunk-legend">Predicted actions only · '
-                "red strips indicate predicted gripper closure</div>"
+            self._advance_warmup_playback()
+            lanes_with_handoff, legend_html = self._warmup_animation_view()._lane_content()
+            lanes_with_handoff = (
+                '<div class="manimux-warmup-notice">Warmup preview · no execution</div>'
+                + lanes_with_handoff
+                + self._warmup_sparkline_html()
             )
+            legend_html = legend_html.replace(">executed</span>", ">previewed</span>")
         return f"""
 <style>
   div:has(> .manimux-chunk-anchor) {{
@@ -758,12 +780,7 @@ class ChunkTimelineView:
   .manimux-chunk-cell.future {{
     border-color:#4b5565; background:transparent;
   }}
-  .manimux-chunk-cell.preview {{ border-color:#47808d; background:#184b59; }}
   .manimux-warmup-notice {{ color:#8bd7e7; margin:0 0 8px; font-weight:600; }}
-  .manimux-warmup-lane {{ border:1px solid #294553; }}
-  .manimux-warmup-lane-time {{ color:#a4bac8; margin-top:5px; font-size:10px; }}
-  .manimux-warmup-gripper {{ display:flex; gap:1px; height:4px; margin-top:3px; }}
-  .manimux-gripper-step.unknown {{ background:#596273; }}
   .manimux-warmup-timing {{ margin-top:9px; padding-top:7px; border-top:1px solid #303a4b; }}
   .manimux-warmup-timing-head {{ display:flex; justify-content:space-between; gap:6px;
     color:#a4bac8; font-size:10px; }}

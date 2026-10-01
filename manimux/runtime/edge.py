@@ -15,6 +15,7 @@ import numpy as np
 from manimux.clock import Clock, SystemClock
 from manimux.embodiments.robot import RobotBase, build_robot
 from manimux.embodiments.sensor import build_sensor
+from manimux.embodiments.sensor.reader import SensorReader
 from manimux.evaluation.identity import rollout_identity
 from manimux.evaluation.rubric import evaluation_parameters
 from manimux.policies import ActionDecoderClient, PolicyCapabilities, metadata_mismatches
@@ -37,13 +38,13 @@ from manimux.runtime.inference import (
 from manimux.runtime.safety import RuntimeState, SafetyGuard
 from manimux.runtime.timeline import ActionTimeline, CommitResult
 from manimux.runtime.warmup import PolicyWarmup
+from manimux.timing import LoopTiming, stage
 from manimux.types import (
     ActionContext,
     GroupVector,
     ObservationSnapshot,
     RobotCommand,
     RobotState,
-    SensorFrame,
     copy_action_chunk,
     copy_group_vector,
 )
@@ -218,6 +219,7 @@ class EdgeRuntime:
             policy=config["viewer"]["policy_label"] or "manimux-local",
             instruction=config["run"]["task"] if config["viewer"]["policy_label"] else "",
             camera_hz=config["viewer"]["camera_hz"],
+            control=config["viewer"].get("control", {}),
         )
         self._state = RuntimeState.DISCONNECTED
         logger.info(
@@ -321,7 +323,16 @@ class EdgeRuntime:
 
     def run(self) -> RunResult:  # noqa: C901 - the safety-critical loop stays linear
         started_wall = time.perf_counter()
+        sensor_reader = SensorReader(
+            self._sensors, self._clock, **self._config["run"].get("sensor_reading", {}),
+        )
         episode_id = _next_rollout_id(self._run_dir)
+        timing = LoopTiming(
+            enabled=self._config["run"].get("control_timing", False),
+            max_cycles=self._config["run"].get("timing_max_cycles", 20000),
+            period_ns=self._control_dt_ns,
+            clock_source=type(self._clock).__name__,
+        )
         recorder = EpisodeRecorder(
             self._run_dir,
             episode_id,
@@ -355,6 +366,7 @@ class EdgeRuntime:
             video_fps=self._config["recording"]["video_fps"],
             video_codec=self._config["recording"]["video_codec"],
             video_queue_size=self._config["recording"]["video_queue_size"],
+            control_timing=timing,
         )
         accepted_plans = 0
         rejected_plans = 0
@@ -372,6 +384,7 @@ class EdgeRuntime:
         robot_connected = False
         steps = 0
         formal_start_recorded = False
+        last_control_status = None
         completed = False
         terminal_reason = "completed"
         abort_reason = "runtime_exception"
@@ -385,9 +398,7 @@ class EdgeRuntime:
                     strategy=build_inference_strategy(self._config),
                     adapter=self._build_adapter(), session_id=self._session_id, clock=self._clock,
                 )
-            for sensor in self._sensors:
-                sensor.start()
-                sensor.read()
+            sensor_reader.start()
             self._worker.start()
             logger.info("policy_worker_ready session=%s", self._session_id)
             if self._decoder is not None:
@@ -442,28 +453,49 @@ class EdgeRuntime:
             # 当前整机未提供手动拖动恢复；Viewer 不展示已退役的驱动能力。
             viewer_episode_metadata["recovery_available"] = False
             self._viewer.set_state_metadata(viewer_episode_metadata)
-            self._viewer.publish_event(
-                "episode_started",
-                metadata=viewer_episode_metadata,
-            )
+            with stage("viewer_publish_event"):
+                self._viewer.publish_event(
+                    "episode_started",
+                    metadata=viewer_episode_metadata,
+                )
             next_tick_ns = self._clock.now_ns()
 
             while steps < self._config["run"]["max_control_steps"]:
+                timing.begin(
+                    scheduled_start_ns=next_tick_ns,
+                    phase=(
+                        f"warmup_{warmup.phase}"
+                        if warmup is not None and not warmup.complete else self._state.value.lower()
+                    ),
+                    step=steps,
+                )
                 loop_start_ns = self._clock.now_ns()
                 now_ns = loop_start_ns
                 state = self._robot.get_state()
-                self._safety.validate_state(state)
-                frames: dict[str, SensorFrame] = {}
-                for sensor in self._sensors:
-                    reading = sensor.read()
-                    batch = {reading.name: reading} if isinstance(reading, SensorFrame) else reading
-                    overlap = set(frames).intersection(batch)
-                    if overlap:
-                        raise RuntimeError(f"duplicate sensor frames: {sorted(overlap)}")
-                    frames.update(batch)
+                with stage("safety_state"):
+                    self._safety.validate_state(state)
+                with stage("camera_read", mode=sensor_reader.mode):
+                    frames = sensor_reader.read()
 
-                viewer_control = self._viewer.poll_control()
+                with stage("viewer_control"):
+                    viewer_control = self._viewer.poll_control()
+                control_diagnostics = getattr(viewer_control, "diagnostics", None)
+                if control_diagnostics is not None:
+                    control_status = (
+                        viewer_control.paused, control_diagnostics.get("reason"),
+                        control_diagnostics.get("timeout_count"),
+                        control_diagnostics.get("error_count"),
+                        control_diagnostics.get("transport_status"),
+                    )
+                    if control_status != last_control_status:
+                        recorder.event(
+                            "viewer_control_state", step=steps,
+                            monotonic_ns=self._clock.now_ns(),
+                            paused=viewer_control.paused, **control_diagnostics,
+                        )
+                        last_control_status = control_status
                 if viewer_control.finish_requested:
+                    timing.set_phase("stopped")
                     # Stop model requests before Home/recording cleanup can take time.
                     self._worker.request_stop()
                     if viewer_control.finish_home is not None:
@@ -472,6 +504,7 @@ class EdgeRuntime:
                     recorder.event("viewer_finish_requested", step=steps, home=home_on_close)
                     break
                 if viewer_control.home_requested:
+                    timing.set_phase("homing")
                     self._robot.home()
                     state = self._robot.get_state()
                     self._safety.reset(state)
@@ -490,27 +523,31 @@ class EdgeRuntime:
                         ),
                     )
                     next_tick_ns = self._clock.now_ns()
+                    timing.end()
                     continue
                 if warmup is not None and not warmup.complete:
                     self._state = RuntimeState.PAUSED
                     before = warmup.metadata()
-                    warmup.advance(
-                        paused=viewer_control.paused,
-                        snapshot=ObservationSnapshot(state=state, frames=frames),
-                    )
+                    with stage("warmup_advance"):
+                        warmup.advance(
+                            paused=viewer_control.paused,
+                            snapshot=ObservationSnapshot(state=state, frames=frames),
+                        )
                     status = warmup.metadata()
+                    timing.set_phase(f"warmup_{warmup.phase}")
                     preview = warmup.take_preview()
                     if preview is not None:
                         preview_chunk, preview_inference_ms, preview_metadata = preview
-                        self._viewer.publish_plan(
-                            preview_chunk, preview_inference_ms,
-                            metadata={
-                                **preview_metadata,
-                                "episode_id": episode_id,
-                                "run_dir": str(self._run_dir.resolve()),
-                                "runtime": self._strategy.name,
-                            },
-                        )
+                        with stage("viewer_publish_plan"):
+                            self._viewer.publish_plan(
+                                preview_chunk, preview_inference_ms,
+                                metadata={
+                                    **preview_metadata,
+                                    "episode_id": episode_id,
+                                    "run_dir": str(self._run_dir.resolve()),
+                                    "runtime": self._strategy.name,
+                                },
+                            )
                     if warmup.complete:
                         self._validate_policy_capabilities()
                         self._strategy.reset()
@@ -525,6 +562,15 @@ class EdgeRuntime:
                     for kind, fields in warmup.take_events():
                         recorder.event(kind, **fields)
                         logger.info("%s %s", kind, fields)
+                        with stage("viewer_publish_event"):
+                            self._viewer.publish_event(
+                                kind, step=steps,
+                                metadata={
+                                    **fields, "episode_id": episode_id,
+                                    "run_dir": str(self._run_dir.resolve()),
+                                    "runtime": self._strategy.name,
+                                },
+                            )
                     if status != before:
                         recorder.update_metadata(warmup=status)
                     viewer_episode_metadata["warmup"] = status
@@ -533,19 +579,22 @@ class EdgeRuntime:
                     self._executor.reset(state)
                     command = self._hold_command(self._clock.now_ns(), state.groups)
                     self._safety.reset(state)
-                    self._safety.validate_command(command)
+                    with stage("safety_command"):
+                        self._safety.validate_command(command)
                     self._robot.send_command(command)
                     previous_command = copy_group_vector(last_command)
                     last_command = copy_group_vector(command.groups)
-                    self._viewer.publish_state(
-                        state, frames, step=steps,
-                        max_steps=self._config["run"]["max_control_steps"],
-                    )
+                    with stage("viewer_publish_state"):
+                        self._viewer.publish_state(
+                            state, frames, step=steps,
+                            max_steps=self._config["run"]["max_control_steps"],
+                        )
                     next_tick_ns = max(
                         next_tick_ns + self._control_dt_ns,
-                        self._clock.now_ns() + self._control_dt_ns,
+                        self._clock.now_ns(),
                     )
-                    self._clock.sleep_until_ns(next_tick_ns)
+                    timing.sleep_until(self._clock, next_tick_ns)
+                    timing.end()
                     # Even after RESET, reacquire a fresh observation on the next tick.
                     continue
                 if viewer_control.paused and (
@@ -563,6 +612,7 @@ class EdgeRuntime:
                 self._state = (
                     RuntimeState.RUNNING if not viewer_control.paused else RuntimeState.PAUSED
                 )
+                timing.set_phase(self._state.value.lower())
                 if self._state == RuntimeState.RUNNING and not formal_start_recorded:
                     recorder.update_metadata(
                         formal_start_state=state_evidence(
@@ -576,7 +626,8 @@ class EdgeRuntime:
                     recorder.event("policy_worker_stopped", step=steps)
 
                 decoded_chunk = None
-                response = self._worker.poll()
+                with stage("worker_poll"):
+                    response = self._worker.poll()
                 if response is not None:
                     logger.info(
                         "policy_response seq=%d inference_ms=%.1f error=%s raw=%s",
@@ -586,7 +637,8 @@ class EdgeRuntime:
                         _raw_action_summary(response.raw_action),
                     )
                 if self._decoder is not None:
-                    decoded = self._decoder.poll()
+                    with stage("decoder_poll"):
+                        decoded = self._decoder.poll()
                     if decoded is not None:
                         if response is not None:
                             raise RuntimeError("model response arrived while decode was in flight")
@@ -620,30 +672,31 @@ class EdgeRuntime:
                             except ValueError as exc:
                                 response = replace(response, error=f"decode_seed_unavailable:{exc}")
                             else:
-                                self._decoder.submit(
-                                    response,
-                                    ActionContext(
-                                        request_seq=response.request_seq,
-                                        observation_time_ns=response.observation_time_ns,
-                                        created_time_ns=response.finished_time_ns,
-                                        execution_time_ns=start_ns,
-                                        measured_state=seed,
-                                        max_source_steps=self._config["inference"][
-                                            "max_chunk_policy_steps"
-                                        ],
-                                        independent_groups=self._config["inference"][
-                                            "independent_group_decoding"
-                                        ],
-                                        decode_budget_ms=(
-                                            self._config["inference"]["decode_budget_ms"]
-                                            if self._config["inference"][
+                                with stage("decoder_submit"):
+                                    self._decoder.submit(
+                                        response,
+                                        ActionContext(
+                                            request_seq=response.request_seq,
+                                            observation_time_ns=response.observation_time_ns,
+                                            created_time_ns=response.finished_time_ns,
+                                            execution_time_ns=start_ns,
+                                            measured_state=seed,
+                                            max_source_steps=self._config["inference"][
+                                                "max_chunk_policy_steps"
+                                            ],
+                                            independent_groups=self._config["inference"][
                                                 "independent_group_decoding"
-                                            ]
-                                            else None
+                                            ],
+                                            decode_budget_ms=(
+                                                self._config["inference"]["decode_budget_ms"]
+                                                if self._config["inference"][
+                                                    "independent_group_decoding"
+                                                ]
+                                                else None
+                                            ),
                                         ),
-                                    ),
-                                    last_request_deadline_ns,
-                                )
+                                        last_request_deadline_ns,
+                                    )
                                 recorder.event(
                                     "decode_submitted",
                                     request_seq=response.request_seq,
@@ -669,14 +722,16 @@ class EdgeRuntime:
                     rejection_reason = None
                     if response.error is not None:
                         rejection_reason = response.error
-                    elif (
-                        response.session_id != self._session_id
-                        or response.request_seq <= discard_responses_through
-                        or response.request_seq < last_submitted_seq
-                        or response.finished_time_ns > last_request_deadline_ns
-                        or response.raw_action is None
-                    ):
-                        rejection_reason = "stale_or_expired_response"
+                    elif response.session_id != self._session_id:
+                        rejection_reason = "session_mismatch"
+                    elif response.request_seq <= discard_responses_through:
+                        rejection_reason = "invalidated_by_pause_or_home"
+                    elif response.request_seq < last_submitted_seq:
+                        rejection_reason = "superseded_response"
+                    elif response.finished_time_ns > last_request_deadline_ns:
+                        rejection_reason = "inference_deadline_exceeded"
+                    elif response.raw_action is None:
+                        rejection_reason = "missing_action"
                     if rejection_reason is not None:
                         logger.warning(
                             "inference_rejected seq=%d reason=%s",
@@ -690,41 +745,43 @@ class EdgeRuntime:
                             request_seq=response.request_seq,
                             reason=rejection_reason,
                         )
-                        self._viewer.publish_event(
-                            "inference_rejected",
-                            step=steps,
-                            chunk_id=response.request_seq,
-                            metadata={"reason": rejection_reason},
-                        )
+                        with stage("viewer_publish_event"):
+                            self._viewer.publish_event(
+                                "inference_rejected",
+                                step=steps,
+                                chunk_id=response.request_seq,
+                                metadata={"reason": rejection_reason},
+                            )
                         pending_visuals.pop(response.request_seq, None)
                     else:
                         try:
                             decode_start = time.perf_counter_ns()
-                            chunk = (
-                                decoded_chunk
-                                if decoded_chunk is not None
-                                else self._adapter.decode_action(
-                                    response.raw_action,
-                                    ActionContext(
-                                        request_seq=response.request_seq,
-                                        observation_time_ns=response.observation_time_ns,
-                                        created_time_ns=response.finished_time_ns,
-                                        execution_time_ns=(
-                                            now_ns
-                                            if self._strategy.name in {"manimux", "rtc"}
-                                            else None
+                            with stage("policy_decode"):
+                                chunk = (
+                                    decoded_chunk
+                                    if decoded_chunk is not None
+                                    else self._adapter.decode_action(
+                                        response.raw_action,
+                                        ActionContext(
+                                            request_seq=response.request_seq,
+                                            observation_time_ns=response.observation_time_ns,
+                                            created_time_ns=response.finished_time_ns,
+                                            execution_time_ns=(
+                                                now_ns
+                                                if self._strategy.name in {"manimux", "rtc"}
+                                                else None
+                                            ),
+                                            measured_state=(
+                                                observation_state
+                                                if self._decode_seed_source == "observation_state"
+                                                else state
+                                            ),
+                                            max_source_steps=self._config["inference"][
+                                                "max_chunk_policy_steps"
+                                            ],
                                         ),
-                                        measured_state=(
-                                            observation_state
-                                            if self._decode_seed_source == "observation_state"
-                                            else state
-                                        ),
-                                        max_source_steps=self._config["inference"][
-                                            "max_chunk_policy_steps"
-                                        ],
-                                    ),
+                                    )
                                 )
-                            )
                             if decoded_chunk is None:
                                 chunk.metadata["decode_ms"] = (
                                     time.perf_counter_ns() - decode_start
@@ -743,12 +800,13 @@ class EdgeRuntime:
                                 request_seq=response.request_seq,
                                 reason=reason,
                             )
-                            self._viewer.publish_event(
-                                "plan_rejected",
-                                step=steps,
-                                chunk_id=response.request_seq,
-                                metadata={"reason": reason},
-                            )
+                            with stage("viewer_publish_event"):
+                                self._viewer.publish_event(
+                                    "plan_rejected",
+                                    step=steps,
+                                    chunk_id=response.request_seq,
+                                    metadata={"reason": reason},
+                                )
                             pending_visuals.pop(response.request_seq, None)
                             chunk = None
                         now_ns = self._clock.now_ns()
@@ -763,23 +821,25 @@ class EdgeRuntime:
                                     f"'joint_position', got {chunk.action_space!r}"
                                 ),
                             )
-                            self._viewer.publish_event(
-                                "plan_rejected",
-                                step=steps,
-                                chunk_id=response.request_seq,
-                                metadata={"reason": "invalid_action_space"},
-                            )
+                            with stage("viewer_publish_event"):
+                                self._viewer.publish_event(
+                                    "plan_rejected",
+                                    step=steps,
+                                    chunk_id=response.request_seq,
+                                    metadata={"reason": "invalid_action_space"},
+                                )
                             pending_visuals.pop(response.request_seq, None)
                             chunk = None
                         canonical_raw = None if chunk is None else copy_action_chunk(chunk)
                         if chunk is not None:
                             try:
-                                chunk = prepare_strategy_chunk(
-                                    self._strategy,
-                                    chunk=chunk,
-                                    response=response,
-                                    now_ns=now_ns,
-                                )
+                                with stage("strategy_prepare_chunk"):
+                                    chunk = prepare_strategy_chunk(
+                                        self._strategy,
+                                        chunk=chunk,
+                                        response=response,
+                                        now_ns=now_ns,
+                                    )
                             except (TypeError, ValueError) as exc:
                                 self._strategy.on_response_rejected(response)
                                 rejected_plans += 1
@@ -789,12 +849,13 @@ class EdgeRuntime:
                                     request_seq=response.request_seq,
                                     reason=reason,
                                 )
-                                self._viewer.publish_event(
-                                    "plan_rejected",
-                                    step=steps,
-                                    chunk_id=response.request_seq,
-                                    metadata={"reason": reason},
-                                )
+                                with stage("viewer_publish_event"):
+                                    self._viewer.publish_event(
+                                        "plan_rejected",
+                                        step=steps,
+                                        chunk_id=response.request_seq,
+                                        metadata={"reason": reason},
+                                    )
                                 pending_visuals.pop(response.request_seq, None)
                                 chunk = None
                         if chunk is not None:
@@ -838,15 +899,17 @@ class EdgeRuntime:
                             ):
                                 result = CommitResult(False, "no_future_horizon")
                             else:
-                                result = self._timeline.commit(
-                                    chunk,
-                                    now_ns=now_ns,
-                                    max_plan_age_ns=int(
-                                        self._config["inference"]["max_plan_age_s"] * 1_000_000_000
-                                    ),
-                                    current_command=commit.current_command,
-                                    blend_steps=commit.blend_steps,
-                                )
+                                with stage("timeline_commit"):
+                                    result = self._timeline.commit(
+                                        chunk,
+                                        now_ns=now_ns,
+                                        max_plan_age_ns=int(
+                                            self._config["inference"]["max_plan_age_s"]
+                                            * 1_000_000_000
+                                        ),
+                                        current_command=commit.current_command,
+                                        blend_steps=commit.blend_steps,
+                                    )
                             if result.accepted:
                                 accepted_plans += 1
                                 last_inference_ms = response.inference_ms
@@ -870,12 +933,13 @@ class EdgeRuntime:
                                     infra_output=chunk,
                                     committed=committed,
                                 )
-                                event_fields = self._strategy.on_plan_accepted(
-                                    chunk=chunk,
-                                    result=result,
-                                    response=response,
-                                    now_ns=now_ns,
-                                )
+                                with stage("strategy_feedback"):
+                                    event_fields = self._strategy.on_plan_accepted(
+                                        chunk=chunk,
+                                        result=result,
+                                        response=response,
+                                        now_ns=now_ns,
+                                    )
                                 recorder.event(
                                     "plan_accepted",
                                     plan_id=chunk.plan_id,
@@ -883,55 +947,59 @@ class EdgeRuntime:
                                     **chunk.metadata,
                                     **event_fields,
                                 )
-                                recorder.event(
-                                    "plan_boundary",
-                                    **build_plan_boundary_payload(
-                                        step=steps,
-                                        monotonic_ns=now_ns,
-                                        blend_anchor_source=commit.anchor_source,
-                                        blend_steps=commit.blend_steps,
-                                        trimmed_steps=result.trimmed_steps,
-                                        previous_reference=previous_reference,
-                                        previous_command=previous_command,
-                                        last_command=last_command,
-                                        measured=state.groups,
-                                        chunk=chunk,
+                                with stage("plan_boundary_diagnostics"):
+                                    recorder.event(
+                                        "plan_boundary",
+                                        **build_plan_boundary_payload(
+                                            step=steps,
+                                            monotonic_ns=now_ns,
+                                            blend_anchor_source=commit.anchor_source,
+                                            blend_steps=commit.blend_steps,
+                                            trimmed_steps=result.trimmed_steps,
+                                            previous_reference=previous_reference,
+                                            previous_command=previous_command,
+                                            last_command=last_command,
+                                            measured=state.groups,
+                                            chunk=chunk,
+                                            committed=committed,
+                                        ),
+                                    )
+                                with stage("viewer_publish_plan"):
+                                    self._viewer.publish_plan(
+                                        chunk,
+                                        response.inference_ms,
                                         committed=committed,
-                                    ),
-                                )
-                                self._viewer.publish_plan(
-                                    chunk,
-                                    response.inference_ms,
-                                    committed=committed,
-                                    metadata={
-                                        "runtime": self._strategy.name,
-                                        "raw_horizon_steps": chunk.horizon_steps,
-                                        "committed_horizon_steps": committed.horizon_steps,
-                                        "trimmed_steps": result.trimmed_steps,
-                                        "timeline_latency_ms": (
-                                            result.timeline_latency_ns / 1_000_000
-                                        ),
-                                        "decode_stage_ms": chunk.metadata.get("decode_stage_ms"),
-                                        "previous_chunk_id": previous_chunk_id,
-                                        "previous_chunk_index": previous_chunk_index,
-                                        "previous_chunk_horizon_steps": (
-                                            0
-                                            if previous_horizon is None
-                                            else previous_horizon.horizon_steps
-                                        ),
-                                        "superseded_steps": (
-                                            0
-                                            if previous_horizon is None
-                                            else max(
-                                                0,
-                                                previous_horizon.horizon_steps
-                                                - previous_chunk_index,
-                                            )
-                                        ),
-                                        **submission_visuals,
-                                        **event_fields,
-                                    },
-                                )
+                                        metadata={
+                                            "runtime": self._strategy.name,
+                                            "raw_horizon_steps": chunk.horizon_steps,
+                                            "committed_horizon_steps": committed.horizon_steps,
+                                            "trimmed_steps": result.trimmed_steps,
+                                            "timeline_latency_ms": (
+                                                result.timeline_latency_ns / 1_000_000
+                                            ),
+                                            "decode_stage_ms": chunk.metadata.get(
+                                                "decode_stage_ms"
+                                            ),
+                                            "previous_chunk_id": previous_chunk_id,
+                                            "previous_chunk_index": previous_chunk_index,
+                                            "previous_chunk_horizon_steps": (
+                                                0
+                                                if previous_horizon is None
+                                                else previous_horizon.horizon_steps
+                                            ),
+                                            "superseded_steps": (
+                                                0
+                                                if previous_horizon is None
+                                                else max(
+                                                    0,
+                                                    previous_horizon.horizon_steps
+                                                    - previous_chunk_index,
+                                                )
+                                            ),
+                                            **submission_visuals,
+                                            **event_fields,
+                                        },
+                                    )
                                 pending_visuals.pop(response.request_seq, None)
                             else:
                                 logger.warning(
@@ -948,12 +1016,13 @@ class EdgeRuntime:
                                     request_seq=chunk.request_seq,
                                     reason=result.reason,
                                 )
-                                self._viewer.publish_event(
-                                    "plan_rejected",
-                                    step=steps,
-                                    chunk_id=response.request_seq,
-                                    metadata={"reason": result.reason},
-                                )
+                                with stage("viewer_publish_event"):
+                                    self._viewer.publish_event(
+                                        "plan_rejected",
+                                        step=steps,
+                                        chunk_id=response.request_seq,
+                                        metadata={"reason": result.reason},
+                                    )
                                 pending_visuals.pop(response.request_seq, None)
 
                 if self._worker.is_alive and not (
@@ -964,24 +1033,26 @@ class EdgeRuntime:
                     and self._state != RuntimeState.RUNNING
                 ):
                     snapshot = ObservationSnapshot(state=state, frames=frames)
-                    submission = self._strategy.build_submission(
-                        session_id=self._session_id,
-                        request_seq=request_seq + 1,
-                        now_ns=now_ns,
-                        snapshot=snapshot,
-                        adapter=self._adapter,
-                        timeline=self._timeline,
-                        request_state=RequestState(
-                            in_flight=request_in_flight,
-                            last_submitted_seq=last_submitted_seq,
-                            last_deadline_ns=last_request_deadline_ns,
-                        ),
-                        runtime_state=self._state,
-                    )
-                    if submission is not None:
-                        prepared_request = self._adapter.prepare_request(
-                            submission.request,
+                    with stage("policy_schedule"):
+                        submission = self._strategy.build_submission(
+                            session_id=self._session_id,
+                            request_seq=request_seq + 1,
+                            now_ns=now_ns,
+                            snapshot=snapshot,
+                            adapter=self._adapter,
+                            timeline=self._timeline,
+                            request_state=RequestState(
+                                in_flight=request_in_flight,
+                                last_submitted_seq=last_submitted_seq,
+                                last_deadline_ns=last_request_deadline_ns,
+                            ),
+                            runtime_state=self._state,
                         )
+                    if submission is not None:
+                        with stage("policy_prepare"):
+                            prepared_request = self._adapter.prepare_request(
+                                submission.request,
+                            )
                         request_seq = submission.request.request_seq
                         if self._decode_seed_source == "observation_state":
                             observation_state = prepared_request.observation.state
@@ -990,7 +1061,8 @@ class EdgeRuntime:
                                 monotonic_ns=observation_state.monotonic_ns,
                                 sequence=observation_state.sequence,
                             )
-                        self._worker.submit_latest(prepared_request)
+                        with stage("worker_submit"):
+                            self._worker.submit_latest(prepared_request)
                         logger.info(
                             "inference_submitted seq=%d observation_ns=%d deadline_ns=%d "
                             "state_seq=%d cameras=%s",
@@ -1040,28 +1112,32 @@ class EdgeRuntime:
                                 submission.event_fields.get("forecast_delay", 0)
                             )
                         pending_visuals[request_seq] = visual_fields
-                        self._viewer.publish_event(
-                            "inference_submitted",
-                            step=steps,
-                            chunk_id=request_seq,
-                            metadata=visual_fields,
-                        )
+                        with stage("viewer_publish_event"):
+                            self._viewer.publish_event(
+                                "inference_submitted",
+                                step=steps,
+                                chunk_id=request_seq,
+                                metadata=visual_fields,
+                            )
                 for kind, fields in self._strategy.take_runtime_events(step=steps):
                     recorder.event(kind, **fields)
-                    self._viewer.publish_event(kind, step=steps, metadata=fields)
+                    with stage("viewer_publish_event"):
+                        self._viewer.publish_event(kind, step=steps, metadata=fields)
 
                 now_ns = self._clock.now_ns()
-                reference = self._timeline.reference_horizon(
-                    now_ns=now_ns,
-                    dt_ns=self._control_dt_ns,
-                    horizon_steps=self._executor.horizon_steps,
-                )
+                with stage("timeline_reference"):
+                    reference = self._timeline.reference_horizon(
+                        now_ns=now_ns,
+                        dt_ns=self._control_dt_ns,
+                        horizon_steps=self._executor.horizon_steps,
+                    )
                 scheduled = copy_group_vector(state.groups)
                 if self._state == RuntimeState.RUNNING and reference is not None:
                     scheduled = {
                         name: values[0].copy() for name, values in reference.groups.items()
                     }
-                    command = self._executor.step(now_ns, state, reference)
+                    with stage("executor_step"):
+                        command = self._executor.step(now_ns, state, reference)
                     if isinstance(self._executor, SmoothExecutor) and (
                         self._config["executor"]["smooth"]["release_guard"] is not None
                         or self._executor.uses_close_latch
@@ -1083,7 +1159,8 @@ class EdgeRuntime:
                         sequence=state.sequence,
                     )
                     if isinstance(self._executor, SmoothExecutor):
-                        command = self._executor.hold(now_ns, held_state)
+                        with stage("executor_hold"):
+                            command = self._executor.hold(now_ns, held_state)
                         command.plan_id = self._timeline.active_plan_id
                     else:
                         self._executor.reset(held_state)
@@ -1099,7 +1176,8 @@ class EdgeRuntime:
                             state.sequence,
                         )
                     )
-                self._safety.validate_command(command)
+                with stage("safety_command"):
+                    self._safety.validate_command(command)
                 log_dispatch = (
                     command.plan_id != last_dispatch_plan_id
                     or now_ns - last_dispatch_log_ns >= 1_000_000_000
@@ -1140,18 +1218,19 @@ class EdgeRuntime:
                     last_dispatch_plan_id = command.plan_id
                 previous_command = copy_group_vector(last_command)
                 last_command = copy_group_vector(command.groups)
-                self._viewer.publish_state(
-                    state,
-                    frames,
-                    step=steps,
-                    max_steps=self._config["run"]["max_control_steps"],
-                    chunk_index=self._timeline.cursor(now_ns),
-                    active_chunk_id=(
-                        None
-                        if self._timeline.accepted_request_seq < 0
-                        else self._timeline.accepted_request_seq
-                    ),
-                )
+                with stage("viewer_publish_state"):
+                    self._viewer.publish_state(
+                        state,
+                        frames,
+                        step=steps,
+                        max_steps=self._config["run"]["max_control_steps"],
+                        chunk_index=self._timeline.cursor(now_ns),
+                        active_chunk_id=(
+                            None
+                            if self._timeline.accepted_request_seq < 0
+                            else self._timeline.accepted_request_seq
+                        ),
+                    )
                 if self._state == RuntimeState.RUNNING:
                     recorder.record_tick(
                         monotonic_ns=now_ns,
@@ -1167,11 +1246,12 @@ class EdgeRuntime:
                     )
                     steps += 1
 
-                self._strategy.on_tick(
-                    steps=steps,
-                    loop_ms=(self._clock.now_ns() - loop_start_ns) / 1e6,
-                    control_dt_ns=self._control_dt_ns,
-                )
+                with stage("strategy_tick"):
+                    self._strategy.on_tick(
+                        steps=steps,
+                        loop_ms=(self._clock.now_ns() - loop_start_ns) / 1e6,
+                        control_dt_ns=self._control_dt_ns,
+                    )
                 next_tick_ns += self._control_dt_ns
                 finished_tick_ns = self._clock.now_ns()
                 if next_tick_ns <= finished_tick_ns:
@@ -1181,27 +1261,31 @@ class EdgeRuntime:
                             lag_ns=finished_tick_ns - next_tick_ns,
                             step=steps,
                         )
-                    next_tick_ns = finished_tick_ns + self._control_dt_ns
-                self._clock.sleep_until_ns(next_tick_ns)
+                    # Resume immediately; rebase so missed periods are not replayed.
+                    next_tick_ns = finished_tick_ns
+                timing.sleep_until(self._clock, next_tick_ns)
+                timing.end()
 
+            timing.end(completed=False)
             episode_dir = recorder.finish(
                 success=True,
                 terminal_reason=terminal_reason,
                 steps=steps,
                 wall_time_s=time.perf_counter() - started_wall,
             )
-            self._viewer.publish_event(
-                "episode_finished",
-                step=steps,
-                metadata={
-                    "episode_id": episode_id,
-                    "episode_dir": str(episode_dir.resolve()),
-                    "reason": terminal_reason,
-                    "launch_mode": self._launch_mode,
-                    "evaluation": dict(self._evaluation),
-                    **self._rollout_identity,
-                },
-            )
+            with stage("viewer_publish_event"):
+                self._viewer.publish_event(
+                    "episode_finished",
+                    step=steps,
+                    metadata={
+                        "episode_id": episode_id,
+                        "episode_dir": str(episode_dir.resolve()),
+                        "reason": terminal_reason,
+                        "launch_mode": self._launch_mode,
+                        "evaluation": dict(self._evaluation),
+                        **self._rollout_identity,
+                    },
+                )
             completed = True
             return RunResult(
                 episode_dir=episode_dir,
@@ -1220,6 +1304,7 @@ class EdgeRuntime:
             logger.error("episode_aborted %s", abort_detail)
             raise
         finally:
+            timing.end(completed=False)
             faulted = not completed and abort_reason != "KeyboardInterrupt"
             self._state = RuntimeState.IDLE
             cleanup_errors: list[BaseException] = []
@@ -1242,11 +1327,10 @@ class EdgeRuntime:
                     closer()
                 except BaseException as exc:
                     cleanup_errors.append(exc)
-            for sensor in self._sensors:
-                try:
-                    sensor.close()
-                except BaseException as exc:
-                    cleanup_errors.append(exc)
+            try:
+                sensor_reader.close()
+            except BaseException as exc:
+                cleanup_errors.append(exc)
             try:
                 self._viewer.close()
             except BaseException as exc:

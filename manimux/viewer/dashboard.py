@@ -1120,7 +1120,9 @@ class PolicyViewer:
             self.status.content = "⚪ **Rollout finished · evaluation skipped**"
 
     def control_state(self) -> dict[str, Any]:
+        requested_at = time.monotonic()
         with self.lock:
+            locked_at = time.monotonic()
             state = {
                 "paused": self.paused,
                 "home_requested": self.home_requested,
@@ -1137,6 +1139,10 @@ class PolicyViewer:
             self.finish_requested = False
             self.finish_home = None
             self.new_rollout_requested = False
+            state["control_timing"] = {
+                "lock_wait_ms": (locked_at - requested_at) * 1000,
+                "state_read_ms": (time.monotonic() - locked_at) * 1000,
+            }
             return state
 
     def _matches_selected_robot(self, message: dict[str, Any]) -> bool:

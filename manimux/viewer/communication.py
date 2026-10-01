@@ -6,6 +6,7 @@ import base64
 import contextlib
 import io
 import threading
+import time
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from typing import Any, cast
@@ -223,28 +224,63 @@ class ControlServer:
 class ControlClient:
     """Best-effort polling client that fails closed when the viewer is absent."""
 
-    def __init__(self, endpoint: str = "tcp://127.0.0.1:5569") -> None:
+    def __init__(
+        self, endpoint: str = "tcp://127.0.0.1:5569", *, timeout_ms: int = 20,
+        reply_timeout_ms: int | None = None,
+    ) -> None:
         self._context: zmq.Context[zmq.Socket[bytes]] = zmq.Context.instance()
         self._endpoint = endpoint
+        self._timeout_ms = timeout_ms
+        self._reply_timeout_ms = timeout_ms if reply_timeout_ms is None else reply_timeout_ms
+        self._pending_since: float | None = None
+        self.last_status = "not_ready"
+        self.last_reply_request_started_at: float | None = None
+        self.last_reply_rtt_ms: float | None = None
         self._socket: zmq.Socket[bytes] | None = None
         self._connect()
 
     def _connect(self) -> None:
+        self._pending_since = None
         if self._socket is not None:
             self._socket.close(linger=0)
         self._socket = self._context.socket(zmq.REQ)
         self._socket.setsockopt(zmq.LINGER, 0)
         self._socket.connect(self._endpoint)
 
-    def poll(self) -> dict[str, Any]:
+    def poll_state(self) -> dict[str, Any] | None:
+        """Return only received controls; absence of a reply is not a Pause command."""
         assert self._socket is not None
         try:
-            self._socket.send(b"state", flags=zmq.NOBLOCK)
-            if self._socket.poll(20, zmq.POLLIN):
-                return cast(dict[str, Any], self._socket.recv_json())
+            if self._pending_since is None:
+                self._socket.send(b"state", flags=zmq.NOBLOCK)
+                self._pending_since = time.monotonic()
+            if self._socket.poll(self._timeout_ms, zmq.POLLIN):
+                state = self._socket.recv_json()
+                self.last_reply_request_started_at = self._pending_since
+                self.last_reply_rtt_ms = (time.monotonic() - self._pending_since) * 1000
+                self._pending_since = None
+                if not isinstance(state, dict) or not isinstance(state.get("paused"), bool):
+                    self.last_status = "invalid_reply"
+                    return None
+                self.last_status = "ok"
+                return state
+            self.last_status = "timeout"
+            # Keep the REQ alive for a bounded late reply, including one-shot events.
+            if (time.monotonic() - self._pending_since) * 1000 >= self._reply_timeout_ms:
+                self._connect()
+            return None
+        except ValueError:
+            self.last_status = "invalid_reply"
         except zmq.ZMQError:
-            pass
+            self.last_status = "transport_error"
         self._connect()
+        return None
+
+    def poll(self) -> dict[str, Any]:
+        """Keep the session-preparation API fail-closed when no reply arrives."""
+        state = self.poll_state()
+        if state is not None:
+            return state
         return {
             "paused": True,
             "home_requested": False,

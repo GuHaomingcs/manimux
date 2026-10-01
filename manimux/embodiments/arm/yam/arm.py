@@ -7,6 +7,7 @@ import numpy as np
 
 from manimux.clock import SystemClock
 from manimux.embodiments.arm.base import ArmBase, ArmController, ArmModel, ArmState
+from manimux.timing import stage
 
 from .kinematics import YamManipulatorKinematics, visual_configuration
 
@@ -43,13 +44,17 @@ class YamController(ArmController):
 
     def get_states(self):
         # 复制 SDK 当前反馈，不用最后一次发送的目标代替实测位置。
-        joints = self.robot.get_joint_pos().copy()
+        with stage(f"yam.{self.channel}.sdk_get_joint_pos"):
+            sdk_joints = self.robot.get_joint_pos()
+        joints = sdk_joints.copy()
         self.sequence += 1
         return {self.channel: ArmState(joints, self.clock.now_ns(), self.sequence)}
 
     def send_commands(self, targets):
         # SDK 可能就地裁剪传入数组；命令本身仍由上层拥有。
-        self.robot.command_joint_pos(targets[self.channel].copy())
+        target = targets[self.channel].copy()
+        with stage(f"yam.{self.channel}.sdk_command_joint_pos"):
+            self.robot.command_joint_pos(target)
 
     def move_joints(self, target, *, time_interval_s):
         """起始姿态和 Home 沿用 SDK 插值；整机层负责协调各臂的阶段。"""

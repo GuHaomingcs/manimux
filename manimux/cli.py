@@ -248,11 +248,14 @@ def _git_sha(workdir: Path | None = None) -> str | None:
 
 
 def _load_config(
-    config_path: Path, executor: str | None = None, *, local: Path | None = None
+    config_path: Path, executor: str | None = None, *, local: Path | None = None,
+    control_timing: bool = False,
 ) -> dict:
     config = load_config(config_path, local=resolve_local_path(config_path, local))
     if executor is not None:
         config["executor"]["type"] = executor
+    if control_timing:
+        config["run"]["control_timing"] = True
     return config
 
 
@@ -297,11 +300,14 @@ def _create_run_dir(config: dict, config_path: Path, *, mode: str) -> Path:
     return run_dir
 
 
-def _run(config_path: Path, executor: str | None = None, *, local: Path | None = None) -> int:
+def _run(
+    config_path: Path, executor: str | None = None, *, local: Path | None = None,
+    control_timing: bool = False,
+) -> int:
     from manimux.runtime import build_runtime
     from manimux.runtime.lock import RuntimeLockError
 
-    config = _load_config(config_path, executor, local=local)
+    config = _load_config(config_path, executor, local=local, control_timing=control_timing)
     try:
         with _runtime_lock(config, config_path, mode="run"):
             run_dir = _create_run_dir(config, config_path, mode="run")
@@ -321,12 +327,15 @@ def _run(config_path: Path, executor: str | None = None, *, local: Path | None =
     return 0 if result.success else 2
 
 
-def _serve(config_path: Path, executor: str | None = None, *, local: Path | None = None) -> int:
+def _serve(
+    config_path: Path, executor: str | None = None, *, local: Path | None = None,
+    control_timing: bool = False,
+) -> int:
     # Session/recovery dependencies are only needed for the interactive service.
     from manimux.runtime.lock import RuntimeLockError
     from manimux.session import RuntimeSessionService
 
-    config = _load_config(config_path, executor, local=local)
+    config = _load_config(config_path, executor, local=local, control_timing=control_timing)
     try:
         with _runtime_lock(config, config_path, mode="serve"):
             run_dir = _create_run_dir(config, config_path, mode="serve")
@@ -360,6 +369,10 @@ def _add_runtime_arguments(parser: argparse.ArgumentParser) -> None:
     )
     parser.add_argument("--executor", choices=("direct", "smooth", "mpc"))
     parser.add_argument(
+        "--control-timing", action="store_true",
+        help="Collect bounded per-cycle timings; save and summarize when the rollout ends",
+    )
+    parser.add_argument(
         "--log-level",
         choices=("DEBUG", "INFO", "WARNING", "ERROR"),
         default="INFO",
@@ -388,14 +401,20 @@ def main(argv: list[str] | None = None) -> int:
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
     )
     if args.command == "run":
-        return _run(args.config, args.executor, local=args.local)
+        return _run(
+            args.config, args.executor, local=args.local, control_timing=args.control_timing,
+        )
     if args.command == "serve":
-        return _serve(args.config, args.executor, local=args.local)
+        return _serve(
+            args.config, args.executor, local=args.local, control_timing=args.control_timing,
+        )
     raise AssertionError(f"unhandled command {args.command}")
 
 
 def run_parameters(**options) -> dict:
     """补齐实验记录目录和控制步数。"""
+
+    from manimux.embodiments.sensor.reader import sensor_reading_parameters
 
     if "max_steps" in options:
         raise ValueError("unsupported run field: max_steps")
@@ -403,6 +422,9 @@ def run_parameters(**options) -> dict:
         "output_dir": Path("data"),
         "max_control_steps": 500,
         "warmup_before_start": False,
+        "control_timing": False,
+        "timing_max_cycles": 20000,
+        "sensor_reading": {},
         "experiment_mode": False,
         "layout_id": "",
         "repeat_id": None,
@@ -413,6 +435,11 @@ def run_parameters(**options) -> dict:
         values["output_dir"] = Path(values["output_dir"])
     if not isinstance(values["warmup_before_start"], bool):
         raise ValueError("run.warmup_before_start must be boolean")
+    if not isinstance(values["control_timing"], bool):
+        raise ValueError("run.control_timing must be boolean")
+    if type(values["timing_max_cycles"]) is not int or values["timing_max_cycles"] <= 0:
+        raise ValueError("run.timing_max_cycles must be a positive integer")
+    values["sensor_reading"] = sensor_reading_parameters(**values["sensor_reading"])
     return values
 
 

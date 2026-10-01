@@ -18,6 +18,7 @@ class ViewerControl:
     home_requested: bool = False
     finish_requested: bool = False
     finish_home: bool | None = None
+    diagnostics: dict[str, Any] | None = None
 
 
 class ViewerBridge:
@@ -31,6 +32,7 @@ class ViewerBridge:
         policy: str = "manimux-local",
         instruction: str = "",
         camera_hz: float = 5.0,
+        control: dict | None = None,
     ) -> None:
         if camera_hz < 0:
             raise ValueError("camera_hz must be non-negative")
@@ -49,15 +51,15 @@ class ViewerBridge:
         if not enabled:
             return
         from manimux.viewer.communication import (
-            ControlClient,
             PolicyPlan,
             RobotSnapshot,
             RuntimeEvent,
             ViewerPublisher,
         )
+        from manimux.viewer.control import RuntimeControlClient
 
         self._publisher = ViewerPublisher()
-        self._controls = ControlClient()
+        self._controls = RuntimeControlClient(**(control or {}))
         self._policy_plan_type = PolicyPlan
         self._snapshot_type = RobotSnapshot
         self._runtime_event_type = RuntimeEvent
@@ -97,6 +99,7 @@ class ViewerBridge:
             finish_home=(
                 state.get("finish_home") if isinstance(state.get("finish_home"), bool) else None
             ),
+            diagnostics=state.get("diagnostics"),
         )
 
     def set_state_metadata(self, metadata: dict[str, object]) -> None:

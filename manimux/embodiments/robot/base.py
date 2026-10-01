@@ -25,6 +25,7 @@ from manimux.kinematics.end_effector import Frame, attach_end_effector
 from manimux.kinematics.robot import RobotKinematics
 from manimux.kinematics.tool import FixedToolGeometry
 from manimux.plugins import load_plugin
+from manimux.timing import stage, timed, timed_lock, timing_scope
 from manimux.types import RobotCommand, RobotState, SensorFrame
 
 
@@ -143,10 +144,18 @@ class RobotBase(ABC):
         if not self._ready:
             raise RuntimeError("robot is not connected")
 
+    @timed("robot_get_state")
     def get_state(self) -> RobotState:
-        with self._lock:
+        with timing_scope("robot_get_state"), timed_lock(self._lock, "assembly_lock_wait"):
             self._require_ready()
-            feedback = {controller: controller.get_states() for controller in self._controllers}
+            feedback = {}
+            for index, controller in enumerate(self._controllers):
+                name = f"controller_{index}.get_states"
+                with (
+                    stage(name, controller_type=type(controller).__name__),
+                    timing_scope(name),
+                ):
+                    feedback[controller] = controller.get_states()
             groups, timestamps = {}, []
             for name, arm in self.arm_components.items():
                 state = feedback[arm.controller][arm.channel]
@@ -166,8 +175,9 @@ class RobotBase(ABC):
             self._sequence += 1
             return RobotState(groups, min(timestamps), self._sequence)
 
+    @timed("robot_send_command")
     def send_command(self, command: RobotCommand) -> None:
-        with self._lock:
+        with timing_scope("robot_send_command"), timed_lock(self._lock, "assembly_lock_wait"):
             self._require_ready()
             if set(command.groups) != set(self.arm_components):
                 raise ValueError("command must contain all configured groups, without extras")
@@ -191,8 +201,13 @@ class RobotBase(ABC):
                 controller.validate_commands(batch)
             try:
                 self.get_state()
-                for controller, batch in batches.items():
-                    controller.send_commands(batch)
+                for index, (controller, batch) in enumerate(batches.items()):
+                    name = f"controller_{index}.send_commands"
+                    with (
+                        stage(name, controller_type=type(controller).__name__),
+                        timing_scope(name),
+                    ):
+                        controller.send_commands(batch)
                 if self._end_effector_control:
                     for name, tool_command in tool_commands.items():
                         self.end_effectors[name].send_command(tool_command)
