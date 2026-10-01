@@ -5,6 +5,35 @@ A checkpoint is not portable to another robot just because its output width matc
 Use the matching experiment on the runtime and model server, and bind local paths
 in your station file where that launcher supports it.
 
+## Integration counts
+
+The README counts distinct policy implementations selected by checked-in deployment
+recipes, not checkpoints, YAML files or every model in an upstream framework.
+
+| Scope | Count | Included implementations |
+| --- | --- | --- |
+| Policies with robot deployment recipes | 8 | Pi05, DP, SAPolicy, GR00T N1.7, LingBot-VLA2, Xiaomi XR-1, UMI DP, OpenWAM |
+| Policies with offline recipes | 5 | Isaac 0.5; StarVLA QwenOFT, QwenPI-v3, QwenGR00T, QwenFast |
+| Inference modes | 8 | Serial, asynchronous chunking, RTC, ACT temporal ensembling, AAC, PAINT, AutoHorizon, DVAC |
+| Robot assemblies | 2 | YAM, Tianji–TacCap |
+
+The **13 policy integrations** are selected through `policy_name` for XPolicyLab
+and `framework` for StarVLA under `manimux/configs/policy/`. QwenGR00T and GR00T N1.7
+are separate implementations; additional tasks and checkpoint variants are not counted.
+Cosmos3 has an additional offline server guide but no checked-in ManiMux policy recipe,
+so it is outside this count. A framework's other models can be integrated through the
+same client protocol; they are not automatically counted as ManiMux deployments.
+
+The **8 inference modes** use seven registered strategies: Serial and asynchronous
+chunking both select `algorithm: manimux`, with different `inference_schedule` settings.
+This count excludes executors (Direct, Smooth, MPC), blending parameters and history wrappers.
+See [scheduling](../advanced/inference.md) for behavior and model-side sampler requirements.
+
+The **2 embodiments** are registered hardware assembly integrations. Offline ALOHA,
+ARX and LIBERO recipe contracts do not add hardware drivers. Counts describe integration
+scope, not a benchmark result or support for every combination. Use each runbook's
+checkpoint, SDK, asset and validation requirements.
+
 ## Model and robot recipes
 
 | Deployment | Guide |

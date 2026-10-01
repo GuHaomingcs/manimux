@@ -14,11 +14,10 @@
 [![Demo video](https://img.shields.io/badge/Demo-Watch%20video-EF4444?style=flat-square)](https://sii-liulab.github.io/manimux/#manimux)
 [![Agent skills](https://img.shields.io/badge/Develop-Agent%20skills-8B5CF6?style=flat-square)](.agents/skills/manimux-development/SKILL.md)
 
-[![Frameworks: 2](https://img.shields.io/badge/Frameworks-2-F59E0B?style=flat-square)](#architecture)
-[![Python](https://img.shields.io/badge/Python-3.11%20%7C%203.12-3776AB?style=flat-square)](pyproject.toml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-22C55E?style=flat-square)](LICENSE)
+[![Policy recipes: 13](https://img.shields.io/badge/Policy%20recipes-13-F59E0B?style=flat-square)](#included-integrations)
+[![Inference modes: 8](https://img.shields.io/badge/Inference%20modes-8-EC4899?style=flat-square)](#included-integrations)
+[![Embodiments: 2](https://img.shields.io/badge/Embodiments-2-06B6D4?style=flat-square)](#included-integrations)
 [![Actively maintained](https://img.shields.io/badge/Status-Actively%20maintained-14B8A6?style=flat-square)](https://github.com/SII-LiuLab/manimux/commits/user_refine/)
-[![Docs build](https://img.shields.io/github/actions/workflow/status/SII-LiuLab/manimux/docs.yml?branch=user_refine&label=Docs&style=flat-square)](https://github.com/SII-LiuLab/manimux/actions/workflows/docs.yml)
 
 [English](README.md) · [简体中文](README.zh-CN.md)
 
@@ -29,21 +28,6 @@
 > **[阅读 ManiMux 使用与开发指南 →](https://sii-liulab.github.io/manimux/) · [Markdown 文档](docs/index.md)**
 > 安装、工作站配置、模型部署、RoboGUI 使用，以及各组件的接入 protocol。
 > 让 agent 开发时，从 [development skill](.agents/skills/manimux-development/SKILL.md) 开始。
-
-ManiMux 让研究者在不同模型、推理算法和机器人之间复用同一套运行与实验流程。
-通过配置组合组件、启动服务，之后在 **RoboGUI** 中完成日常实验操作。
-你的创新改在哪一层，就按那一层的 protocol 接入，其他部分继续复用。
-
-| 共享能力 | 可以做什么 |
-| --- | --- |
-| 配置组合 | 选择模型框架、动作 adapter、推理算法、执行器和本体 |
-| 统一主循环 | 复用观测处理、异步推理、动作时间线和 rollout 生命周期 |
-| RoboGUI | 准备、开始、暂停、结束；查看相机、3D 状态、轨迹和 chunk 交接 |
-| 实验管理 | 自由运行或选择自己的布局／重复模板，查看保存记录 |
-| Agent 接入指南 | 明确接口、配置位置、数据语义和验证方式 |
-
-评价是可选能力。你可以使用自己的实验设计和指标，需要时再使用人工标签或
-PRM-as-a-Judge。模型训练和示教数采由外部工具负责。
 
 ## 最新动态
 
@@ -61,6 +45,19 @@ PRM-as-a-Judge。模型训练和示教数采由外部工具负责。
 **准备 → 开始 → 暂停／结束 → 查看记录。** 自由实验不要求评分；模板研究按需启用
 布局、重复次数和评价。轨迹在独立的离线页面回放，不发送机器人命令。
 [使用流程 →](docs/usage/research.md)
+
+<a id="included-integrations"></a>
+
+## 已接入内容
+
+- **有机器人部署配置的策略（8 类）：** Pi05、DP、SAPolicy、GR00T N1.7、LingBot-VLA2、Xiaomi XR-1、UMI DP、OpenWAM。
+- **有离线配置的策略（5 类）：** Isaac 0.5，以及 StarVLA 的 QwenOFT、QwenPI-v3、QwenGR00T、QwenFast。
+- **推理模式（8 种）：** Serial、异步 chunk、RTC、ACT temporal ensembling、AAC、PAINT、AutoHorizon、DVAC。
+- **本体（2 种）：** YAM、Tianji–TacCap。**执行器：** Direct、Smooth、MPC。
+
+策略通过 **XPolicyLab** 或 **StarVLA** 提供服务。以上统计已有接入，
+不代表所有模型 × 算法 × 本体组合都可用或已通过真机验证。
+具体配置与范围见[支持目录](docs/usage/deployments.md#integration-counts)。评价是可选能力，实验设计和指标由研究者决定。
 
 <a id="architecture"></a>
 
@@ -181,6 +178,9 @@ Prepare 可能根据配置连接机器人并移动到起始姿态，请使用与
 [第三方声明](THIRD_PARTY_NOTICES.md) · [上游许可证](licenses) · [完整文档](docs/index.md)
 
 ## 许可证
+
+[![Python](https://img.shields.io/badge/Python-3.11%20%7C%203.12-3776AB?style=flat-square)](pyproject.toml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-22C55E?style=flat-square)](LICENSE)
 
 ManiMux 使用 [MIT](LICENSE) 许可证。第三方框架、SDK 与资产保留各自的许可证，
 详见[第三方声明](THIRD_PARTY_NOTICES.md)。

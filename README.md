@@ -15,11 +15,10 @@ Designed for **100–200 Hz command execution** alongside **live digital twin vi
 [![Demo video](https://img.shields.io/badge/Demo-Watch%20video-EF4444?style=flat-square)](https://sii-liulab.github.io/manimux/#manimux)
 [![Agent skills](https://img.shields.io/badge/Develop-Agent%20skills-8B5CF6?style=flat-square)](.agents/skills/manimux-development/SKILL.md)
 
-[![Frameworks: 2](https://img.shields.io/badge/Frameworks-2-F59E0B?style=flat-square)](#architecture)
-[![Python](https://img.shields.io/badge/Python-3.11%20%7C%203.12-3776AB?style=flat-square)](pyproject.toml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-22C55E?style=flat-square)](LICENSE)
+[![Policy recipes: 13](https://img.shields.io/badge/Policy%20recipes-13-F59E0B?style=flat-square)](#included-integrations)
+[![Inference modes: 8](https://img.shields.io/badge/Inference%20modes-8-EC4899?style=flat-square)](#included-integrations)
+[![Embodiments: 2](https://img.shields.io/badge/Embodiments-2-06B6D4?style=flat-square)](#included-integrations)
 [![Actively maintained](https://img.shields.io/badge/Status-Actively%20maintained-14B8A6?style=flat-square)](https://github.com/SII-LiuLab/manimux/commits/user_refine/)
-[![Docs build](https://img.shields.io/github/actions/workflow/status/SII-LiuLab/manimux/docs.yml?branch=user_refine&label=Docs&style=flat-square)](https://github.com/SII-LiuLab/manimux/actions/workflows/docs.yml)
 
 [English](README.md) · [简体中文](README.zh-CN.md)
 
@@ -30,23 +29,6 @@ Designed for **100–200 Hz command execution** alongside **live digital twin vi
 > **[Read the ManiMux Guide →](https://sii-liulab.github.io/manimux/) · [Markdown source](docs/index.md)**
 > Installation, station setup, deployment recipes, RoboGUI workflows and integration protocols.
 > For agent-led development, start with the [development skill](.agents/skills/manimux-development/SKILL.md).
-
-ManiMux lets researchers reuse one execution and experiment workflow across policies,
-inference strategies and robot embodiments. Configure the components, start the services,
-and operate your experiment in **RoboGUI**. Extend the part your research changes through
-an explicit protocol; keep the rest of the stack.
-
-| Shared foundation | What you can do |
-| --- | --- |
-| Configurable deployment | Compose a policy framework, action adapter, inference strategy, executor and robot |
-| One runtime | Reuse observation handling, asynchronous inference, action timelines and rollout lifecycle |
-| RoboGUI | Prepare, start, pause and finish; inspect cameras, 3D state, trajectories and chunk handoffs |
-| Research workflow | Run freely or apply your own layout/repetition template; review saved rollouts |
-| Agent-ready integration | Give your agent the owning interface, configuration path and validation example |
-
-Evaluation is optional. Use your own research protocol and metrics; human labels and
-PRM-as-a-Judge are available when needed. Model training and demonstration collection
-remain with external tools.
 
 ## News
 
@@ -62,6 +44,18 @@ remain with external tools.
 **Prepare → Start → Pause / Finish → Review.** Free rollouts need no scoring.
 Study rollouts can use a template and optional evaluation. Recorded trajectories replay
 in a separate, hardware-free view. [Research workflow →](docs/usage/research.md)
+
+## Included integrations
+
+- **Policies with robot deployment recipes (8):** Pi05, DP, SAPolicy, GR00T N1.7, LingBot-VLA2, Xiaomi XR-1, UMI DP and OpenWAM.
+- **Policies with offline recipes (5):** Isaac 0.5 and StarVLA's QwenOFT, QwenPI-v3, QwenGR00T and QwenFast.
+- **Inference modes (8):** Serial, asynchronous chunking, RTC, ACT temporal ensembling, AAC, PAINT, AutoHorizon and DVAC.
+- **Embodiments (2):** YAM and Tianji–TacCap. **Executors:** Direct, Smooth and MPC.
+
+Policy serving uses **XPolicyLab** or **StarVLA**. Counts describe included integrations,
+not all model × method × robot combinations or completed hardware validation.
+See the [support catalog](docs/usage/deployments.md#integration-counts) for scope and recipes.
+Evaluation is optional; choose your own research protocol and metrics.
 
 ## Architecture
 
@@ -187,6 +181,9 @@ please also cite its paper and the models/methods you use.
 [Third-party notices](THIRD_PARTY_NOTICES.md) · [Upstream licenses](licenses) · [Documentation](https://sii-liulab.github.io/manimux/)
 
 ## License
+
+[![Python](https://img.shields.io/badge/Python-3.11%20%7C%203.12-3776AB?style=flat-square)](pyproject.toml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-22C55E?style=flat-square)](LICENSE)
 
 ManiMux is licensed under [MIT](LICENSE). Third-party frameworks, SDKs and assets
 retain their own licenses; see [third-party notices](THIRD_PARTY_NOTICES.md).
