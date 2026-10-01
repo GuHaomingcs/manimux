@@ -8,8 +8,8 @@ docs_dir: .
 site_dir: ../site
 theme:
   name: material
-  logo: assets/mark.svg
-  favicon: assets/mark.svg
+  logo: assets/manimux-icon.png
+  favicon: assets/manimux-icon.png
   font: false
   palette:
     scheme: default

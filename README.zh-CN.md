@@ -1,6 +1,6 @@
 <div align="center">
 
-# ManiMux
+<h1><img src="docs/assets/manimux-logo.png" alt="ManiMux" width="800"></h1>
 
 **任何本体，任何策略，任何推理算法。**
 
