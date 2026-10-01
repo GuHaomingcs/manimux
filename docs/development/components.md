@@ -114,6 +114,15 @@ and `component_hardware` bindings there. For example, `YamRobot` explicitly crea
 `YamController`; changing only its arm YAML does not create another vendor's session.
 Keep constructors inert and open SDK connections only through `connect()`.
 
+The optional `controller: module:Class` field in an arm component YAML is consumed
+by `manimux.embodiments.robot.can_arms:build_robot` for the X5/PiPER adapters.
+It selects an `ArmController` for each independently owned CAN channel; the
+generic `RobotModel` loader still loads only geometry. The factory uses the
+existing station's component hardware bindings and `RobotBase` lifecycle/batching.
+It does not introduce another runtime registry or loop. See the
+[SDK adapter guide](../usage/can-arms.md) for unsupported Home/read-only operations
+and the X5 polling-time limitation.
+
 The runtime uses `connect()`, `get_state() -> RobotState`,
 `send_command(RobotCommand)`, `home()`, `stop()` and `close()`. Group names and
 coordinate order must agree between state, command and offline model. The current

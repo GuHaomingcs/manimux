@@ -52,6 +52,14 @@ logs/
 !/manimux/embodiments/arm/yam/assets/
 !/manimux/embodiments/arm/yam/assets/**
 
+# Public RoboTwin follower-arm geometry and its retained license are redistributable.
+!/manimux/embodiments/arm/aloha_agilex/assets/
+!/manimux/embodiments/arm/aloha_agilex/assets/**
+
+# Public standard PiPER meshes retain the official MIT notice in the component.
+!/manimux/embodiments/arm/piper/assets/
+!/manimux/embodiments/arm/piper/assets/**
+
 # Local backup of the pre-refactor package tree; the active package is /manimux.
 /src/
 

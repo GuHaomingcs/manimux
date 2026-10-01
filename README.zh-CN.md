@@ -55,6 +55,12 @@
 - **推理模式（8 种）：** Serial、异步 chunk、RTC、ACT temporal ensembling、AAC、PAINT、AutoHorizon、DVAC。
 - **本体（2 种）：** YAM、Tianji–TacCap。**执行器：** Direct、Smooth、MPC。
 
+另提供 [ALOHA-AgileX 从臂资产](docs/usage/aloha.md)和[标准 PiPER 资产](docs/usage/piper.md)，
+用于离线 RoboGUI 展示和回放，
+并提供实验性的 [ARX X5 / PiPER SDK 控制接口](docs/usage/can-arms.md)及本地配置模板。
+目前完成离线接口验证，尚未进行真机部署验证。
+依赖安装参见 [SDK 安装指南](docs/usage/robot-sdks.md)。
+
 策略通过 **XPolicyLab** 或 **StarVLA** 提供服务。以上统计已有接入，
 不代表所有模型 × 算法 × 本体组合都可用或已通过真机验证。
 具体配置与范围见[支持目录](docs/usage/deployments.md#integration-counts)。评价是可选能力，实验设计和指标由研究者决定。

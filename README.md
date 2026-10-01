@@ -52,6 +52,12 @@ in a separate, hardware-free view. [Research workflow →](docs/usage/research.m
 - **Inference modes (8):** Serial, asynchronous chunking, RTC, ACT temporal ensembling, AAC, PAINT, AutoHorizon and DVAC.
 - **Embodiments (2):** YAM and Tianji–TacCap. **Executors:** Direct, Smooth and MPC.
 
+[ALOHA-AgileX follower-arm assets](docs/usage/aloha.md) and
+[standard PiPER assets](docs/usage/piper.md) are available for offline RoboGUI
+preview and replay. Experimental [ARX X5 / PiPER SDK adapters](docs/usage/can-arms.md)
+include station templates and offline validation; physical deployment remains unvalidated.
+The [SDK installation guide](docs/usage/robot-sdks.md) covers their external dependencies.
+
 Policy serving uses **XPolicyLab** or **StarVLA**. Counts describe included integrations,
 not all model × method × robot combinations or completed hardware validation.
 See the [support catalog](docs/usage/deployments.md#integration-counts) for scope and recipes.

@@ -64,6 +64,10 @@ nav:
   - Overview: index.md
   - Start here:
       - Python environments: usage/environments.md
+      - ALOHA assets: usage/aloha.md
+      - PiPER assets: usage/piper.md
+      - Robot SDK installation: usage/robot-sdks.md
+      - ARX and PiPER adapters: usage/can-arms.md
       - First experiment: usage/getting-started.md
       - Bind your station: usage/station.md
       - Configure a deployment: usage/configuration.md

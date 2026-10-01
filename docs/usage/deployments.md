@@ -34,6 +34,12 @@ ARX and LIBERO recipe contracts do not add hardware drivers. Counts describe int
 scope, not a benchmark result or support for every combination. Use each runbook's
 checkpoint, SDK, asset and validation requirements.
 
+Experimental [X5 (2023) and standard PiPER SDK adapters](can-arms.md) provide
+component models, controllers and a selectable assembly factory. They have offline
+interface validation but no checked-in real-robot policy deployment, so they are
+listed separately from the two deployed assemblies above. X5 device feedback
+freshness remains an explicit limitation of the official binding.
+
 ## Model and robot recipes
 
 | Deployment | Guide |

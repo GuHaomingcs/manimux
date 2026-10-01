@@ -31,6 +31,44 @@ geometry from `i2rt-robotics/i2rt` at commit
 viewer rendering and forward/inverse kinematics. The upstream project is under the MIT
 License; see `licenses/i2rt-MIT.txt`.
 
+## RoboTwin ALOHA-AgileX follower-arm assets
+
+`manimux/embodiments/arm/aloha_agilex/assets/robotwin/` contains two extracted
+follower-arm URDFs and nine DAE meshes from `TianxingChen/RoboTwin2.0`, revision
+`d513175169bcdcdb6ddf3de08f10cddc55ad91f1`. The dataset card declares MIT;
+the RoboTwin project's notice is retained at
+`manimux/embodiments/arm/aloha_agilex/assets/LICENSE.txt`.
+Relative mesh references, fixed TCP links and removal of unavailable textures
+are documented in the component README. These are offline visual/kinematic
+resources, not hardware calibration or a complete mobile-robot simulation.
+
+ARX and PiPER SDKs are separately installed local dependencies. No SDK source
+or native library is vendored into the ManiMux package by this integration.
+
+## ARX X5 (2023) kinematic model
+
+`manimux/embodiments/arm/arx_x5/model.urdf` is derived from `ARXroboticsX/X5`
+at revision `9a255e38156e3f5a263f341df209ab028d49dad9`, under BSD-3-Clause.
+Its notice is retained at `manimux/embodiments/arm/arx_x5/LICENSE.txt`.
+
+This model omits visual/collision meshes while preserving the upstream joint
+geometry, inertia and source limits. It does not establish physical calibration
+or collision-free motion.
+
+## Standard PiPER model assets
+
+`manimux/embodiments/arm/piper/model.urdf` and ten STL files in
+`manimux/embodiments/arm/piper/assets/meshes/` are derived from
+`agilexrobotics/piper_ros/src/piper_description` at revision
+`ac41fcbcdda598f01b51cf6175ed9a24d0dacadc`, under MIT. Its notice is retained at
+`manimux/embodiments/arm/piper/LICENSE.txt`.
+
+Meshes are copied unchanged. The URDF uses relative mesh paths and omits
+collision elements; upstream joint geometry, inertia, visual origins and
+materials remain unchanged. These resources support offline rendering and
+FK/IK, not physical calibration or collision-free motion. Preparation and
+model scope are documented in `docs/usage/piper.md`.
+
 ## Tianji Marvin model assets
 
 `manimux/embodiments/arm/tianji/assets/` and
