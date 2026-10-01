@@ -52,7 +52,7 @@ does not alter model inputs. Confirm unknown placement with the user or an autho
 
 ## Environments and model paths
 
-Read `envs/README.md` and the component/model runbook. Existing `envs/*/.venv` paths are
+Read `docs/usage/environments.md` and the component/model runbook. Existing `envs/*/.venv` paths are
 local assets, not installed by cloning. Target hardware/model interpreters explicitly with
 `uv pip install --python`; do not point root `uv sync` or `uv run` at those environments.
 Do not invent a single all-hardware dependency extra.

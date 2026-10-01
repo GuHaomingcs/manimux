@@ -22,7 +22,7 @@ environment with the selected hardware dependencies installed.
 | YAM with integrated grippers | [yam_example.yaml](../../manimux/configs/local/yam_example.yaml) | [YAM component](../../manimux/embodiments/arm/yam/README.md), [RealSense](../../manimux/embodiments/sensor/realsense/README.md), [Pi05 runbook](../deployment/pi05-yam.md) |
 | Tianji–TacCap | [tianji_taccap_example.yaml](../../manimux/configs/local/tianji_taccap_example.yaml) | [UMI-DP runbook](../deployment/umi-dp-tianji-taccap.md) · [Xiaomi XR-1 runbook](../deployment/xiaomi-xr1-tianji-taccap.md) |
 
-Hardware and model environments are separate; see [Python environments](../../envs/README.md).
+Hardware and model environments are separate; see [Python environments](environments.md).
 A clone does not install private SDKs, create CAN interfaces or download checkpoints.
 
 ## 2. Create your station file

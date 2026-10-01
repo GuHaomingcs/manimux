@@ -58,6 +58,7 @@ validation:
 nav:
   - Overview: index.md
   - Start here:
+      - Python environments: usage/environments.md
       - First experiment: usage/getting-started.md
       - Bind your station: usage/station.md
       - Configure a deployment: usage/configuration.md

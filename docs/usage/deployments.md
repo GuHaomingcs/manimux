@@ -51,7 +51,7 @@ checkpoint, SDK, asset and validation requirements.
 
 Model dependencies run in their own environments. The hardware runtime does not
 need torch or JAX merely to talk to a policy server. Follow the selected framework's
-installation instructions and [environment guidance](../../envs/README.md).
+installation instructions and [environment guidance](environments.md).
 
 ## What support means
 

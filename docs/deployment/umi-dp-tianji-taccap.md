@@ -8,7 +8,7 @@ selects the robot assembly, policy adapter, inference algorithm and execution se
 ## Prepare the environments
 
 Run the commands below from the repository root. Hardware and model processes use
-separate Python environments; see [Python environments](../../envs/README.md).
+separate Python environments; see [Python environments](../usage/environments.md).
 
 - Install this ManiMux checkout and its `xpolicylab` extra in the Tianji hardware
   environment. The commands below use `envs/tianji/.venv/bin/python`.

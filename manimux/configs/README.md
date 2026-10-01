@@ -32,7 +32,7 @@ ignored `training/` directory, outside the package. Deployment still retains che
 metadata and normalization references needed for inference. Private cluster-job payloads
 may also live under `.local/`. Old directory paths have no forwarding aliases.
 
-Root [`envs/`](../../envs/README.md) describes local Python environments;
+[Python environments](../../docs/usage/environments.md) describes local Python environments;
 [`env_cfg/`](../../env_cfg/README.md) contains action-dimension metadata still read from
 that location by XPolicyLab. These have different purposes from experiment/station YAML.
 Moving directories alone does not migrate every historical deployment entry point.

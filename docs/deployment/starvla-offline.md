@@ -51,7 +51,7 @@ Use separate Python environments:
 - **ManiMux, Python 3.11–3.12:** `python -m pip install -e '.[starvla,replay]'`.
   The client requires `websockets>=15` for synchronous connection keepalive options.
   YAM FK/IK examples also need the YAM geometry dependencies described in
-  [Python environments](../../envs/README.md).
+  [Python environments](../usage/environments.md).
 - **StarVLA, Python 3.10:** follow its [installation guide](../../StarVLA/docs/starVLA_guideline.md#0-installation).
   The model process additionally needs `websockets>=14`, `msgpack`, `PyYAML`,
   `opencv-python` and the checkpoint's model dependencies. It does not import ManiMux.

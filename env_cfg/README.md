@@ -3,7 +3,7 @@
 These files describe the robot dimensions and environment batch size used by
 model services and dataset conversion. For CAN interfaces, controller IPs and USB
 serials, start with [local station setup](../docs/usage/station.md).
-Python dependency environments are documented in [envs/](../envs/README.md).
+Python dependency environments are documented in [the environment guide](../docs/usage/environments.md).
 
 | Files | Purpose |
 | --- | --- |
@@ -20,7 +20,7 @@ have provider consumers.
 
 ## Why this directory remains at the repository root
 
-In the pinned XPolicyLab revision `2077534393039cf844a744f52eb6a44cbdd1016c`,
+In the pinned XPolicyLab revision `6a431433dbd4fef268a017837f8a963a8200a77b`,
 `utils/process_data.py` resolves `get_robot_action_dim_info()`, `get_action_dim()`
 and `get_batch_size()` through `../../env_cfg`. Its LeRobot v2.1 and v3.0
 conversion scripts also read the parent workspace's `env_cfg/` directly.

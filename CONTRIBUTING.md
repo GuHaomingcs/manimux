@@ -34,6 +34,6 @@ To apply formatting and lint fixes, use `uv run ruff format manimux` and
 `uv run ruff check --fix manimux`. If your local test workspace is installed, run
 `uv run pytest tests/unit` or `uv run pytest tests/integration` as relevant; include
 those test paths in Ruff checks when changing them. See the
-[environment guide](envs/README.md#offline-regression-tests) for hardware-specific
+[environment guide](docs/usage/environments.md#offline-regression-tests) for hardware-specific
 interpreters. Documentation changes use `mkdocs build --strict` in the
 [documentation environment](docs/README.md#preview-locally).

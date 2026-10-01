@@ -2,8 +2,8 @@
 
 `envs/` is a conventional location for local virtual environments, such as
 `envs/yam/.venv`. It does not contain robot IPs, CAN bindings or experiment YAML.
-Cloning the repository does not create these environments; a checkout containing only
-this README does not imply that environments in another checkout are missing.
+Cloning the repository does not create these environments. Their contents are local
+and ignored by Git; follow the selected deployment guide to create them.
 
 | Location | Purpose |
 | --- | --- |
@@ -20,11 +20,11 @@ appropriate environment instead of treating an old interpreter path as a source 
 
 ## Installation entry points
 
-- First connection to your own robot: [local station setup](../docs/usage/station.md).
-- YAM SDK: [YAM component README](../manimux/embodiments/arm/yam/README.md).
-- Cameras: [RealSense README](../manimux/embodiments/sensor/realsense/README.md).
-- Tianji/TacCap: [deployment runbook](../docs/deployment/umi-dp-tianji-taccap.md).
-- Models: [deployment runbook index](../docs/usage/deployments.md#policies-and-deployment).
+- First connection to your own robot: [local station setup](station.md).
+- YAM SDK: [YAM component README](../../manimux/embodiments/arm/yam/README.md).
+- Cameras: [RealSense README](../../manimux/embodiments/sensor/realsense/README.md).
+- Tianji/TacCap: [deployment runbook](../deployment/umi-dp-tianji-taccap.md).
+- Models: [deployment runbook index](deployments.md#model-and-robot-recipes).
 
 Hardware/model environments are usually created with `uv venv`, then populated with
 `uv pip install --python`. When adding dependencies, target the interpreter explicitly:
@@ -41,7 +41,7 @@ not declared there. Manage the root development environment through the root pro
 
 - `manimux/configs/`: experiments, assemblies, inference, executors, model-service settings
   and station templates. The private `manimux/configs/local/station.yaml` binds local devices.
-- [`env_cfg/`](../env_cfg/README.md): action-field dimensions and environment batch metadata
+- [`env_cfg/`](../../env_cfg/README.md): action-field dimensions and environment batch metadata
   consumed by XPolicyLab. It is not a Python environment or a station file.
 
 Environment locations and all model launchers have not been unified into one layout.
@@ -52,7 +52,7 @@ They should not be confused with the robot's CAN, serial and IP bindings.
 Tests, fixtures and test launchers are local development resources and are excluded
 from Git. Keep useful regression checks locally; do not force-add them to commits.
 A fresh clone does not include `tests/`, so the commands below require a local test
-suite. Formatting and lint commands are listed in [Contributing](../CONTRIBUTING.md)
+suite. Formatting and lint commands are listed in [Contributing](../../CONTRIBUTING.md)
 and work without that directory.
 
 Run runtime and component tests with the runtime interpreter, from the repository root:
