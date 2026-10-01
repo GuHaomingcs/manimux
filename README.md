@@ -18,6 +18,7 @@ Designed for **100–200 Hz command execution** alongside **live digital twin vi
 [![Frameworks: 2](https://img.shields.io/badge/Frameworks-2-F59E0B?style=flat-square)](#architecture)
 [![Python](https://img.shields.io/badge/Python-3.11%20%7C%203.12-3776AB?style=flat-square)](pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-22C55E?style=flat-square)](LICENSE)
+[![Actively maintained](https://img.shields.io/badge/Status-Actively%20maintained-14B8A6?style=flat-square)](https://github.com/SII-LiuLab/manimux/commits/user_refine/)
 [![Docs build](https://img.shields.io/github/actions/workflow/status/SII-LiuLab/manimux/docs.yml?branch=user_refine&label=Docs&style=flat-square)](https://github.com/SII-LiuLab/manimux/actions/workflows/docs.yml)
 
 [English](README.md) · [简体中文](README.zh-CN.md)
@@ -46,6 +47,11 @@ an explicit protocol; keep the rest of the stack.
 Evaluation is optional. Use your own research protocol and metrics; human labels and
 PRM-as-a-Judge are available when needed. Model training and demonstration collection
 remain with external tools.
+
+## News
+
+- **2026-10-01** — The [ManiMux Guide](https://sii-liulab.github.io/manimux/) is live, covering setup, deployment, RoboGUI and integration protocols.
+- **2026-10-01** — Updated [research workflows](docs/usage/research.md) and [agent integration guides](docs/development/README.md) for free exploration, study templates and component development.
 
 ## RoboGUI
 
@@ -140,7 +146,12 @@ as configured; use the runbook matching your actual setup.
 | Analyze your recorded experiments | [Experiment skill](.agents/skills/manimux-experiments/SKILL.md) |
 
 Each integration documents its input/output semantics, owning files, YAML selection and
-validation. [Contributing](CONTRIBUTING.md) explains the expected handoff.
+validation.
+
+**Build with us.** Contributions are welcome—from new embodiments, policies, and
+inference strategies to documentation and bug fixes. Start with the
+[integration guide](docs/development/README.md), follow the shared protocols, and see
+[Contributing](CONTRIBUTING.md) for the expected handoff.
 
 ## Support and evidence
 

@@ -17,6 +17,7 @@
 [![Frameworks: 2](https://img.shields.io/badge/Frameworks-2-F59E0B?style=flat-square)](#architecture)
 [![Python](https://img.shields.io/badge/Python-3.11%20%7C%203.12-3776AB?style=flat-square)](pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-22C55E?style=flat-square)](LICENSE)
+[![Actively maintained](https://img.shields.io/badge/Status-Actively%20maintained-14B8A6?style=flat-square)](https://github.com/SII-LiuLab/manimux/commits/user_refine/)
 [![Docs build](https://img.shields.io/github/actions/workflow/status/SII-LiuLab/manimux/docs.yml?branch=user_refine&label=Docs&style=flat-square)](https://github.com/SII-LiuLab/manimux/actions/workflows/docs.yml)
 
 [English](README.md) · [简体中文](README.zh-CN.md)
@@ -43,6 +44,11 @@ ManiMux 让研究者在不同模型、推理算法和机器人之间复用同一
 
 评价是可选能力。你可以使用自己的实验设计和指标，需要时再使用人工标签或
 PRM-as-a-Judge。模型训练和示教数采由外部工具负责。
+
+## 最新动态
+
+- **2026-10-01** — [ManiMux 在线指南](https://sii-liulab.github.io/manimux/)上线，覆盖安装配置、部署、RoboGUI 使用与接入 protocol。
+- **2026-10-01** — 更新[实验流程](docs/usage/research.md)与 [agent 接入指南](docs/development/README.md)，支持自由探索、模板研究与组件开发。
 
 <a id="robogui"></a>
 
@@ -138,7 +144,9 @@ Prepare 可能根据配置连接机器人并移动到起始姿态，请使用与
 | 分析自己的实验记录 | [Experiment skill](.agents/skills/manimux-experiments/SKILL.md) |
 
 每种接入都应说明数据语义、代码归属、YAML 选择方式和验证结果。
-[贡献指南](CONTRIBUTING.md)说明具体交付要求。
+
+**欢迎一起建设 ManiMux。** 无论是新本体、策略、推理算法，还是文档完善与问题修复，都欢迎贡献。
+请从[接入指南](docs/development/README.md)开始，遵循共享 protocol，并参考[贡献指南](CONTRIBUTING.md)完成交付。
 
 ## 支持情况
 
