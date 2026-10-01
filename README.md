@@ -8,6 +8,7 @@ A composable framework for real-robot inference and experiments.
 
 **Policy × Runtime × Embodiment**
 
+[![Documentation](https://img.shields.io/badge/Documentation-Guide-246C56?style=flat-square)](https://sii-liulab.github.io/manimux/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-2EA043?style=flat-square)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.11%20%7C%203.12-3776AB?style=flat-square)](pyproject.toml)
 [![RoboGUI](https://img.shields.io/badge/RoboGUI-Viser-0891B2?style=flat-square)](#robogui)
@@ -15,9 +16,13 @@ A composable framework for real-robot inference and experiments.
 
 [English](README.md) · [简体中文](README.zh-CN.md)
 
-[Quick start](#quick-start) · [Architecture](#architecture) · [Integrate](#integrate) · [Documentation](docs/README.md) · [Citation](#citation)
+[Quick start](#quick-start) · [Architecture](#architecture) · [Integrate](#integrate) · [Documentation](https://sii-liulab.github.io/manimux/) · [Citation](#citation)
 
 </div>
+
+> **[Read the ManiMux Guide →](https://sii-liulab.github.io/manimux/) · [Markdown source](docs/index.md)**
+> Installation, station setup, deployment recipes, RoboGUI workflows and integration protocols.
+> For agent-led development, start with the [development skill](.agents/skills/manimux-development/SKILL.md).
 
 ManiMux lets researchers reuse one execution and experiment workflow across policies,
 inference strategies and robot embodiments. Configure the components, start the services,
@@ -100,12 +105,12 @@ only needed for the deployment path you choose.
 
 ### Run on your robot
 
-1. Select a [model/robot runbook](docs/reference/README.md#policies-and-deployment)
+1. Select a [model/robot runbook](docs/usage/deployments.md)
    and prepare its hardware and model environments.
 2. Bind devices, service addresses and checkpoint paths in your private
-   [station file](manimux/configs/local/README.md).
+   [station file](docs/usage/station.md).
 3. Start the camera, RoboGUI, model server and runtime using the
-   [complete Pi05/YAM example](docs/reference/guideline.md#pi05-30k-on-yam)
+   [complete Pi05/YAM example](docs/usage/getting-started.md#pi05-30k-on-yam)
    or the selected model's runbook.
 4. Continue in RoboGUI: enter your task, prepare and run trials, then review records.
 
@@ -133,10 +138,10 @@ validation. [Contributing](CONTRIBUTING.md) explains the expected handoff.
 
 ## Support and evidence
 
-See the [support catalog](docs/reference/README.md) for model, hardware and method
+See the [support catalog](docs/usage/deployments.md) for model, hardware and method
 runbooks. Capabilities vary by checkpoint and backend; an integration does not imply
 that every model × robot × algorithm combination has been tested on hardware.
-ManiMux is under active development. Our own [study register](docs/experiments.md)
+ManiMux is under active development. Our own [study register](experiments.md)
 and validation reports describe the evidence behind specific configurations.
 
 ## Citation
@@ -162,7 +167,7 @@ please also cite its paper and the models/methods you use.
 }
 ```
 
-[Third-party notices](THIRD_PARTY_NOTICES.md) · [Upstream licenses](licenses) · [Documentation](docs/README.md)
+[Third-party notices](THIRD_PARTY_NOTICES.md) · [Upstream licenses](licenses) · [Documentation](https://sii-liulab.github.io/manimux/)
 
 ## License
 

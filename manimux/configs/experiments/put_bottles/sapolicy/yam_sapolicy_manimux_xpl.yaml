@@ -5,7 +5,7 @@
 #        python manimux/servers/sapolicy.py --config manimux/configs/policy/sapolicy/yam/abc-bottles.yaml
 #   2. camera server at 640x480:
 #        envs/yam/.venv/bin/manimux-camera-server --config manimux/configs/embodiment/sensor/cameras/realsense_3_views.yaml
-#   3. viewer as in docs/reference/sapolicy-yam-runbook.md
+#   3. viewer as in docs/deployment/sapolicy-yam.md
 #
 # Safety: connects paused when viewer.enabled; operator must Start at the robot.
 run:

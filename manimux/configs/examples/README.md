@@ -29,7 +29,7 @@ Algorithm-specific prefix handling remains in the inference strategy.
 References resolve relative to each YAML. If you copy this file into
 `experiments/<task>/<model>/`, change component references from `../` to `../../../`.
 Output paths are relative to the launch working directory. Device bindings, service
-addresses and checkpoint roots belong in the [local station file](../local/README.md).
+addresses and checkpoint roots belong in the [local station file](../../../docs/usage/station.md).
 
 ## `run`, `serve` and experiment mode
 

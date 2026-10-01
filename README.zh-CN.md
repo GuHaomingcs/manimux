@@ -8,6 +8,7 @@
 
 **Policy × Runtime × Embodiment**
 
+[![Documentation](https://img.shields.io/badge/Documentation-Guide-246C56?style=flat-square)](https://sii-liulab.github.io/manimux/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-2EA043?style=flat-square)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.11%20%7C%203.12-3776AB?style=flat-square)](pyproject.toml)
 [![RoboGUI](https://img.shields.io/badge/RoboGUI-Viser-0891B2?style=flat-square)](#robogui)
@@ -15,9 +16,13 @@
 
 [English](README.md) · [简体中文](README.zh-CN.md)
 
-[快速开始](#quick-start) · [架构](#architecture) · [接入开发](#integrate) · [文档](docs/README.md) · [引用](#citation)
+[快速开始](#quick-start) · [架构](#architecture) · [接入开发](#integrate) · [文档](https://sii-liulab.github.io/manimux/) · [引用](#citation)
 
 </div>
+
+> **[阅读 ManiMux 使用与开发指南 →](https://sii-liulab.github.io/manimux/) · [Markdown 文档](docs/index.md)**
+> 安装、工作站配置、模型部署、RoboGUI 使用，以及各组件的接入 protocol。
+> 让 agent 开发时，从 [development skill](.agents/skills/manimux-development/SKILL.md) 开始。
 
 ManiMux 让研究者在不同模型、推理算法和机器人之间复用同一套运行与实验流程。
 通过配置组合组件、启动服务，之后在 **RoboGUI** 中完成日常实验操作。
@@ -102,9 +107,9 @@ uv run manimux-viewer --robot yam --demo --host 127.0.0.1 --port 8086
 
 ### 使用自己的机器人
 
-1. 选择[模型／本体指南](docs/reference/README.md#policies-and-deployment)，安装相应的硬件和模型环境。
-2. 在私有 [station 文件](manimux/configs/local/README.md)中绑定设备、服务地址与 checkpoint 路径。
-3. 按照[完整 Pi05/YAM 示例](docs/reference/guideline.md#pi05-30k-on-yam)或对应模型指南，启动相机、RoboGUI、模型服务和 runtime。
+1. 选择[模型／本体指南](docs/usage/deployments.md)，安装相应的硬件和模型环境。
+2. 在私有 [station 文件](docs/usage/station.md)中绑定设备、服务地址与 checkpoint 路径。
+3. 按照[完整 Pi05/YAM 示例](docs/usage/getting-started.md#pi05-30k-on-yam)或对应模型指南，启动相机、RoboGUI、模型服务和 runtime。
 4. 之后在 RoboGUI 填写任务、准备、运行、结束和查看记录。
 
 `manimux serve` 保持服务运行，供 GUI 连续开展多次实验；`manimux run` 运行一次 rollout。
@@ -132,9 +137,9 @@ Prepare 可能根据配置连接机器人并移动到起始姿态，请使用与
 
 ## 支持情况
 
-[支持目录](docs/reference/README.md)列出模型、本体、算法和验证记录。
+[支持目录](docs/usage/deployments.md)列出模型、本体、算法和验证记录。
 能力取决于实际 checkpoint 与 backend；已接入不代表每一种组合都通过了真机验证。
-项目仍在持续开发，我们自己的[实验表](docs/experiments.md)记录特定配置下的研究进展。
+项目仍在持续开发，我们自己的[实验表](experiments.md)记录特定配置下的研究进展。
 
 <a id="citation"></a>
 
@@ -160,7 +165,7 @@ Prepare 可能根据配置连接机器人并移动到起始姿态，请使用与
 }
 ```
 
-[第三方声明](THIRD_PARTY_NOTICES.md) · [上游许可证](licenses) · [完整文档](docs/README.md)
+[第三方声明](THIRD_PARTY_NOTICES.md) · [上游许可证](licenses) · [完整文档](docs/index.md)
 
 ## 许可证
 

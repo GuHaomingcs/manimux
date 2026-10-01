@@ -1,7 +1,7 @@
 # Policies: model, client and robot adapter are separate
 
 Source paths below are relative to the repository root. Read
-`docs/reference/component-policy-development.md` for payload examples and migration limits.
+`docs/development/components.md` for payload examples and migration limits.
 
 ## Classify the integration first
 
@@ -68,7 +68,7 @@ behavior and response decoding through the public client boundary.
 The StarVLA peer implementation uses `policy.worker: starvla_ws` and
 `manimux/policies/starvla/`. Its independently versioned `StarVLA/` service owns
 loading, normalization and sampling; the client owns native MessagePack, reset and
-identity checks. See `docs/reference/starvla-offline-runbook.md` for explicit joint/EEF
+identity checks. See `docs/deployment/starvla-offline.md` for explicit joint/EEF
 contracts and offline examples. AAC selection operates on grouped joint candidates
 in `manimux/policies/aac.py`; each backend converts its own wire format before selection.
 

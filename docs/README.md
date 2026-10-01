@@ -1,27 +1,44 @@
-# Documentation
+# ManiMux documentation
 
-## Use ManiMux
+The [guide](index.md) is the documentation website's entry point. These files have
+separate audiences and responsibilities:
 
-- [Start here](../README.md#quick-start): hardware-free RoboGUI, then real-robot deployment.
-- [Install and launch](reference/guideline.md): environments and a complete Pi05/YAM example.
-- [Connect your workstation](../manimux/configs/local/README.md): private device and service bindings.
-- [Run your research](usage/research.md): free rollouts, study templates, records and replay.
-- [Configure an experiment](../manimux/configs/README.md): YAML composition and parameter ownership.
-- [Model and hardware runbooks](reference/README.md): supported paths and validation limits.
+- Root `README.md`: a concise project overview, demo and quick-start links.
+- `.agents/skills/*/SKILL.md`: instructions that route an agent through development or setup.
+- `docs/`: user guides and detailed integration protocols, rendered into this website.
 
-## Extend ManiMux
+Skills link to the relevant protocol pages rather than duplicating their specifications.
+README stays short; it does not embed the skills or the full protocols. Update a protocol
+in its owning Markdown page and rebuild the website.
 
-- [Integration map](development/README.md): choose the right interface and directory.
-- [Components](development/components.md): arms, tools, assembly, geometry and sensors.
-- [Policies](development/policies.md): model frameworks, clients and action adapters.
-- [Runtime and RoboGUI](development/runtime-config.md): strategies, executors, display and records.
-- [Agent entry point](../AGENTS.md) and [development skill](../.agents/skills/manimux-development/SKILL.md).
+## Preview locally
 
-## Optional evaluation
+From the repository root, in a documentation-only environment:
 
-- [Human evaluation and saved evidence](reference/experiment-infra.md).
-- [PRM-as-a-Judge](reference/prm-as-a-judge.md).
-- [ManiMux team's study register](experiments.md): our tasks, decisions and results; not required for users.
+```bash
+uv venv .venv-docs --python 3.12
+uv pip install --python .venv-docs/bin/python -r requirements-docs.txt
+.venv-docs/bin/mkdocs serve --dev-addr 127.0.0.1:8000
+```
 
-The [reference library](reference/README.md) also contains dated reproductions and
-validation reports. Their evidence applies to the stated configuration and revision.
+Build a static site with `.venv-docs/bin/mkdocs build --strict`. Output goes to the
+ignored `site/` directory. Serve that directory on any static host. Repository
+links use `user_refine` until this documentation is merged; update `edit_uri` in
+`mkdocs.yml` and `REVISION` in `scripts/docs/hooks.py` together when publishing
+from another branch.
+
+## Publishing
+
+The [public guide](https://sii-liulab.github.io/manimux/) is deployed by
+`.github/workflows/docs.yml` after documentation changes are pushed to `user_refine`.
+The workflow builds with strict link validation and publishes only `site/` to GitHub
+Pages. It does not install robot/model environments or initialize submodules.
+The repository Pages setting must use **GitHub Actions**, and the `github-pages`
+environment must permit deployments from `user_refine`. When changing the publishing
+branch, update that environment rule, the workflow trigger and the source-link settings
+above together.
+
+Keep onboarding in `usage/`, extension contracts in `development/`, supported
+launch recipes in `deployment/`, and detailed algorithms in `advanced/`. Team
+study decisions/results belong in the root [experiment register](../experiments.md).
+Historical development logs remain available in Git history rather than the guide.

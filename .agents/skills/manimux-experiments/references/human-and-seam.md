@@ -1,6 +1,6 @@
 # Human scores and chunk seam metrics
 
-Read the current metric definitions in `docs/experiments.md` first.
+Read the current metric definitions in `experiments.md` first.
 Do not turn the examples below into frozen numeric settings.
 
 ## Human

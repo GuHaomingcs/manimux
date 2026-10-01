@@ -20,11 +20,11 @@ appropriate environment instead of treating an old interpreter path as a source 
 
 ## Installation entry points
 
-- First connection to your own robot: [local station setup](../manimux/configs/local/README.md).
+- First connection to your own robot: [local station setup](../docs/usage/station.md).
 - YAM SDK: [YAM component README](../manimux/embodiments/arm/yam/README.md).
 - Cameras: [RealSense README](../manimux/embodiments/sensor/realsense/README.md).
-- Tianji/TacCap: [deployment runbook](../docs/reference/umi-dp-tianji-taccap-runbook.md).
-- Models: [deployment runbook index](../docs/reference/README.md#policies-and-deployment).
+- Tianji/TacCap: [deployment runbook](../docs/deployment/umi-dp-tianji-taccap.md).
+- Models: [deployment runbook index](../docs/usage/deployments.md#policies-and-deployment).
 
 Hardware/model environments are usually created with `uv venv`, then populated with
 `uv pip install --python`. When adding dependencies, target the interpreter explicitly:

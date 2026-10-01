@@ -20,14 +20,13 @@ SOP below only for a requested evaluation, applying the user's chosen metrics.
 ## Read the current agreement
 
 Start with the user's selected experiment and saved session. For ManiMux team
-studies, `docs/experiments.md` owns the current task roster,
+studies, `experiments.md` owns the current task roster,
 selected policies, proposed versus confirmed settings, metrics, result rows,
 and progress. Do not copy particular tasks, checkpoints, numeric presets or
 judge defaults into this skill. If the user changes a setting, update the
 register's decision and status without treating unrelated proposals as approved.
 
-`docs/reference/experiment-design.md` supplies study principles; some pilot tables are
-historical. `docs/reference/experiment-infra.md` supplies the operation/evidence contract.
+`docs/usage/records.md` supplies study principles and the operation/evidence contract.
 Current source and stored artifacts decide what actually happened. In particular,
 the register describes intended settings; a session manifest describes its run.
 An old rollout is not automatically evidence for a newly confirmed preset.

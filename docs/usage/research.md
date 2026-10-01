@@ -1,7 +1,7 @@
 # Run your research in RoboGUI
 
 Start the camera, model, Viewer and `manimux serve` processes using the matching
-[runbook](../reference/guideline.md). The GUI then owns daily rollout operation.
+[runbook](getting-started.md). The GUI then owns daily rollout operation.
 The task command is the instruction sent to the policy; the experiment name,
 condition and notes describe your research and do not modify model inputs.
 
@@ -103,11 +103,11 @@ in the replay URL. Closing RoboGUI also stops its replay view.
 
 This entry point replays trajectories from finalized `data.zarr` records, including
 older compatible episodes. It does not replay their videos or raw model outputs.
-For an independent NPZ trajectory use [action replay](../reference/action-replay.md).
+For an independent NPZ trajectory use [action replay](replay.md).
 
 ## Optional evaluation
 
-Human labels and [PRM](../reference/prm-as-a-judge.md) are available when they answer
+Human labels and [PRM](evaluation.md) are available when they answer
 your research question. `result.json.success` describes runtime completion, not
 whether the robot accomplished the task. A missing human label means unreviewed.
-See [record meanings](../reference/experiment-infra.md) before comparing metrics.
+See [record meanings](records.md) before comparing metrics.

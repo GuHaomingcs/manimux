@@ -2,7 +2,7 @@
 
 These files describe the robot dimensions and environment batch size used by
 model services and dataset conversion. For CAN interfaces, controller IPs and USB
-serials, start with [local station setup](../manimux/configs/local/README.md).
+serials, start with [local station setup](../docs/usage/station.md).
 Python dependency environments are documented in [envs/](../envs/README.md).
 
 | Files | Purpose |

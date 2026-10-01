@@ -6,7 +6,7 @@ description: Connect a ManiMux installation to a developer's local YAM, Tianji o
 # ManiMux Station Setup
 
 Paths are relative to the repository root. Start with
-[`manimux/configs/local/README.md`](../../../manimux/configs/local/README.md).
+[`docs/usage/station.md`](../../../docs/usage/station.md).
 Installing ManiMux does not discover, name or connect a robot automatically. Bind existing
 components to the actual devices; do not copy a developer's addresses, serials or paths as
 universal defaults.
@@ -14,7 +14,7 @@ universal defaults.
 ## One private station file
 
 The default is `manimux/configs/local/station.yaml`, ignored by Git and excluded from
-packages. Copy either `yam.example.yaml` or `tianji_taccap.example.yaml` from the same
+packages. Copy either `yam_example.yaml` or `tianji_taccap_example.yaml` from the same
 directory if no station file exists. Read an existing file before changing it and preserve
 unrelated bindings. Device keys must match the selected assembly's component names.
 
