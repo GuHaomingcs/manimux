@@ -33,6 +33,7 @@ class _TickRecord:
     plan_id: str | None
     inference_ms: float | None
     camera_times_ns: dict[str, int]
+    sent_commands: dict[str, dict]
 
 
 @dataclass(slots=True)
@@ -142,6 +143,7 @@ class EpisodeRecorder:
         inference_ms: float | None,
         camera_times_ns: dict[str, int],
         frames: dict[str, SensorFrame] | None = None,
+        sent_commands: dict[str, dict] | None = None,
     ) -> None:
         self._ticks.append(
             _TickRecord(
@@ -152,6 +154,11 @@ class EpisodeRecorder:
                 plan_id=plan_id,
                 inference_ms=inference_ms,
                 camera_times_ns=dict(camera_times_ns),
+                sent_commands={
+                    name: {key: value.copy() if isinstance(value, np.ndarray) else value
+                           for key, value in sample.items()}
+                    for name, sample in (sent_commands or {}).items()
+                },
             )
         )
         self._video.submit(frames or {})
@@ -183,6 +190,38 @@ class EpisodeRecorder:
                     np.stack(stage_values) if stage_values else np.empty((0, dim), dtype=np.float64)
                 )
                 stage_group.create_dataset(name, data=array)
+
+        sent = ticks.create_group("sent_command")
+        sent.attrs.update({
+            "source": "latest complete i2rt MIT CAN send cycle, sampled per recording tick",
+            "position": "decoded wire target mapped to joint radians and normalized gripper",
+            "motor_position": "decoded MIT position in motor radians",
+            "send_time_ns": "Unix ns before last successful host bus.send per motor",
+            "send_monotonic_ns": "monotonic ns before that host bus.send",
+            "send_end_monotonic_ns": "monotonic ns after that host bus.send returns",
+            "send_count": "successful host sends including retries in that motor transaction",
+            "sequence": "SDK-local complete-cycle counter; repeated rows are cached samples",
+            "missing": "valid=false, position=NaN, integer fields=-1; never substitute command",
+            "scope": "host send evidence, not hardware receive timestamps or a full CAN log",
+        })
+        for name, dim in self._group_dims.items():
+            group = sent.create_group(name)
+            samples = [record.sent_commands.get(name) for record in self._ticks]
+            group.create_dataset(
+                "valid", data=np.asarray([s is not None for s in samples], dtype=bool)
+            )
+            group.create_dataset("sequence", data=np.asarray([
+                -1 if s is None else s["sequence"] for s in samples
+            ], dtype=np.int64))
+            for key in ("position", "motor_position", "send_time_ns", "send_monotonic_ns",
+                        "send_end_monotonic_ns", "send_count"):
+                floating = key in {"position", "motor_position"}
+                dtype = np.float64 if floating else np.int64
+                values = [np.full(dim, np.nan if floating else -1, dtype=dtype)
+                          if s is None else np.asarray(s[key], dtype=dtype) for s in samples]
+                group.create_dataset(
+                    key, data=np.stack(values) if values else np.empty((0, dim), dtype=dtype)
+                )
 
         camera_names = sorted({name for record in self._ticks for name in record.camera_times_ns})
         camera_group = ticks.create_group("camera_time_ns")

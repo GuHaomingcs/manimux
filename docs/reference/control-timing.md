@@ -6,6 +6,9 @@ control frequency, sleep policy, or model sampling settings.
 
 ## Record a timing run
 
+The default experiment baseline is a 100 Hz host control loop and a 30 Hz Viewer
+display cap. Higher-rate control runs are explicit diagnostics, not a new default.
+
 Finish the current rollout and restart only the ManiMux runtime with the diagnostic
 flag. Existing camera, Viewer and policy services can stay running:
 
@@ -150,3 +153,26 @@ rollouts. A display-only cursor plays at the action interval; it is not measured
 execution. Predicted TCP paths remain blue, and Start/Finish clear previews and
 reject late warmup messages. Warmup never commits these preview actions to the
 robot timeline.
+
+
+## Viewer display cadence
+
+Live display reception and rendering run in separate threads. The receiver merges
+adjacent robot-state messages into the newest sample; it retains the latest images
+per camera because image updates are less frequent than joint updates. It does not
+merge across robot/episode identity, plan messages or lifecycle events. Received
+plans and events retain their order. This does not add reliable delivery to the
+existing best-effort transport.
+
+The renderer consumes these batches at a default cap of 30 Hz. Set the Viewer CLI
+`--render-hz 60` to try 60 Hz; this never changes runtime, camera or motor rates.
+Rendering over budget skips missed display ticks rather than replaying them.
+Prediction FK is cached per chunk; the remaining path is redrawn when its cursor
+changes. Each message's scene changes are batched with Viser's atomic update.
+
+The English `Viewer queue / draw` field reports receiver-to-callback age (including
+waiting for the dashboard lock) and Python callback work, in milliseconds. These
+numbers use the Viewer process's monotonic clock. They exclude upstream network
+queueing and browser/WebSocket presentation latency; they are not end-to-end age.
+Viewer controls still share the dashboard lock with a display callback, so this
+change reduces work and callback frequency but does not eliminate that lock.

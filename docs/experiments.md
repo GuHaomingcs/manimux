@@ -3,6 +3,11 @@
 > 2026-09-29 · v0.1 草案。Pi05 抓瓶子 Serial K=16、RTC 最小源进度阈值16与β=5、双方 blend=0、100 Hz 插值 + Direct、不限速已写入 YAML；推理配置收敛到 `inference/aligned/`。配对入口已接通自动预热、手动Start前RESET、seed0与RTC自动延迟初值。保留用户手调的控制步数预算，不新增严格墙钟时限。仅完成源码、静态与配置检查，完整 setting 尚未冻结，未新增实测结果。最新进度见 §7.1。
 > 本文是当前实验的登记入口；[研究设计](reference/experiment-design.md)解释对照原则，[实验设施](reference/experiment-infra.md)说明操作和数据格式。
 
+**2026-10-01 默认运行基线：主循环 `robot.control_hz=100`，Viewer `--render-hz=30`。**
+当前已对齐的 Pi05 抓瓶子 Serial / RTC 均采用此基线；200 Hz 仅为已完成的性能诊断，RTC 入口已恢复 100 Hz。
+Viewer 默认以 30 Hz 刷新最新状态，接收与绘制分线程，不补播连续旧状态；这不是模型动作频率或相机帧率。
+后续新增或对齐的实验沿用该基线，偏离时显式登记；历史未对齐入口不因本次决定自动改写。
+
 ## 1. 本轮范围与记录方式
 
 - **先在抓瓶子任务确定 Serial / RTC setting；Pi05 增加丢硬币任务。SAPolicy 不进入本轮。**
@@ -198,6 +203,7 @@ Pi05 coin 产物：`checkpoints/finetuned/pi05/pi05_coin_20260928_v2_w32/50000`�
 | `policy_server.inference_seed` | 0 | 0 | 共同Joint30k recipe显式指定；Pi05模型加载及每条新rollout的RESET复位噪声序列，连续请求推进；已接通源码，未运行模型端回归 |
 | `run.warmup_before_start` | true | true | Prepare后持续真实推理；用户随时手动Start，排空预热请求并等待RESET应答后才取新观测正式推理；没有固定时长或稳定门槛 |
 | `robot.control_hz` | 100 Hz | 100 Hz | **两者已确认并写入 YAML**：30 Hz 模型动作点经 Timeline 线性插值，在 100 Hz 执行循环中更新目标命令 |
+| Viewer `--render-hz` | 30 Hz | 30 Hz | 2026-10-01 确认；独立 Viewer CLI 默认值为30，无需额外传参；不改变模型动作时间轴 |
 | executor / control profile | `direct` + `yam_control_unlimited` | 相同 | 2026-09-29 第1–5项：移除 Smooth recipe 引用，保留共同不限速 profile |
 | arm 速度 / 加速度限制 | null；null | null；null | 不额外限速、限加速度；保留 1/30 s 模型动作时间轴 |
 | gripper 速度 / 加速度 / 单独关爪速度限制 | null；null；null | 相同 | 三项全部关闭；SDK 的夹持力处理是另一层，见参数清单 |

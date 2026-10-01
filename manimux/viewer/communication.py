@@ -5,6 +5,9 @@ from __future__ import annotations
 import base64
 import contextlib
 import io
+import logging
+import math
+from collections import deque
 import threading
 import time
 from collections.abc import Callable, Mapping
@@ -169,29 +172,109 @@ class ViewerPublisher:
         self._socket.close(linger=0)
 
 
+class _ViewerInbox:
+    """Coalesce adjacent state samples without crossing plan/event boundaries."""
+
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self._messages: deque[dict[str, Any]] = deque()
+
+    @staticmethod
+    def _identity(message: dict[str, Any]) -> tuple:
+        metadata = message.get("metadata") or {}
+        return (message.get("robot"), metadata.get("service_id"),
+                metadata.get("episode_id"), metadata.get("episode_dir"))
+
+    def put(self, message: dict[str, Any]) -> None:
+        message = dict(message)
+        message["_viewer_received_ns"] = time.monotonic_ns()
+        with self._lock:
+            if (self._messages and message.get("kind") == "state"
+                    and self._messages[-1].get("kind") == "state"
+                    and self._identity(self._messages[-1]) == self._identity(message)):
+                previous = self._messages.pop()
+                # Images arrive less often than joint samples. Preserve the newest
+                # image per camera when a newer, image-free state replaces a sample.
+                for key in ("cameras_jpeg", "camera_metadata"):
+                    message[key] = {**previous.get(key, {}), **message.get(key, {})}
+            self._messages.append(message)
+
+    def take(self) -> list[dict[str, Any]]:
+        with self._lock:
+            messages = list(self._messages)
+            self._messages.clear()
+        return messages
+
+
 class ViewerReceiver:
-    def __init__(self, endpoint: str, callback: Callable[[dict[str, Any]], None]) -> None:
-        self._context: zmq.Context[zmq.Socket[bytes]] = zmq.Context.instance()
-        self._socket: zmq.Socket[bytes] = self._context.socket(zmq.PULL)
-        self._socket.setsockopt(zmq.RCVHWM, 4)
-        self._socket.setsockopt(zmq.LINGER, 0)
-        self._socket.bind(endpoint)
+    """Receive independently of rendering; display current state at a bounded rate."""
+
+    def __init__(
+        self, endpoint: str, callback: Callable[[dict[str, Any]], None],
+        *, render_hz: float = 30.0,
+    ) -> None:
+        if not math.isfinite(render_hz) or render_hz <= 0:
+            raise ValueError("render_hz must be finite and positive")
+        self._endpoint = endpoint
         self._callback = callback
-        self._running = True
+        self._period = 1.0 / render_hz
+        self._inbox = _ViewerInbox()
+        self._stop = threading.Event()
+        self._ready = threading.Event()
+        self._startup_error: Exception | None = None
         self._thread = threading.Thread(target=self._run, name="viewer-bridge", daemon=True)
+        self._render_thread = threading.Thread(
+            target=self._render, name="viewer-render", daemon=True,
+        )
         self._thread.start()
+        if not self._ready.wait(5.0):
+            self.close()
+            raise TimeoutError("Viewer receiver did not start")
+        if self._startup_error is not None:
+            self.close()
+            raise self._startup_error
+        self._render_thread.start()
 
     def _run(self) -> None:
-        poller = zmq.Poller()
-        poller.register(self._socket, zmq.POLLIN)
-        while self._running:
-            if self._socket in dict(poller.poll(100)):
-                self._callback(cast(dict[str, Any], self._socket.recv_json()))
+        # The receive thread owns its ZeroMQ socket for its entire lifetime.
+        socket = zmq.Context.instance().socket(zmq.PULL)
+        socket.setsockopt(zmq.RCVHWM, 4)
+        socket.setsockopt(zmq.LINGER, 0)
+        try:
+            socket.bind(self._endpoint)
+        except Exception as exc:
+            self._startup_error = exc
+            self._ready.set()
+            socket.close(linger=0)
+            return
+        self._ready.set()
+        try:
+            while not self._stop.is_set():
+                if socket.poll(50, zmq.POLLIN):
+                    message = socket.recv_json()
+                    if isinstance(message, dict):
+                        self._inbox.put(message)
+        finally:
+            socket.close(linger=0)
+
+    def _render(self) -> None:
+        while not self._stop.is_set():
+            started = time.monotonic()
+            for message in self._inbox.take():
+                if self._stop.is_set():
+                    break
+                try:
+                    self._callback(message)
+                except Exception:
+                    logging.getLogger(__name__).exception("Viewer display update failed")
+            # Never catch up by replaying missed display ticks.
+            self._stop.wait(max(0.0, self._period - (time.monotonic() - started)))
 
     def close(self) -> None:
-        self._running = False
-        self._thread.join(timeout=1.0)
-        self._socket.close(linger=0)
+        self._stop.set()
+        for thread in (self._thread, self._render_thread):
+            if thread.ident is not None and thread is not threading.current_thread():
+                thread.join(timeout=2.0)
 
 
 class ControlServer:

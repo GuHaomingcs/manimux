@@ -60,6 +60,12 @@ class YamController(ArmController):
         """起始姿态和 Home 沿用 SDK 插值；整机层负责协调各臂的阶段。"""
         self.robot.move_joints(target.copy(), time_interval_s=time_interval_s)
 
+    def sent_command_snapshots(self):
+        """Read cached CAN-send evidence; an unpatched SDK has no evidence."""
+        getter = getattr(self.robot, "get_sent_command_snapshot", None)
+        sample = getter() if callable(getter) else None
+        return {} if sample is None else {self.channel: sample}
+
     def runtime_metadata(self):
         """Read connected SDK settings and calibrated bounds without device I/O."""
         from manimux.recording.provenance import (

@@ -103,6 +103,7 @@ class PolicyViewer:
         robot: RobotView,
         reference_root: Path = DEFAULT_LAYOUT_ROOT,
         viewer_config: dict | None = None,
+        render_hz: float = 30.0,
     ) -> None:
         self.robot = robot
         self.viewer_config = viewer_config if viewer_config is not None else robot.options
@@ -140,6 +141,8 @@ class PolicyViewer:
         }
         self.robot_handles: dict[str, Any] = {}
         self.plan_actions: dict[str, FloatArray] = {}
+        self._plan_points: dict[str, FloatArray] = {}
+        self._plan_cursor: int | None = None
         self.last_joint_positions: dict[str, FloatArray] = {}
         self.plan_chunk_id: int | None = None
         self.plan_start_index = 0
@@ -164,7 +167,12 @@ class PolicyViewer:
         self.episode_finalized = False
         self._build_scene()
         self._build_gui()
-        self.receiver = ViewerReceiver(bridge_endpoint, self.on_message)
+        def display_message(message: dict[str, Any]) -> None:
+            # Batch link poses and overlays so clients do not see a partial update.
+            with self.server.atomic():
+                self.on_message(message)
+
+        self.receiver = ViewerReceiver(bridge_endpoint, display_message, render_hz=render_hz)
         self.control_server = ControlServer(control_endpoint, self.control_state)
 
         @self.server.on_client_disconnect
@@ -302,6 +310,7 @@ class PolicyViewer:
             self.chunk_info = self.server.gui.add_text("Chunk", "—", disabled=True)
             self.executor_info = self.server.gui.add_text("Executor", "waiting", disabled=True)
             self.latency = self.server.gui.add_text("Inference", "—", disabled=True)
+            self.display_timing = self.server.gui.add_text("Viewer queue / draw", "—", disabled=True)
             self.progress = self.server.gui.add_number("Step", 0, disabled=True)
             self.runtime_name = self.server.gui.add_text("Runtime", "waiting", disabled=True)
             self.episode_path = self.server.gui.add_text("Episode", "waiting", disabled=True)
@@ -1156,6 +1165,7 @@ class PolicyViewer:
 
     def on_message(self, message: dict[str, Any]) -> None:
         with self.lock:
+            display_started = time.monotonic_ns()
             if not self._matches_selected_robot(message):
                 return
             try:
@@ -1175,6 +1185,12 @@ class PolicyViewer:
                 if timeline is not None:
                     timeline.update(message)
                     self._refresh_chunk_timeline(force=kind != "state")
+                timing = getattr(self, "display_timing", None)
+                received = message.get("_viewer_received_ns")
+                if kind == "state" and timing is not None and received is not None:
+                    queue_ms = max(0, display_started - received) / 1e6
+                    draw_ms = (time.monotonic_ns() - display_started) / 1e6
+                    timing.value = f"{queue_ms:.1f} / {draw_ms:.1f} ms"
             except (KeyError, TypeError, ValueError) as exc:
                 self.status.content = (
                     f"🔴 **Rejected malformed {message.get('kind')} message: {exc}**"
@@ -1220,6 +1236,11 @@ class PolicyViewer:
             group_name: np.asarray(group_actions, dtype=np.float64)
             for group_name, group_actions in grouped_actions.items()
         }
+        self._plan_points = {
+            name: self.robot.positions(name, actions)
+            for name, actions in self.plan_actions.items()
+        }
+        self._plan_cursor = start_index
         self.plan_chunk_id = chunk_id
         self.plan_start_index = start_index
         self.policy_name.value = str(message.get("policy", "unknown"))
@@ -1235,7 +1256,8 @@ class PolicyViewer:
             if group_actions is None:
                 self._draw_plan(group, np.empty((0, 0)))
             else:
-                self._draw_plan(group, group_actions[start_index:])
+                self._draw_plan(group, group_actions[start_index:],
+                                points=self._plan_points[group.name][start_index:])
 
     def _update_warmup_plan(
         self, message: dict[str, Any], grouped_actions: dict[str, FloatArray], *, start_index: int
@@ -1282,7 +1304,9 @@ class PolicyViewer:
                 position=points[-1] + np.asarray((0.0, 0.0, 0.04)), visible=visible,
             ))
 
-    def _draw_plan(self, group: RobotGroup, actions: FloatArray) -> None:
+    def _draw_plan(
+        self, group: RobotGroup, actions: FloatArray, *, points: FloatArray | None = None,
+    ) -> None:
         root = f"{self._root(group)}/predicted_ee"
         if len(actions) < 2:
             for handle in self.current_plan_handles[group.name]:
@@ -1292,7 +1316,8 @@ class PolicyViewer:
         # This line lives below the group root, which already carries the arm's
         # base_position. Keep FK output in that local frame to avoid applying
         # the left/right base offset twice.
-        points = self.robot.positions(group.name, actions)
+        if points is None:
+            points = self.robot.positions(group.name, actions)
         segments = np.stack((points[:-1], points[1:]), axis=1)
         point_colors = _trajectory_colors(len(points))
         segment_colors = np.stack((point_colors[:-1], point_colors[1:]), axis=1)
@@ -1331,7 +1356,9 @@ class PolicyViewer:
             actions = actions[self.plan_start_index :]
             if len(actions) < 2:
                 continue
-            points = self.robot.positions(group.name, actions)
+            cached = self._plan_points.get(group.name)
+            points = (cached[self.plan_start_index:] if cached is not None
+                      else self.robot.positions(group.name, actions))
             point_colors = _trajectory_colors(len(points)).astype(np.float64)
             muted_colors = (0.55 * point_colors + 0.45 * 190.0).astype(np.uint8)
             history_colors = np.stack((muted_colors[:-1], muted_colors[1:]), axis=1)
@@ -1372,6 +1399,8 @@ class PolicyViewer:
         self.current_plan_handles = {group.name: [] for group in self.robot.groups}
         self._clear_plan_history()
         self.plan_actions = {}
+        self._plan_points = {}
+        self._plan_cursor = None
         self.plan_chunk_id = None
         self.plan_start_index = 0
 
@@ -1405,13 +1434,17 @@ class PolicyViewer:
             active_chunk_id is not None
             and self.plan_chunk_id is not None
             and int(active_chunk_id) == self.plan_chunk_id
+            and action_index != getattr(self, "_plan_cursor", None)
         ):
             for group in self.robot.groups:
                 actions = self.plan_actions.get(group.name)
                 self._draw_plan(
                     group,
                     actions[action_index:] if actions is not None else np.empty((0, 0)),
+                    points=(self._plan_points[group.name][action_index:]
+                            if group.name in self._plan_points else None),
                 )
+            self._plan_cursor = action_index
         for group_name, configuration in grouped_positions.items():
             self._update_group(self.robot.group(group_name), configuration)
         self.camera_view.update_images(message.get("cameras_jpeg", {}))
@@ -1733,6 +1766,8 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--host", default="0.0.0.0")
     parser.add_argument("--port", type=int, default=8086)
+    parser.add_argument("--render-hz", type=float, default=30.0,
+                        help="Live display refresh cap; independent of robot control Hz")
     parser.add_argument("--bridge-endpoint", default="tcp://127.0.0.1:5568")
     parser.add_argument("--control-endpoint", default="tcp://127.0.0.1:5569")
     parser.add_argument("--reference-root", type=Path, default=DEFAULT_LAYOUT_ROOT)
@@ -1756,6 +1791,8 @@ def _parser() -> argparse.ArgumentParser:
 def main() -> None:
     parser = _parser()
     args = parser.parse_args()
+    if not np.isfinite(args.render_hz) or args.render_hz <= 0:
+        parser.error("--render-hz must be finite and positive")
     if args.replay_actions is not None:
         if args.action_dt_s is None or not np.isfinite(args.action_dt_s) or args.action_dt_s <= 0:
             parser.error("--replay-actions requires a finite, positive --action-dt-s")
@@ -1788,6 +1825,7 @@ def main() -> None:
         robot,
         reference_root=args.reference_root,
         viewer_config=viewer_config,
+        render_hz=args.render_hz,
     )
     if args.demo:
         threading.Thread(target=_demo, args=(viewer,), daemon=True).start()

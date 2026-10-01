@@ -1237,6 +1237,7 @@ class EdgeRuntime:
                         state=state,
                         scheduled=scheduled,
                         command=command.groups,
+                        sent_commands=getattr(self._robot, "sent_command_snapshots", lambda: {})(),
                         plan_id=command.plan_id,
                         inference_ms=last_inference_ms,
                         camera_times_ns={

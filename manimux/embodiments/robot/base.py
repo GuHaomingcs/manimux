@@ -221,6 +221,19 @@ class RobotBase(ABC):
     def home(self) -> None:
         raise NotImplementedError("home trajectory not configured; use the runtime motion planner")
 
+    def sent_command_snapshots(self) -> dict:
+        """Read optional controller send evidence without issuing hardware reads."""
+        with self._lock:
+            snapshots = {}
+            for controller in self._controllers:
+                getter = getattr(controller, "sent_command_snapshots", None)
+                snapshots[controller] = getter() if callable(getter) else {}
+            return {
+                name: snapshots[arm.controller][arm.channel]
+                for name, arm in self.arm_components.items()
+                if arm.channel in snapshots[arm.controller]
+            }
+
     def runtime_metadata(self) -> dict:
         """Snapshot optional controller provenance without polling or commanding hardware."""
         controllers = {}
