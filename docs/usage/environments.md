@@ -52,7 +52,7 @@ They should not be confused with the robot's CAN, serial and IP bindings.
 Tests, fixtures and test launchers are local development resources and are excluded
 from Git. Keep useful regression checks locally; do not force-add them to commits.
 A fresh clone does not include `tests/`, so the commands below require a local test
-suite. Formatting and lint commands are listed in [Contributing](../../CONTRIBUTING.md)
+suite. Formatting and lint commands are listed in [Contributing](../development/README.md#contributing)
 and work without that directory.
 
 Run runtime and component tests with the runtime interpreter, from the repository root:

@@ -7,7 +7,8 @@ description: Integrate or review ManiMux robot components, policy frameworks, ac
 
 ManiMux provides shared real-robot inference, execution and experiment operation.
 Users choose their research and optional evaluation; integrations reuse the common
-runtime and RoboGUI. Read root and relevant nested `AGENTS.md` instructions.
+runtime and RoboGUI. Read the [repository guide](../../../docs/development/agent-guide.md)
+before editing, plus relevant nested or framework `AGENTS.md` instructions.
 
 ## Choose the extension point
 

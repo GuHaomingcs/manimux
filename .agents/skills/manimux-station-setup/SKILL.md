@@ -5,7 +5,8 @@ description: Connect a ManiMux installation to a developer's local YAM, Tianji o
 
 # ManiMux Station Setup
 
-Paths are relative to the repository root. Start with
+Paths are relative to the repository root. Read the
+[repository guide](../../../docs/development/agent-guide.md) before editing. Start with
 [`docs/usage/station.md`](../../../docs/usage/station.md).
 Installing ManiMux does not discover, name or connect a robot automatically. Bind existing
 components to the actual devices; do not copy a developer's addresses, serials or paths as

@@ -129,7 +129,9 @@ as configured; use the runbook matching your actual setup.
 ## Integrate
 
 **For users:** configure an existing combination and use RoboGUI.
-**For your coding agent:** start at [AGENTS.md](AGENTS.md), then load the relevant skill.
+**For your coding agent:** use the [development skill](.agents/skills/manimux-development/SKILL.md)
+or the matching task skill below. If your tool does not discover repository skills,
+ask it to read the linked `SKILL.md` explicitly.
 
 | Task | Entry point |
 | --- | --- |
@@ -145,7 +147,7 @@ validation.
 **Build with us.** Contributions are welcome—from new embodiments, policies, and
 inference strategies to documentation and bug fixes. Start with the
 [integration guide](docs/development/README.md), follow the shared protocols, and see
-[Contributing](CONTRIBUTING.md) for the expected handoff.
+[Contributing](docs/development/README.md#contributing) for the expected handoff.
 
 ## Support and evidence
 
@@ -177,7 +179,7 @@ please also cite its paper and the models/methods you use.
 }
 ```
 
-[Third-party notices](THIRD_PARTY_NOTICES.md) · [Upstream licenses](licenses) · [Documentation](https://sii-liulab.github.io/manimux/)
+[Third-party notices](licenses/THIRD_PARTY_NOTICES.md) · [Upstream licenses](licenses) · [Documentation](https://sii-liulab.github.io/manimux/)
 
 ## License
 
@@ -185,4 +187,4 @@ please also cite its paper and the models/methods you use.
 [![License: MIT](https://img.shields.io/badge/License-MIT-22C55E?style=flat-square)](LICENSE)
 
 ManiMux is licensed under [MIT](LICENSE). Third-party frameworks, SDKs and assets
-retain their own licenses; see [third-party notices](THIRD_PARTY_NOTICES.md).
+retain their own licenses; see [third-party notices](licenses/THIRD_PARTY_NOTICES.md).

@@ -4,10 +4,10 @@ ManiMux is a composable real-robot experiment platform. Keep model inference, ru
 scheduling, embodiment control and experiment interfaces separate.
 Teleoperation and demonstration collection are outside this repository; retain runtime
 rollout recording and offline replay.
-These instructions apply throughout this checkout; also read the instructions in any
-submodule or nested directory before editing it.
+These conventions apply throughout this checkout. Repository skills load this guide
+explicitly; read instructions in any submodule or nested directory before editing it.
 
-Public entry points: [User guide](docs/index.md) · [Integration map](docs/development/README.md).
+Public entry points: [User guide](../index.md) · [Integration map](../development/README.md).
 Skills route agents to these same maintained protocol guides.
 
 ## Task skills
@@ -17,9 +17,9 @@ repository root. They describe existing code and workflows, not permission to ru
 
 | Task | Skill |
 |---|---|
-| Integrate or review a component, policy client/adapter, runtime or Viewer feature | [Development](.agents/skills/manimux-development/SKILL.md) |
-| Bind an installation to local robots, cameras and SDKs | [Station setup](.agents/skills/manimux-station-setup/SKILL.md) |
-| Track experiment progress, evaluate recorded rollouts, run PRM, or update experiment result tables | [Experiments](.agents/skills/manimux-experiments/SKILL.md) |
+| Integrate or review a component, policy client/adapter, runtime or Viewer feature | [Development](../../.agents/skills/manimux-development/SKILL.md) |
+| Bind an installation to local robots, cameras and SDKs | [Station setup](../../.agents/skills/manimux-station-setup/SKILL.md) |
+| Track experiment progress, evaluate recorded rollouts, run PRM, or update experiment result tables | [Experiments](../../.agents/skills/manimux-experiments/SKILL.md) |
 
 For a new integration, the Development skill maps each extension to its existing
 interface, owning directory, configuration and focused validation. Read its relevant
@@ -28,7 +28,7 @@ reference before copying an older integration; compatibility paths are not templ
 ## First connection to a local robot
 
 For another installation of a supported robot, start with
-[local station setup](docs/usage/station.md) and its matching template.
+[local station setup](../usage/station.md) and its matching template.
 Keep machine-specific CAN interfaces, controller IPs, device serials and service addresses
 in one private station file. Read an existing file before editing it, preserve component
 names, and establish physical device mappings instead of assuming enumeration order means left/right.
@@ -62,9 +62,9 @@ Do not add model implementations or framework runtimes inside the ManiMux Python
 
 For models owned by XPolicyLab:
 
-- Read [XPolicyLab/AGENTS.md](XPolicyLab/AGENTS.md),
-  [the contribution standard](XPolicyLab/CONTRIBUTING.md) and
-  [the reference adapter](XPolicyLab/policy/demo_policy/) before implementation.
+- Read [XPolicyLab/AGENTS.md](../../XPolicyLab/AGENTS.md),
+  [the contribution standard](../../XPolicyLab/CONTRIBUTING.md) and
+  [the reference adapter](../../XPolicyLab/policy/demo_policy/) before implementation.
 - Reuse an existing policy directory when an XPolicyLab model is already integrated.
 - Keep upstream model source and reproduction changes under that policy directory,
   following XPolicyLab's vendored-source or pinned-submodule conventions. Preserve upstream

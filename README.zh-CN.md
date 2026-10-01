@@ -129,8 +129,9 @@ Prepare 可能根据配置连接机器人并移动到起始姿态，请使用与
 
 ## 接入开发
 
-**用户**通过配置和 RoboGUI 使用项目；**用户的 agent** 从 [AGENTS.md](AGENTS.md)
-进入，按任务读取 skill 和对应接口文档。
+**用户**通过配置和 RoboGUI 使用项目；**用户的 agent** 按任务读取
+[开发 skill](.agents/skills/manimux-development/SKILL.md)或下方对应 skill。
+如果使用的工具不会自动发现仓库 skill，直接让它读取链接中的 `SKILL.md`。
 
 | 要做的事 | 文档入口 |
 | --- | --- |
@@ -143,7 +144,7 @@ Prepare 可能根据配置连接机器人并移动到起始姿态，请使用与
 每种接入都应说明数据语义、代码归属、YAML 选择方式和验证结果。
 
 **欢迎一起建设 ManiMux。** 无论是新本体、策略、推理算法，还是文档完善与问题修复，都欢迎贡献。
-请从[接入指南](docs/development/README.md)开始，遵循共享 protocol，并参考[贡献指南](CONTRIBUTING.md)完成交付。
+请从[接入指南](docs/development/README.md)开始，遵循共享 protocol，并参考[贡献指南](docs/development/README.md#contributing)完成交付。
 
 ## 支持情况
 
@@ -175,7 +176,7 @@ Prepare 可能根据配置连接机器人并移动到起始姿态，请使用与
 }
 ```
 
-[第三方声明](THIRD_PARTY_NOTICES.md) · [上游许可证](licenses) · [完整文档](docs/index.md)
+[第三方声明](licenses/THIRD_PARTY_NOTICES.md) · [上游许可证](licenses) · [完整文档](docs/index.md)
 
 ## 许可证
 
@@ -183,4 +184,4 @@ Prepare 可能根据配置连接机器人并移动到起始姿态，请使用与
 [![License: MIT](https://img.shields.io/badge/License-MIT-22C55E?style=flat-square)](LICENSE)
 
 ManiMux 使用 [MIT](LICENSE) 许可证。第三方框架、SDK 与资产保留各自的许可证，
-详见[第三方声明](THIRD_PARTY_NOTICES.md)。
+详见[第三方声明](licenses/THIRD_PARTY_NOTICES.md)。

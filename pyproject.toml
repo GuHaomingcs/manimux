@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Composable real-robot inference and experiment framework"
 readme = "README.md"
 license = "MIT"
-license-files = ["LICENSE", "THIRD_PARTY_NOTICES.md", "licenses/*.txt"]
+license-files = ["LICENSE", "licenses/THIRD_PARTY_NOTICES.md", "licenses/*.txt"]
 requires-python = ">=3.11,<3.13"
 dependencies = [
   "mujoco>=3.3",
@@ -59,7 +59,7 @@ packages = ["manimux"]
 exclude = ["manimux/configs/local/station.yaml"]
 
 [tool.hatch.build.targets.wheel.force-include]
-"THIRD_PARTY_NOTICES.md" = "manimux/THIRD_PARTY_NOTICES.md"
+"licenses/THIRD_PARTY_NOTICES.md" = "manimux/THIRD_PARTY_NOTICES.md"
 "licenses/i2rt-MIT.txt" = "manimux/licenses/i2rt-MIT.txt"
 "licenses/starvla-MIT.txt" = "manimux/licenses/starvla-MIT.txt"
 

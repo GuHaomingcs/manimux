@@ -1,8 +1,9 @@
 # Integrate with ManiMux
 
 Implement the part your research changes; reuse the runtime, robot assembly and
-RoboGUI around it. Start your coding agent at [`AGENTS.md`](../../AGENTS.md) and
-[the development skill](../../.agents/skills/manimux-development/SKILL.md).
+RoboGUI around it. Start your coding agent with
+[the development skill](../../.agents/skills/manimux-development/SKILL.md), which loads
+[the repository guide](agent-guide.md).
 Humans and agents use the same protocol references below.
 
 | I want to add… | Owning implementation | Guide |
@@ -79,3 +80,34 @@ Use a deterministic clock to exercise delayed responses, overlap and reset. If t
 algorithm needs a specialized sampler, implement that in the owning model framework
 and declare its capability. Observation mapping and command generation retain their
 existing owners. See [runtime details](runtime-config.md).
+
+## Contributing
+
+Submit a focused pull request with the implementation, selecting configuration,
+runnable example and evidence described above. State remaining hardware or checkpoint
+requirements. Keep model dependencies in their framework, local device bindings in the
+private station file, and research settings in YAML.
+
+Write new comments and general documentation in English; update both homepage languages
+when changing user-facing behavior. Do not commit recordings, weights, credentials or
+hardware addresses. Regression tests currently stay in the ignored local `tests/`
+workspace; report the commands and results in the PR instead of force-adding tests.
+
+### Local checks
+
+Run checks on the owning code paths. These commands work from the repository root
+without a Makefile:
+
+```bash
+uv run ruff format --check manimux
+uv run ruff check manimux
+uv run mypy manimux
+```
+
+To apply formatting and lint fixes, use `uv run ruff format manimux` and
+`uv run ruff check --fix manimux`. If your local test workspace is installed, run
+`uv run pytest tests/unit` or `uv run pytest tests/integration` as relevant; include
+those test paths in Ruff checks when changing them. See the
+[environment guide](../usage/environments.md#offline-regression-tests) for hardware-specific
+interpreters. Documentation changes use `mkdocs build --strict -f docs/mkdocs.yml` in the
+[documentation environment](https://github.com/SII-LiuLab/manimux/blob/main/docs/README.md#preview-locally).

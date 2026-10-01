@@ -4,7 +4,8 @@ site_url: https://sii-liulab.github.io/manimux/
 repo_url: https://github.com/SII-LiuLab/manimux
 repo_name: SII-LiuLab / ManiMux
 edit_uri: edit/main/docs/
-site_dir: site
+docs_dir: .
+site_dir: ../site
 theme:
   name: material
   logo: assets/mark.svg
@@ -27,7 +28,7 @@ theme:
 plugins:
   - search
 hooks:
-  - scripts/docs/hooks.py
+  - _build/hooks.py
 extra_css:
   - assets/guide.css
 markdown_extensions:
@@ -50,6 +51,9 @@ markdown_extensions:
 exclude_docs: |
   /README.md
   /experiments.md
+  /mkdocs.yml
+  /requirements.txt
+  /_build/
 validation:
   nav:
     omitted_files: warn
@@ -72,6 +76,7 @@ nav:
       - Optional video evaluation: usage/evaluation.md
   - Develop with your agent:
       - Integration map: development/README.md
+      - Repository guide: development/agent-guide.md
       - Architecture: development/architecture.md
       - Robots, tools and cameras: development/components.md
       - Models, clients and adapters: development/policies.md

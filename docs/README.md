@@ -5,7 +5,9 @@ separate audiences and responsibilities:
 
 - Root `README.md`: a concise project overview, demo and quick-start links.
 - `.agents/skills/*/SKILL.md`: instructions that route an agent through development or setup.
-- `docs/`: user guides and detailed integration protocols, rendered into this website.
+- `docs/`: user guides, shared repository conventions and integration protocols.
+- `docs/mkdocs.yml`, `docs/requirements.txt`, `docs/_build/`: website build configuration.
+- `licenses/`: upstream license texts and third-party attribution.
 
 Skills link to the relevant protocol pages rather than duplicating their specifications.
 README stays short; it does not embed the skills or the full protocols. Update a protocol
@@ -17,14 +19,14 @@ From the repository root, in a documentation-only environment:
 
 ```bash
 uv venv .venv-docs --python 3.12
-uv pip install --python .venv-docs/bin/python -r requirements-docs.txt
-.venv-docs/bin/mkdocs serve --dev-addr 127.0.0.1:8000
+uv pip install --python .venv-docs/bin/python -r docs/requirements.txt
+.venv-docs/bin/mkdocs serve -f docs/mkdocs.yml --dev-addr 127.0.0.1:8000
 ```
 
-Build a static site with `.venv-docs/bin/mkdocs build --strict`. Output goes to the
+Build a static site with `.venv-docs/bin/mkdocs build --strict -f docs/mkdocs.yml`. Output goes to the
 ignored `site/` directory. Serve that directory on any static host. Repository
 links use `main`; update `edit_uri` in
-`mkdocs.yml` and `REVISION` in `scripts/docs/hooks.py` together when publishing
+`docs/mkdocs.yml` and `REVISION` in `docs/_build/hooks.py` together when publishing
 from another branch.
 
 ## Publishing

@@ -6,8 +6,8 @@ description: Maintain ManiMux experiment settings, progress, and per-task result
 # ManiMux Experiments
 
 Work from the ManiMux checkout. Paths written as `docs/...`, `manimux/...`,
-`scripts/...`, or `PRM-as-a-Judge/...` are relative to its root. Read its
-`AGENTS.md` before editing. This skill owns experiment operation and reporting;
+`scripts/...`, or `PRM-as-a-Judge/...` are relative to its root. Read the
+[repository guide](../../../docs/development/agent-guide.md) before editing. This skill owns experiment operation and reporting;
 use the development skill when the request changes recording or runtime behavior.
 
 ## User research versus team studies
