@@ -4,7 +4,7 @@ StarVLA is a separately versioned policy framework alongside XPolicyLab. Its nat
 WebSocket service loads the checkpoint and runs the model; ManiMux selects
 `worker: starvla_ws` and reuses its adapters, runtime, executors and recorder.
 These examples use synthetic images and an offline plant. They never open a robot
-or camera connection. See [validation and limits](starvla-offline.md).
+or camera connection. See the [support and validation matrix](#support-and-validation-matrix).
 
 ```text
 StarVLA/ native model service
@@ -165,6 +165,38 @@ reset state is isolated per WebSocket connection.
 Saved canonical joint trajectories use the same [action replay](../usage/replay.md)
 and [recording workflow](../usage/records.md) as other policies. No model service is
 needed to replay a recording. Stop the temporary server after validation.
+
+## Support and validation matrix
+
+Support is selected by a checkpoint contract and recipe, not by the framework
+name alone. Real-model results below describe the native-peer validation campaign
+on 2026-09-28; they are historical evidence, not a new benchmark of every checkout.
+Current interface checks use the real native WebSocket server with explicitly
+synthetic predictions where model weights are not needed.
+
+| Framework / recipe | Action contract | Enabled sampling | Interface and offline runtime | Real checkpoint inference | Real robot |
+| --- | --- | --- | --- | --- | --- |
+| QwenOFT / RoboTwin ALOHA | 50 × 14 absolute joints; explicit arm/gripper permutation | Default | Native RPC, paired recipe and recording | Validated through native service and 500-step offline runtime | Not validated |
+| QwenPI_v3 / RoboDojo ARX | 50 × 14 absolute joints; 14D state | Default, RTC, PAINT, AAC, AutoHorizon, DVAC, subject to loaded-head checks | Native RPC, paired recipes, samplers and recording | Validated through native service; serial/async/ensemble and five sampling recipes | Not validated |
+| QwenGR00T / LIBERO | 8 × 7 native EEF feedback deltas | Default for this recipe | Native codec and first-feedback-delta conversion | Validated through native service and Direct/Smooth/MPC offline execution | Not validated |
+| QwenFast / LIBERO | 8 × 7 native EEF feedback deltas | Default | Native codec and first-feedback-delta conversion | Validated with matching action-token VLM and FAST processor | Not validated |
+| Synthetic YAM EEF contract | 50 predicted dual-arm poses; 20-step joint prefix | Default | Real YAM FK/IK, inline/process/parallel decoding, serial/async/ensemble, Smooth/MPC and recording | No matching learned checkpoint validated | Not validated |
+
+The YAM row tests absolute poses and observation-relative deltas in arm-base and
+tool frames. The LIBERO rows use an analytic plant, not YAM/Franka dynamics.
+Joint AAC validation uses fixture geometry/statistics, not calibrated ARX metrics.
+Passing a synthetic runtime check does not establish successful learned-model
+inference or physical motion. No row establishes every architecture, embodiment,
+checkpoint, sampler and executor combination.
+
+YAM EEF checks require the pinned i2rt solver dependencies even though they do
+not open CAN. Prepare the [offline EEF environment](../usage/environments.md#yam-eef-regression-environment)
+before running the local regression suite. Missing dependencies are prerequisites
+to resolve, not successful checks or a reason to substitute a weaker IK solver.
+Checkpoint-based validation remains available through the existing
+`scripts.validation.starvla_offline_probe` commands above. Keep reports and
+rollout artifacts local; record the framework revision, checkpoint identity and
+validation stage when repeating a campaign.
 
 ## Action semantics and capability limits
 

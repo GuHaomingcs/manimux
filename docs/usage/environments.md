@@ -40,6 +40,40 @@ Do not point root-project `uv sync` or `UV_PROJECT_ENVIRONMENT` at an existing i
 hardware/model environment: syncing the root lockfile can remove SDK/model dependencies
 not declared there. Manage the root development environment through the root project normally.
 
+## YAM EEF regression environment
+
+EEF regression checks use actual offline YAM geometry and the i2rt IK solver.
+They need SDK dependencies but never construct a motor session. Create a separate
+environment so installing this pinned SDK does not replace the PiPER/ARX environment:
+
+```bash
+uv venv --python 3.12 envs/yam/.venv
+printf 'scikit-build-core<0.10\n' > envs/yam/i2rt-build-constraints.txt
+uv pip install --python envs/yam/.venv/bin/python \
+  --build-constraint envs/yam/i2rt-build-constraints.txt \
+  -e '.[starvla,replay]' pytest opencv-python-headless \
+  'i2rt @ git+https://github.com/i2rt-robotics/i2rt.git@5d47b358bafb30c65e397f2ece506550a0db4594'
+uv pip check --python envs/yam/.venv/bin/python
+```
+
+The build constraint follows the pinned i2rt source's requirement for ruckig's
+source build. A compiler and CMake are needed on a fresh installation. The core
+package supplies MuJoCo; i2rt supplies Mink and its QP solver dependencies.
+This environment contains no learned-model runtime such as torch/JAX.
+
+With the ignored local regression suite available, run:
+
+```bash
+envs/yam/.venv/bin/python -m pytest \
+  tests/unit/test_pose_adapter.py \
+  tests/integration/test_starvla_eef_runtime.py
+```
+
+These checks exercise the real native protocol, offline IK, decoder processes,
+runtime/executors and recorder with synthetic predictions. They do not load
+learned checkpoint weights or certify physical robot behavior. Keep output
+reports under the ignored local workspace.
+
 ## Different from configuration
 
 - `manimux/configs/`: experiments, assemblies, inference, executors, model-service settings

@@ -392,6 +392,14 @@ class EdgeRuntime:
         home_on_close = bool(self._config["robot"]["options"].get("home_on_close", False))
         warmup = None
         try:
+            robot_capabilities = self._robot.capabilities()
+            if home_on_close and not robot_capabilities.home:
+                if self._config["robot"]["options"].get("execute") is True:
+                    raise ValueError(
+                        "home_on_close requires a robot with an available Home operation"
+                    )
+                home_on_close = False
+                recorder.event("home_on_close_skipped", reason="read_only_home_unavailable")
             if self._config["run"].get("warmup_before_start", False):
                 warmup = PolicyWarmup(
                     self._config, worker=self._worker,
@@ -448,6 +456,8 @@ class EdgeRuntime:
                 **self._rollout_identity,
                 "camera_map": self._config["policy"]["adapter"].get("camera_map", {}),
                 "launch_mode": self._launch_mode,
+                "robot_capabilities": robot_capabilities.metadata(),
+                "home_on_close": home_on_close,
                 **({"warmup": warmup.metadata()} if warmup is not None else {}),
             }
             # 当前整机未提供手动拖动恢复；Viewer 不展示已退役的驱动能力。
@@ -499,11 +509,24 @@ class EdgeRuntime:
                     # Stop model requests before Home/recording cleanup can take time.
                     self._worker.request_stop()
                     if viewer_control.finish_home is not None:
+                        if viewer_control.finish_home and not robot_capabilities.home:
+                            raise NotImplementedError("Finish requested an unavailable robot Home")
                         home_on_close = viewer_control.finish_home
                     terminal_reason = "viewer_finish_requested"
                     recorder.event("viewer_finish_requested", step=steps, home=home_on_close)
                     break
                 if viewer_control.home_requested:
+                    if not robot_capabilities.home:
+                        recorder.event(
+                            "viewer_home_rejected", step=steps, reason="robot_home_unavailable"
+                        )
+                        self._viewer.publish_event(
+                            "home_rejected", step=steps,
+                            metadata={"reason": "robot_home_unavailable"},
+                        )
+                        next_tick_ns = self._clock.now_ns()
+                        timing.end()
+                        continue
                     timing.set_phase("homing")
                     self._robot.home()
                     state = self._robot.get_state()

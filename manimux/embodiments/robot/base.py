@@ -14,10 +14,11 @@ import yaml
 from scipy.spatial.transform import Rotation
 
 from manimux.clock import Clock, SystemClock
-from manimux.embodiments.layout import assembly_action_contract, group_layouts
 from manimux.embodiments.arm.base import ArmBase, ArmController, ArmModel
 from manimux.embodiments.end_effector.base import EndEffectorModel
 from manimux.embodiments.end_effector.gripper import GripperBase, GripperCommand
+from manimux.embodiments.layout import assembly_action_contract, group_layouts
+from manimux.embodiments.robot.capabilities import RobotCapabilities
 from manimux.embodiments.sensor.base import SensorBase
 from manimux.kinematics.base import FloatArray, ManipulatorKinematicsBase, rigid_transform
 from manimux.kinematics.composed import ComposedManipulatorKinematics
@@ -218,6 +219,10 @@ class RobotBase(ABC):
                     raise ExceptionGroup("command and stop failed", [error, stop_error]) from None
                 raise
 
+    def capabilities(self) -> RobotCapabilities:
+        """Optional operations default to unavailable; implementations opt in."""
+        return RobotCapabilities()
+
     def home(self) -> None:
         raise NotImplementedError("home trajectory not configured; use the runtime motion planner")
 
@@ -248,6 +253,7 @@ class RobotBase(ABC):
         return {
             "connected": self._ready,
             "execute": self._execute,
+            "capabilities": self.capabilities().metadata(),
             "groups": {
                 name: controllers[arm.controller] for name, arm in self.arm_components.items()
             },
@@ -517,8 +523,12 @@ class RobotModel:
                 home_joints[group_name] = q
         kin = RobotKinematics({key: value.kinematics for key, value in groups.items()})
         contract = assembly_action_contract(source)
-        layouts = (group_layouts({name: model.num_coordinates for name, model in kin.models.items()},
-                                contract) if contract else {})
+        layouts = (
+            group_layouts(
+                {name: model.num_coordinates for name, model in kin.models.items()}, contract
+            )
+            if contract else {}
+        )
         return cls(
             name,
             MappingProxyType(groups),

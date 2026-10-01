@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 
 from manimux.clock import Clock
-from manimux.embodiments.robot import RobotBase
+from manimux.embodiments.robot import RobotBase, RobotCapabilities
 from manimux.types import RobotCommand, RobotState, copy_group_vector
 
 
@@ -55,6 +55,21 @@ class RobotDouble(RobotBase):
             if values.shape != self._groups[name].shape:
                 raise ValueError(f"command group {name!r} has the wrong shape")
         self._target = copy_group_vector(command.groups)
+
+    def capabilities(self) -> RobotCapabilities:
+        return RobotCapabilities(home=True)
+
+    def runtime_metadata(self) -> dict[str, object]:
+        return {
+            "driver": "offline_tracking_plant",
+            "connected": self._connected,
+            "hardware_used": False,
+            "capabilities": self.capabilities().metadata(),
+        }
+
+    def sent_command_snapshots(self) -> dict:
+        """This synthetic plant has no physical driver dispatch telemetry."""
+        return {}
 
     def home(self) -> None:
         self._target = {name: np.zeros_like(value) for name, value in self._groups.items()}

@@ -165,6 +165,8 @@ class PolicyViewer:
         )
         self._last_chunk_timeline_render = 0.0
         self.observe_only = False
+        self.robot_home_available = False
+        self.home_on_finish = False
         self.current_episode_dir: Path | None = None
         self.episode_finalized = False
         self._build_scene()
@@ -328,7 +330,9 @@ class PolicyViewer:
             self.chunk_info = self.server.gui.add_text("Chunk", "—", disabled=True)
             self.executor_info = self.server.gui.add_text("Executor", "waiting", disabled=True)
             self.latency = self.server.gui.add_text("Inference", "—", disabled=True)
-            self.display_timing = self.server.gui.add_text("Viewer queue / draw", "—", disabled=True)
+            self.display_timing = self.server.gui.add_text(
+                "Viewer queue / draw", "—", disabled=True
+            )
             self.progress = self.server.gui.add_number("Step", 0, disabled=True)
             self.runtime_name = self.server.gui.add_text("Runtime", "waiting", disabled=True)
             self.episode_path = self.server.gui.add_text("Episode", "waiting", disabled=True)
@@ -558,12 +562,9 @@ class PolicyViewer:
             self.paused = True
             self.finish_requested = True
             self._clear_warmup_preview()
-            # The new assembly has no Home trajectory. Its primary Finish
-            # action must save/close cleanly instead of requesting robot.home().
-            self.finish_home = (
-                False if self.robot.name == "tianji-taccap"
-                else home if self.robot.name == "tianji" else None
-            )
+            # Finish honors the runtime's configured cleanup behavior and never
+            # requests an unavailable operation or enables Home implicitly.
+            self.finish_home = home and self.robot_home_available and self.home_on_finish
             self.service_ready = False
             self._set_policy_controls_enabled(False)
             self._update_recovery_controls()
@@ -1039,6 +1040,10 @@ class PolicyViewer:
             kind = "study" if experiment_mode else "free"
             self.status.content = f"🟠 **Preparing a new {kind} rollout**"
 
+    def _update_robot_capabilities(self, metadata: dict[str, Any]) -> None:
+        self.robot_home_available = metadata.get("robot_capabilities", {}).get("home") is True
+        self.home_on_finish = metadata.get("home_on_close") is True
+
     def _set_policy_controls_enabled(self, enabled: bool) -> None:
         allowed = enabled and not self.observe_only
         phase = self._warmup.get("phase") if self._warmup is not None else None
@@ -1049,7 +1054,7 @@ class PolicyViewer:
         )
         self.pause_btn.disabled = not allowed or self.paused
         self.home_btn.disabled = (
-            not allowed or not self.paused or self.robot.name == "tianji-taccap"
+            not allowed or not self.paused or not self.robot_home_available
         )
         self.finish_btn.disabled = not allowed
         if hasattr(self, "finish_no_home_btn"):
@@ -1464,6 +1469,8 @@ class PolicyViewer:
 
     def _update_state(self, message: dict[str, Any]) -> None:
         metadata = message.get("metadata") or {}
+        if "robot_capabilities" in metadata:
+            self._update_robot_capabilities(metadata)
         if "camera_map" in metadata:
             self.camera_view.set_policy_map(metadata["camera_map"])
         if not self.episode_active and bool(metadata.get("episode_active", False)):
@@ -1520,6 +1527,7 @@ class PolicyViewer:
                 self.service_id = incoming_service_id
                 self.records.root.value = incoming_service_id
             self.observe_only = metadata.get("control_mode", "observe") == "observe"
+            self._update_robot_capabilities(metadata)
             self.paused = True
             self.rollout_started = False
             self.service_ready = False
@@ -1555,6 +1563,8 @@ class PolicyViewer:
             self._update_warmup(metadata.get("warmup"))
             self.executor_info.value = "observe only" if self.observe_only else "managed"
             self.status.content = self._connected_status()
+        elif event == "home_rejected":
+            self.status.content = "🟠 **Home unavailable for this robot session**"
         elif event == "inference_submitted":
             planned = metadata.get("planned_switch_step")
             suffix = f" → switch {planned}" if planned is not None else ""

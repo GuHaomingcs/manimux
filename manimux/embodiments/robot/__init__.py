@@ -9,6 +9,7 @@ from pathlib import Path
 from manimux.clock import Clock
 from manimux.embodiments.layout import gripper_indices, group_layouts
 from manimux.embodiments.robot.base import RobotBase, RobotModel
+from manimux.embodiments.robot.capabilities import RobotCapabilities
 from manimux.plugins import load_plugin
 
 RobotFactory = Callable[[dict, Clock], RobotBase]
@@ -110,6 +111,7 @@ def build_robot(config: dict, clock: Clock) -> RobotBase:
 
 __all__ = [
     "RobotBase",
+    "RobotCapabilities",
     "RobotModel",
     "RobotFactory",
     "action_contract_group_indices",

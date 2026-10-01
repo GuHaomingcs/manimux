@@ -152,8 +152,14 @@ class ArxX5Controller(ArmController):
             or self._failed
         ):
             raise RuntimeError("X5 SDK process is not ready")
-        self._connection.send((operation, payload))
-        return self._receive(self._connection, self.rpc_timeout_s)
+        try:
+            self._connection.send((operation, payload))
+            return self._receive(self._connection, self.rpc_timeout_s)
+        except TimeoutError:
+            raise
+        except (EOFError, OSError) as error:
+            self._failed = True
+            raise RuntimeError("X5 SDK transport failed; cleanup required") from error
 
     def get_states(self) -> dict[str, ArmState]:
         with self._lock:

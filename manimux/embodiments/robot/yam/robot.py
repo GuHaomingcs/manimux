@@ -10,6 +10,7 @@ from manimux.clock import SystemClock
 from manimux.embodiments.arm.yam import YamController
 from manimux.embodiments.robot._interrupt import finish_move_before_interrupt
 from manimux.embodiments.robot.base import RobotBase, RobotModel
+from manimux.embodiments.robot.capabilities import RobotCapabilities
 
 log = logging.getLogger(__name__)
 
@@ -123,6 +124,9 @@ class YamRobot(RobotBase):
         # YAM stop sends a hold target, so observation-only runs must skip it too.
         if self._execute:
             super().stop()
+
+    def capabilities(self) -> RobotCapabilities:
+        return RobotCapabilities(home=self._execute)
 
     def home(self):
         if not self._execute:

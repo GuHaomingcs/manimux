@@ -40,10 +40,20 @@ Document these lifecycle details in the integration's runbook:
 
 Required operations cannot be stubbed out. Optional unsupported capabilities must
 be declared and unavailable to normal callers/UI; an unexpected direct call should
-fail explicitly. The current base `home()` raises `NotImplementedError`, and some
-Viewer controls still branch on robot names. These are existing integration gaps,
-not a complete generic capability mechanism. Resolve the affected caller contract
-when adding a capability; do not invent a `supports_home` field that nobody reads.
+fail explicitly. `RobotBase.capabilities()` returns `RobotCapabilities`; optional
+Home defaults to unavailable. An assembly with an implemented Home operation opts
+in only when its execution configuration permits it. YAM declares Home for
+`execute: true`; the CAN arm and Tianji–TacCap assemblies retain the default.
+
+The runtime publishes `robot_capabilities` in episode events and state metadata.
+RoboGUI gates the active-rollout Home button using this declaration, and the
+runtime rejects unsupported manual or Finish/Home requests. In executing sessions,
+`home_on_close: true` requires an available Home operation before services start.
+Read-only sessions skip unavailable cleanup Home and record the reason, preserving
+existing YAM observation behavior. Finish preserves the
+configured cleanup behavior; a button click does not implicitly enable Home.
+Idle service recovery is separate and continues to use its explicit
+`recovery.actions` contract. A Viewer initial pose never declares hardware Home.
 
 For a focused review, trace configuration -> factory -> controller/assembly ->
 runtime caller. Record the required behavior, actual SDK mapping, discrepancy and

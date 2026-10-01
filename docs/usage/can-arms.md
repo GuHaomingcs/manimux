@@ -100,6 +100,12 @@ claiming that guarantee. Native constructor/PROTECT effects also require physica
 validation. The adapter never calls the upstream `SingleArm`, GO_HOME or the
 independently maintained SDK's automatic motor-state clearing.
 
+An X5 RPC timeout leaves dispatch of that request uncertain. The controller
+quarantines the connection: a late reply cannot satisfy a later request, and
+further reads/commands require cleanup and a new connection. Broken pipes and
+EOF follow the same rule. Forced process termination still reports an unconfirmed
+protective stop; it is not evidence that an in-flight vendor call was cancelled.
+
 ## Offline geometry and validation
 
 Both component `model.urdf` files retain their respective upstream joint
@@ -112,14 +118,30 @@ Select the checkpoint's actual TCP and calibrated bounds before EEF deployment.
 The X5 source's broad `[-10, 10]` bounds are not physical device limits; set
 `options.joint_limits` in its component recipe when using bounded hardware IK.
 
-This contribution does not add live hardware Viewer presets. The current
-Viewer's Home gating partly depends on robot names; it needs a capability-aware
-extension before exposing Home controls for these assemblies. The ALOHA and PiPER presets provide offline display and replay.
-A hardware deployment needs its own experiment and station configuration. Keep `home_on_close: false` for these factories.
+The ALOHA and PiPER presets provide offline display and replay. A hardware
+deployment needs its own experiment and station configuration. These assemblies
+declare Home unavailable through `RobotBase.capabilities()`; RoboGUI disables the
+active-rollout Home button and the runtime rejects unsupported requests. Keep
+`home_on_close: false` for these factories. See the shared
+[optional-operation contract](../development/components.md#shared-behavior-across-embodiments).
+
+### Validation matrix
+
+| Boundary | Standard PiPER | Official X5 (2023) | Evidence scope |
+| --- | --- | --- | --- |
+| Imports, binding APIs and FK | Official pyAgxArm codecs and MDH FK | Official binding signatures and pure `KinematicSolver` FK | Real SDK, no device session |
+| Coordinate layout and bounded IK | Six joints plus normalized gripper | Six joints plus normalized gripper | Actual assembly/model loaders |
+| Read-only lifecycle | No enable, motion, hold, Home or reset | Rejected before spawning a native session | Virtual CAN / fake binding |
+| Feedback identity and staleness | Cached sample and oldest position-packet receipt | Cached poll identity and polling failures | Interface checks; X5 device freshness remains unavailable |
+| Dispatch failures | CAN send error reaches the caller; no remaining target frames | Timeout/late reply and broken transport prevent later RPCs | Failure injection, no hardware |
+| Motor faults | Seven decoded fault flags reject commands without reset | No automatic fault recovery advertised | Virtual CAN, not physical fault recovery |
+| Stop and cleanup | Hold followed by another command; failed shutdown remains retryable | PROTECT followed by another command; startup/close/process failures remain visible | Fake lifecycle checks |
+| Physical calibration, stop completion and task success | Pending hardware validation | Pending hardware validation | Not established by offline tests |
 
 Offline checks cover real pyAgxArm codecs with virtual CAN, X5 binding signatures,
 fake X5 process lifetime, read-only guards, calibrated targets, cached/stale
-feedback, stop followed by another command, failed/partial cleanup, actual
+feedback, send errors, motor faults, RPC timeout/late replies, broken transport,
+stop followed by another command, failed/partial cleanup, actual
 assembly loading and bounded FK/IK. They do not establish real-robot readiness.
 The [RoboTwin ALOHA Viewer](aloha.md#preview-and-replay) remains a separate asset
 preset and is not substituted for these physical arm models.
