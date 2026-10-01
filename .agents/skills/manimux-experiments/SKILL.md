@@ -19,12 +19,15 @@ SOP below only for a requested evaluation, applying the user's chosen metrics.
 
 ## Read the current agreement
 
-Start with the user's selected experiment and saved session. For ManiMux team
-studies, `experiments.md` owns the current task roster,
-selected policies, proposed versus confirmed settings, metrics, result rows,
-and progress. Do not copy particular tasks, checkpoints, numeric presets or
-judge defaults into this skill. If the user changes a setting, update the
-register's decision and status without treating unrelated proposals as approved.
+Start with the user's selected experiment and saved session. Read their study
+register when one is provided. A private root `experiments.md` is a supported local
+convention, ignored by Git and absent from fresh clones. Preserve an existing file;
+do not recreate its task roster or results from memory. If a requested evaluation
+needs a register and none exists, establish it from the user's actual study choices.
+The register owns selected policies, proposed versus confirmed settings, metrics,
+result rows and progress. Do not copy tasks, checkpoints, numeric presets or judge
+defaults into this skill. If the user changes a setting, update its decision and
+status without treating unrelated proposals as approved.
 
 `docs/usage/records.md` supplies study principles and the operation/evidence contract.
 Current source and stored artifacts decide what actually happened. In particular,

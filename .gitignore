@@ -59,3 +59,6 @@ logs/
 # Generated documentation website.
 /site/
 /.venv-docs/
+
+# Private study decisions and results; preserve the local file.
+/experiments.md

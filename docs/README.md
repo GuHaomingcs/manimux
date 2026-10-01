@@ -40,5 +40,6 @@ above together.
 
 Keep onboarding in `usage/`, extension contracts in `development/`, supported
 launch recipes in `deployment/`, and detailed algorithms in `advanced/`. Team
-study decisions/results belong in the root [experiment register](../experiments.md).
+study decisions/results may live in a private root `experiments.md`, ignored by Git.
+Keep existing local records; they are not required to build or use the project.
 Historical development logs remain available in Git history rather than the guide.

@@ -6,7 +6,8 @@ SVG plots, comparison tables, attempt details and downloadable data. It does not
 run robots, policy inference or PRM inference.
 
 The report opens with one wide Model / Method comparison table per task containing
-Human, left/right seam and all 11 PRM columns, following `experiments.md`.
+Human, left/right seam and all 11 PRM columns. An optional private study register
+can supply the planned comparison rows.
 Handoff and 10/20/30-step similarity plots follow the table. Metric definitions,
 provenance, attempt details and downloads are collapsed below.
 
@@ -35,7 +36,7 @@ task_id: put_bottles
 title: Put bottles into the bin
 output_root: ../../analysis
 experiment_table:
-  path: ../../../experiments.md
+  path: ../../../experiments.md  # Optional private register; create it before enabling this block.
   heading: Table 1. 抓瓶子放入箱子 · YAM · 首轮主任务
   bindings:
     Pi05 / Serial: explicit-checkpoint-and-setting-version

@@ -1,6 +1,8 @@
 # Human scores and chunk seam metrics
 
-Read the current metric definitions in `experiments.md` first.
+Read the current metric definitions in the user's selected study register first.
+The optional private root `experiments.md` is not shipped with the repository; if
+no register exists, use the user's agreed definitions and identify missing choices.
 Do not turn the examples below into frozen numeric settings.
 
 ## Human

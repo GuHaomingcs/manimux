@@ -152,8 +152,7 @@ inference strategies to documentation and bug fixes. Start with the
 See the [support catalog](docs/usage/deployments.md) for model, hardware and method
 runbooks. Capabilities vary by checkpoint and backend; an integration does not imply
 that every model × robot × algorithm combination has been tested on hardware.
-ManiMux is under active development. Our own [study register](experiments.md)
-and validation reports describe the evidence behind specific configurations.
+ManiMux is under active development. Each deployment guide states its validation scope.
 
 ## Citation
 

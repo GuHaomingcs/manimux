@@ -88,5 +88,4 @@ It routes each integration to its existing interface and protocol.
 </div>
 
 Model training and demonstration collection remain in their own tools.
-Our [experiment register](../experiments.md) tracks the team's studies;
-your experiments can follow their own questions and evaluation choices.
+Choose your own research questions, experiment plans and evaluation criteria.

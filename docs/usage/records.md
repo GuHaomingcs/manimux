@@ -2,8 +2,9 @@
 
 For everyday operation, use the [RoboGUI research guide](research.md).
 Free rollouts do not require scoring. Study rollouts support optional templates,
-reference images and evaluation. The [team study register](../../experiments.md)
-describes our campaign, not a required workflow for other researchers.
+reference images and evaluation. If you maintain a study register, keep it in your
+private root `experiments.md` (ignored by Git), or use your own location. A fresh
+clone does not include one; everyday inference does not require it.
 
 `manimux serve` keeps one configuration available for repeated GUI-driven Prepare
 requests. Each creates a fresh rollout. `manimux run` creates one runtime immediately;
