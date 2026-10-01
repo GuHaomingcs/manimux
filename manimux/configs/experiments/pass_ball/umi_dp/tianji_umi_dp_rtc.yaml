@@ -43,7 +43,7 @@ policy:
 
 viewer:
   enabled: false
-  robot: tianji
+  robot: tianji-taccap
   policy_label: UMI DP Tianji
 
 recording:

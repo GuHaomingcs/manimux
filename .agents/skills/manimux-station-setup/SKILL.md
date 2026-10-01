@@ -18,8 +18,8 @@ packages. Copy either `yam_example.yaml` or `tianji_taccap_example.yaml` from th
 directory if no station file exists. Read an existing file before changing it and preserve
 unrelated bindings. Device keys must match the selected assembly's component names.
 
-Physical runtime startup and camera/Pi05/UMI_DP `--experiment` entry points resolve the
-station in this order: CLI `--local`, experiment `local:`, default station path. CLI paths
+Physical runtime startup and camera/Pi05/UMI_DP/XR-1 Tianji `--experiment` entry points
+resolve the station in this order: CLI `--local`, experiment `local:`, default station path. CLI paths
 are relative to the working directory, experiment references to that YAML, and `paths`
 values to the station file. Use the same experiment and station for the three processes.
 Pi05 and camera-server `--config` also read the selected station. UMI_DP standalone
@@ -50,6 +50,10 @@ devices. Follow the chosen template's REP/PUB addressing: current YAM uses reque
 port 5555, while Tianji's timestamped client subscribes on 5556. A manual Viewer preview
 does not alter model inputs. Confirm unknown placement with the user or an authorized preview.
 
+Viewer preset names and runtime robot identities are distinct: `--robot tianji` selects
+the Viewer preset, while the Tianji assembly is named `tianji-taccap`. Experiments must
+use `viewer.robot: tianji-taccap` so Viewer message filtering and runtime ownership agree.
+
 ## Environments and model paths
 
 Read `docs/usage/environments.md` and the component/model runbook. Existing `envs/*/.venv` paths are
@@ -59,8 +63,10 @@ Do not invent a single all-hardware dependency extra.
 
 `paths.checkpoints` supplies Pi05's checkpoint root; the selected experiment/server recipe
 chooses relative checkpoint and normalization paths within it. UMI_DP retains the explicit
-`paths.checkpoint` artifact binding. These relocate selected artifacts without replacing
-the experiment's checkpoint identity, transforms or action conventions.
+`paths.checkpoint` artifact binding. XR-1 Tianji also uses `paths.checkpoint`, with optional
+`paths.norm_stats` and `paths.vlm_processor`; see its deployment runbook linked from the
+station guide. These relocate selected artifacts without replacing the experiment's
+checkpoint identity, transforms or action conventions.
 The SDK/model dependency environment is separate from these configuration bindings.
 
 ## Inspect without connecting

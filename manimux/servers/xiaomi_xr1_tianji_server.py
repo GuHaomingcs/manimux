@@ -173,9 +173,11 @@ def main() -> int:
     args = parser.parse_args()
 
     _prepare_imports()
-    from manimux.cli import read_experiment
+    from manimux.cli import read_experiment, resolve_local_path
 
-    experiment = read_experiment(args.experiment, local=args.local)
+    experiment = read_experiment(
+        args.experiment, local=resolve_local_path(args.experiment, args.local)
+    )
     config = dict(experiment["policy_server"])
     if args.checkpoint is not None:
         config["checkpoint_path"] = str(args.checkpoint)
