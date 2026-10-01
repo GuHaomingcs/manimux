@@ -32,10 +32,10 @@ ignored `training/` directory, outside the package. Deployment still retains che
 metadata and normalization references needed for inference. Private cluster-job payloads
 may also live under `.local/`. Old directory paths have no forwarding aliases.
 
-[Python environments](../../docs/usage/environments.md) describes local Python environments;
-[`env_cfg/`](../../env_cfg/README.md) contains action-dimension metadata still read from
-that location by XPolicyLab. These have different purposes from experiment/station YAML.
-Moving directories alone does not migrate every historical deployment entry point.
+[Python environments](../../docs/usage/environments.md) describes local dependency environments.
+Model-side action dimensions and batch size belong in [policy recipes](policy/README.md#model-layout-passed-to-xpolicylab),
+resolved through the experiment's `policy_server` section. No root `env_cfg/` registry
+is required by the shipped ManiMux deployment recipes.
 
 Start with the [annotated Pi05 RTC example](examples/README.md) for component references,
 `run` versus `serve`, and the Viewer experiment workflow.

@@ -41,8 +41,8 @@ not declared there. Manage the root development environment through the root pro
 
 - `manimux/configs/`: experiments, assemblies, inference, executors, model-service settings
   and station templates. The private `manimux/configs/local/station.yaml` binds local devices.
-- [`env_cfg/`](../../env_cfg/README.md): action-field dimensions and environment batch metadata
-  consumed by XPolicyLab. It is not a Python environment or a station file.
+- [Policy recipes](../../manimux/configs/policy/README.md#model-layout-passed-to-xpolicylab): model-side action dimensions
+  and batch size, passed to XPolicyLab through experiment configuration.
 
 Environment locations and all model launchers have not been unified into one layout.
 They should not be confused with the robot's CAN, serial and IP bindings.

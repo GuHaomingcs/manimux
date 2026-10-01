@@ -126,6 +126,7 @@ envs/yam/.venv/bin/python -m pytest -o addopts='' -q \
 XPolicyLab/policy/SAPolicy/.venv/bin/python -m pytest -o addopts='' -q \
   XPolicyLab/policy/SAPolicy/tests
 XPolicyLab/policy/SAPolicy/.venv/bin/python -m XPolicyLab.policy.SAPolicy.validate_checkpoint \
+  --model-config manimux/configs/policy/sapolicy/yam/teleopMV51/raw.yaml \
   --checkpoint "$PWD/checkpoints/finetuned/sapolicy/teleopMV51" --rtc \
   --output data/sapolicy/checkpoint-validation.json
 envs/yam/.venv/bin/python scripts/validation/xpolicylab_yam_forward_probe.py \

@@ -54,6 +54,11 @@ operations must work; optional unsupported operations must be explicit to caller
 never silent no-ops or fabricated success. If the current capability declaration
 or caller behavior is insufficient, identify the gap before changing the interface.
 
+XPolicyLab deployment recipes own explicit `robot_action_dim_info` and `num_envs`;
+pass the resolved policy config to the shared framework helpers. Do not recreate a
+parent `env_cfg/` registry. Model representation and physical joint layout remain
+separate responsibilities connected by the action adapter.
+
 Use the existing loader and factory for each layer. Do not create a parallel main
 loop, registry or config framework. Do not spread SDK calls, model codecs or
 experiment constants into unrelated components. Validate data at the boundary

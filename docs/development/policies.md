@@ -118,6 +118,20 @@ adapters may have different solver requirements; preserve whole-chunk rejection
 versus per-step hold behavior. SAPolicy's bounded IK must not be replaced as a
 side effect of a different model's integration.
 
+## Model layout configuration
+
+For XPolicyLab models, declare `robot_action_dim_info` (`arm_dim`, `ee_dim`) and
+`num_envs` in the policy recipe and consume the complete config in the shared
+framework dimension helpers. `policy_server.config` and its inline overrides are
+the deployment path; do not add a root `env_cfg/` directory or derive model dimensions
+from a robot SDK. `env_cfg_type` may still identify checkpoints/profiles, but explicit
+layouts do not use it for a filesystem lookup. See the
+[recipe contract](../../manimux/configs/policy/README.md#model-layout-passed-to-xpolicylab).
+Test experiment overrides, standalone recipes and unchanged pack/unpack results.
+Model representations and physical joints can differ; the action adapter owns that
+conversion. Existing benchmark-only framework adapters retain their legacy registry
+until explicitly migrated; they are not templates for new ManiMux deployments.
+
 ## Verify the connection between layers
 
 Use a real client decoder with a synthetic wire response, then the actual adapter.

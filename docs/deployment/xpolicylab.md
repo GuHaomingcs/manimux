@@ -58,13 +58,19 @@ YAM state + 三路 RGB + instruction
 
 ## YAM embodiment 声明
 
-XPolicy 的 `pack_robot_state` 从主仓库 `env_cfg/` 读取机器人维度：
+The policy recipe declares the model-side layout and batch size explicitly:
 
-```text
-env_cfg/yam_dual.yml
-env_cfg/robot/_robot_info.json
-env_cfg/sim/yam_real.yml
+```yaml
+env_cfg_type: yam_dual
+robot_action_dim_info: {arm_dim: [6, 6], ee_dim: [1, 1]}
+num_envs: 1
 ```
+
+The experiment resolves `policy_server.config` and applies inline overrides. Its
+launcher passes the resulting mapping to XPolicyLab, whose model adapter reads
+`get_robot_action_dim_info(model_cfg)`. There is no ManiMux-root `env_cfg/` lookup.
+`env_cfg_type` remains available for checkpoint/profile identity. Standalone model
+recipes follow the same contract; no hardware or URDF is loaded in the server.
 
 YAM 的标准顺序是：
 
