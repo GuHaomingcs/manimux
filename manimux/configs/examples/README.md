@@ -43,11 +43,11 @@ a fresh runtime; Start rollout begins execution; Finish completes that rollout a
 service waits for the next Prepare. Both commands use `EdgeRuntime.run()` for the actual
 control loop. `serve` does not start camera or model servers for you.
 
-`run.experiment_mode` defaults to false and selects the initial Viewer evaluation mode.
-Under `serve`, Prepare normal / Prepare experiment chooses the mode for each rollout:
+`run.experiment_mode` defaults to false for the single-rollout `run` entry point.
+Under `serve`, Prepare free / Prepare study chooses the mode for each rollout:
 
-- Normal: no human evaluation is required before preparing the next rollout.
-- Experiment: after finishing, save the task result, failure tags and notes,
+- Free: no human evaluation is required before preparing the next rollout.
+- Study: after finishing, save the task result, failure tags and notes,
   or click `Skip evaluation` to continue without a label. Either choice enables the next
   Prepare once the runtime service is ready. Skipping does not write a human-label file.
 
@@ -97,3 +97,9 @@ runtime owners at once:
 envs/yam/.venv/bin/python -m manimux run \
   --config manimux/configs/examples/yam_pi05_rtc.yaml
 ```
+
+## Optional research template
+
+The commented `run.experiment_template` in the example shows custom layout IDs,
+repeat counts and optional reference images. The [research guide](../../../docs/usage/research.md)
+explains free/study rollouts, identity fields, record locations and GUI replay.

@@ -1,6 +1,6 @@
 # Policies: model, client and robot adapter are separate
 
-Paths are relative to the repository root. Read
+Source paths below are relative to the repository root. Read
 `docs/reference/component-policy-development.md` for payload examples and migration limits.
 
 ## Classify the integration first

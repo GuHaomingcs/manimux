@@ -62,9 +62,9 @@ The Viewer follows `policy.adapter.camera_map` reported by the runtime and label
 inputs with their camera sources. Before receiving that mapping, it shows its labeled
 default previews. For an explicit manual preview, use
 `--config manimux/configs/viewer/yam-top.yaml`.
-Normal rollouts have no scoring step. Experiment rollouts offer `Save evaluation` or
+Free rollouts have no scoring step. Study rollouts offer `Save evaluation` or
 `Skip evaluation` before the next rollout. Skipping writes no human label.
-See the [Viewer tutorial](viewer-tutorial.html) for controls.
+See the [research guide](../usage/research.md) for current controls and saved-record replay.
 
 The current recipe uses **`robot.control_hz: 100.0`**. Its model horizon is 50, action-point
 spacing is `1/30 s`, and RTC `chunk_policy_steps` is 12. Twelve is the execution threshold for
@@ -90,7 +90,7 @@ requires the model dependencies used to resolve that contract.
 - `manimux/configs/local/station.yaml`: private devices, service addresses and local paths.
 - `manimux/configs/experiments/<task>/<model>/`: robot, adapter, observation, inference, execution and recording.
 - `manimux/configs/policy/<model>/<embodiment>/<task>/`: model/checkpoint and normalization contract.
-- `manimux/configs/embodiment/robot/yam_control.yaml`: shared layout and motion limits for
+- `manimux/configs/embodiment/robot/yam_control_unlimited.yaml`: shared layout and motion limits for
   the paired Pi05 30k RTC recipes.
 
 The control profile does not set model action spacing or force experiments

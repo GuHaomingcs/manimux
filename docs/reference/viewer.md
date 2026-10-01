@@ -1,4 +1,4 @@
-# Viewer
+# RoboGUI
 
 Tianji and YAM Viewer use the offline `RobotModel` and named runtime groups. They
 do not construct robot drivers or load policy implementations. The old YAM adapter
@@ -7,10 +7,14 @@ remains for historical collection replay.
 ```bash
 .venv/bin/manimux-viewer --robot tianji --host 127.0.0.1 --port 8086
 # Offline synthetic display; no hardware connections:
-.venv/bin/manimux-viewer --robot tianji --demo --host 127.0.0.1
+.venv/bin/manimux-viewer --robot yam --demo --host 127.0.0.1
 # Select another station's display configuration:
 .venv/bin/manimux-viewer --config path/to/viewer.yaml
 ```
+
+For current user controls, research templates and record browsing, read the
+[research guide](../usage/research.md). The [integration guide](../development/runtime-config.md)
+explains how to add display support using the existing offline model.
 
 ## Files
 

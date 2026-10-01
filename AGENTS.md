@@ -7,6 +7,9 @@ rollout recording and offline replay.
 These instructions apply throughout this checkout; also read the instructions in any
 submodule or nested directory before editing it.
 
+Public entry points: [User guide](docs/README.md) · [Integration map](docs/development/README.md).
+Skills route agents to these same maintained protocol guides.
+
 ## Task skills
 
 Read only the skill relevant to the task; paths inside skills are relative to this

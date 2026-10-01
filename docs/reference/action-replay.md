@@ -53,3 +53,10 @@ protocol are unchanged. Replay does not construct `PolicyViewer`, bind its contr
 socket, connect a runtime subscriber, write rollout data, or send robot commands.
 Only the robot's offline model dependencies are required. The NPZ playback path
 has no video or PyAV requirement.
+
+## Replay a ManiMux recording from RoboGUI
+
+The live Viewer's **Recorded rollouts** panel reads a finalized episode and opens
+state, scheduled reference or executor-command playback in a separate view. It uses
+recorded tick times instead of a fixed NPZ action interval. See the
+[research guide](../usage/research.md#review-in-the-gui).

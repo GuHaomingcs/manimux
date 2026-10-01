@@ -1,8 +1,10 @@
 [project]
 name = "manimux"
 version = "0.1.0"
-description = "Local asynchronous policy runtime for dual-arm robot evaluation"
+description = "Composable real-robot inference and experiment framework"
 readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE", "THIRD_PARTY_NOTICES.md", "licenses/*.txt"]
 requires-python = ">=3.11,<3.13"
 dependencies = [
   "mujoco>=3.3",

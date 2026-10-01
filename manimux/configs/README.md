@@ -49,7 +49,7 @@ Each experiment explicitly declares `policy.action_dt_s`, `policy.horizon_policy
 - `robot.control_hz: 30.0`: the runtime targets one command tick every 1/30 second.
 - Setting `robot.control_hz: 100.0` samples the same timeline at 10 ms intervals using
   interpolation. It does not change the model's action spacing or request 100 inferences
-  per second. This is a separate experiment choice, not the current RTC 30k recipe.
+  per second. This is the current Pi05 RTC 30k recipe's choice, not a requirement for other experiments.
 - `executor.smooth.cutoff_hz` is a filter cutoff, not an interpolation or command rate.
 
 Shared YAML is packaged with the code. References resolve relative to the referring YAML.
@@ -69,16 +69,16 @@ policy:
   adapter:
     type: manimux.policy_adapter.joint:JointAdapter
     camera_map:
-      cam_head: front_camera
-      cam_left_wrist: left_camera
-      cam_right_wrist: right_camera
+      cam_head: d405_front
+      cam_left_wrist: d405_left
+      cam_right_wrist: d405_right
   action_dt_s: 0.03333333333333333
   horizon_policy_steps: 50
 policy_server:
   config: ../../../policy/pi05/yam/put-bottles/joint-step30000.yaml
 inference:
   algorithm: rtc
-  config: ../../../inference/yam_rtc.yaml
+  config: ../../../inference/aligned/yam_rtc.yaml
 executor:
   type: smooth
   config: ../../../executor/yam_smooth.yaml
@@ -296,3 +296,11 @@ See the [DVAC audit](../../docs/reference/reproductions/dvac-pi05.md) for the pa
 | `recording.video_fps` | Video encoding target rate; zero disables video without changing policy/camera rates. |
 | `recording.video_codec` | OpenCV four-character codec, default `mp4v`. |
 | `recording.video_queue_size` | Asynchronous queue capacity; a full queue drops video bundles instead of blocking control. |
+
+## Research metadata
+
+`run.experiment_name`, `run.condition` and `run.notes` are editable in RoboGUI and
+frozen at Prepare. `run.experiment_template` optionally constrains study layouts,
+repeat counts and reference images. See the [workflow and schema example](../../docs/usage/research.md).
+Keep outputs under the repository-level `data/`; `run.output_dir` or the private
+station's `paths.output_dir` chooses the actual destination.

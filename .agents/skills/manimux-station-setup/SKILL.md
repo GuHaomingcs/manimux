@@ -74,7 +74,7 @@ inspection does not require revalidating its FK/IK or its team's hardware valida
 
 Keep action semantics, TCP/FK/IK, timing, limits and execution switches unchanged when
 binding the same robot model. The current YAM Pi05 RTC 30k experiment enables execution,
-uses a 30 Hz command loop and can move during Prepare; the generic YAM assembly example
+uses a 100 Hz command loop and can move during Prepare; the generic YAM assembly example
 has different execution settings. Do not substitute one for the other without saying so.
 
 Hand off the chosen experiment, interpreter, station file and resolved device/service

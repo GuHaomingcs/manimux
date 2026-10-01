@@ -4,11 +4,14 @@
 
 ## Start here
 
+- [Research workflow](../usage/research.md): free/study rollouts and GUI record replay.
+- [Integration map](../development/README.md): maintained component and algorithm protocols.
+
 - [Connect your own robot](../../manimux/configs/local/README.md): first steps for users and agents; one private station file for CAN/IP/USB and shared deployment service bindings.
 - [Guideline](guideline.md): installation, hardware-free demos and complete YAM startup commands.
 - [Python environments](../../envs/README.md) · [XPolicyLab action metadata](../../env_cfg/README.md): why these differ from experiment and station configuration.
 - [Configuration guide](../../manimux/configs/README.md): config layout, field meanings and shared control profiles.
-- [Viewer tutorial](viewer-tutorial.html): rollout controls, camera views and experiment labels.
+- [Earlier Viewer visual reference](viewer-tutorial.html): screenshots of the earlier controls; use the research workflow above for current labels and behavior.
 - [Action replay](action-replay.md): play named joint trajectories in an independent offline Viewer.
 - [Experiment workflow](experiment-infra.md): persistent services, normal/experiment modes and saved evidence.
 - [Architecture](architecture.md): policy, adapter, strategy, executor and robot boundaries.
@@ -48,23 +51,20 @@ does not mean every checkpoint or inference-method combination has passed a real
 
 ## Support counts
 
-The README badges count integration coverage, not task success, hardware validation of every
-checkpoint, or support for every policy × embodiment × inference combination.
+Support is documented per runbook and configuration, rather than one aggregate
+badge count. Framework clients, model families, checkpoint variants and successful
+real-robot deployments are different kinds of coverage.
 
-- **8 policy integrations:** six model families have YAM deployment configurations:
-  Pi05, GR00T, LingBot-VLA2, Xiaomi XR-1, OpenWAM and SAPolicy.
-  Cosmos3 and Isaac 0.5 add two model-only / offline paths, not two more YAM-ready policies.
-  Checkpoint variants and framework clients (XPolicyLab and StarVLA) are not counted separately.
-- **Hardware assemblies:** YAM uses the component implementation; Tianji–TacCap migration
-  boundaries are listed in [code organization](code-organization.md). Simulator drivers
-  have been retired. A model checkpoint does not itself establish a hardware integration.
-- **8 inference modes:** seven built-in strategies—ManiMux, RTC, ACT temporal ensembling,
-  AAC, PAINT, AutoHorizon and DVAC—plus serial prefix execution. Serial is a scheduling mode
-  of the ManiMux strategy, not an eighth registered strategy. Direct, Smooth and MPC are
-  executors and are not counted as inference methods.
+- **Policy backends:** XPolicyLab and StarVLA. Model/checkpoint paths are listed above.
+- **Hardware assemblies:** YAM and Tianji–TacCap; device SDKs/assets and validation
+  differ by installation. See [components](../development/components.md).
+- **Scheduling:** ManiMux, RTC, ACT temporal ensembling, AAC, PAINT, AutoHorizon and
+  DVAC are built-in strategies. Serial is a scheduling mode of the ManiMux strategy.
+- **Execution:** Direct, Smooth and MPC are executors, separate from inference strategies.
 
-Sources: [model configurations](../../manimux/configs/), [robot factories](../../manimux/embodiments/robot/__init__.py),
-[strategy registry](../../manimux/runtime/inference.py) and [serial execution](serial-execution.md).
+Sources: [model configurations](../../manimux/configs/),
+[robot factory](../../manimux/embodiments/robot/__init__.py) and
+[strategy factory](../../manimux/runtime/inference.py).
 
 ## Inference and execution
 

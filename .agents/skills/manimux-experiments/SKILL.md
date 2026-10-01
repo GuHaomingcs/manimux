@@ -10,9 +10,17 @@ Work from the ManiMux checkout. Paths written as `docs/...`, `manimux/...`,
 `AGENTS.md` before editing. This skill owns experiment operation and reporting;
 use the development skill when the request changes recording or runtime behavior.
 
+## User research versus team studies
+
+Read [the research workflow](../../../docs/usage/research.md) for free rollouts and
+optional templates. Do not require a study register, fixed layout count, human
+labels or PRM when the user only wants inference or experiment management. Use the
+SOP below only for a requested evaluation, applying the user's chosen metrics.
+
 ## Read the current agreement
 
-Start with `docs/experiments.md`. It owns the current task roster,
+Start with the user's selected experiment and saved session. For ManiMux team
+studies, `docs/experiments.md` owns the current task roster,
 selected policies, proposed versus confirmed settings, metrics, result rows,
 and progress. Do not copy particular tasks, checkpoints, numeric presets or
 judge defaults into this skill. If the user changes a setting, update the

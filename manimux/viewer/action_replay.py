@@ -33,6 +33,8 @@ class ActionReplayViewer:
         host: str = "127.0.0.1",
         port: int = 8087,
         server=None,
+        timestamps_ns: np.ndarray | None = None,
+        source_label: str = "joint targets",
     ):
         if not np.isfinite(action_dt_s) or action_dt_s <= 0:
             raise ValueError("action_dt_s must be finite and positive")
@@ -43,6 +45,13 @@ class ActionReplayViewer:
         self.robot = robot
         self.action_dt_s = float(action_dt_s)
         self.count = len(next(iter(self.actions.values())))
+        self.source_label = source_label
+        self.times = np.arange(self.count, dtype=np.float64) * self.action_dt_s
+        if timestamps_ns is not None:
+            stamps = np.asarray(timestamps_ns, dtype=np.int64)
+            if stamps.shape != (self.count,) or np.any(np.diff(stamps) <= 0):
+                raise ValueError("Replay timestamps must match samples and strictly increase")
+            self.times = (stamps - stamps[0]).astype(np.float64) / 1e9
         self._lock = threading.RLock()
         self._position = 0.0
         self._last_time = time.monotonic()
@@ -53,7 +62,7 @@ class ActionReplayViewer:
         try:
             self._build_scene()
             self.server.gui.add_markdown(
-                "## Action replay\nOffline joint targets; no hardware connection or execution."
+                f"## Offline replay\n{source_label}; no hardware connection or execution."
             )
             self.play = self.server.gui.add_checkbox("Play", False, disabled=self.count == 1)
             self.speed = self.server.gui.add_dropdown(
@@ -74,7 +83,7 @@ class ActionReplayViewer:
             @self.play.on_update
             def _play(_event):
                 with self._lock:
-                    if self.play.value and self._position >= self.count - 1:
+                    if self.play.value and self._position >= self.times[-1]:
                         self._position = 0.0
                     self._last_time = time.monotonic()
 
@@ -135,7 +144,7 @@ class ActionReplayViewer:
 
     def seek(self, index: int) -> None:
         with self._lock:
-            self._position = float(np.clip(index, 0, self.count - 1))
+            self._position = float(self.times[int(np.clip(index, 0, self.count - 1))])
             self._last_time = time.monotonic()
             self.tick(now=self._last_time)
 
@@ -144,14 +153,13 @@ class ActionReplayViewer:
             now = time.monotonic() if now is None else now
             if self.play.value:
                 self._position = min(
-                    self.count - 1,
-                    self._position
-                    + max(0.0, now - self._last_time) * float(self.speed.value) / self.action_dt_s,
+                    self.times[-1],
+                    self._position + max(0.0, now - self._last_time) * float(self.speed.value),
                 )
-                if self._position >= self.count - 1:
+                if self._position >= self.times[-1]:
                     self.play.value = False
             self._last_time = now
-            index = int(self._position)
+            index = int(np.searchsorted(self.times, self._position, side="right") - 1)
             if index == self._rendered:
                 return
             with self.server.atomic():
@@ -162,7 +170,7 @@ class ActionReplayViewer:
                 self.frame.value = index
                 self.status.content = (
                     f"Frame **{index + 1} / {self.count}** · "
-                    f"time **{index * self.action_dt_s:.3f} s** · joint targets"
+                    f"time **{self.times[index]:.3f} s** · {self.source_label}"
                 )
             self._rendered = index
 
