@@ -2,17 +2,22 @@
 
 # ManiMux
 
-**接入你的模型与机器人，开展你的真机研究。**
+**任何本体，任何策略，任何推理算法。**
 
-面向真机推理、运行与实验管理的可组合框架。
+**让你的机器人操作研究在真机上落地。** ManiMux 通过统一 protocol，让部署与实验流程**标准化**，
+将你选择的本体、策略与推理算法接入 **RoboGUI**。
+运行时以**实时数字孪生可视化**下的 **100–200 Hz 命令执行**为设计目标。
 
 **Policy × Runtime × Embodiment**
 
-[![Documentation](https://img.shields.io/badge/Documentation-Guide-246C56?style=flat-square)](https://sii-liulab.github.io/manimux/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-2EA043?style=flat-square)](LICENSE)
+[![Documentation](https://img.shields.io/badge/Documentation-Guide-2563EB?style=flat-square)](https://sii-liulab.github.io/manimux/)
+[![Demo video](https://img.shields.io/badge/Demo-Watch%20video-EF4444?style=flat-square)](https://sii-liulab.github.io/manimux/#manimux)
+[![Agent skills](https://img.shields.io/badge/Develop-Agent%20skills-8B5CF6?style=flat-square)](.agents/skills/manimux-development/SKILL.md)
+
+[![Frameworks: 2](https://img.shields.io/badge/Frameworks-2-F59E0B?style=flat-square)](#architecture)
 [![Python](https://img.shields.io/badge/Python-3.11%20%7C%203.12-3776AB?style=flat-square)](pyproject.toml)
-[![RoboGUI](https://img.shields.io/badge/RoboGUI-Viser-0891B2?style=flat-square)](#robogui)
-[![Agent skills](https://img.shields.io/badge/Develop-Agent%20skills-7C3AED?style=flat-square)](.agents/skills/manimux-development/SKILL.md)
+[![License: MIT](https://img.shields.io/badge/License-MIT-22C55E?style=flat-square)](LICENSE)
+[![Docs build](https://img.shields.io/github/actions/workflow/status/SII-LiuLab/manimux/docs.yml?branch=user_refine&label=Docs&style=flat-square)](https://github.com/SII-LiuLab/manimux/actions/workflows/docs.yml)
 
 [English](README.md) · [简体中文](README.zh-CN.md)
 

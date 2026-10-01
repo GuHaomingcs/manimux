@@ -2,17 +2,23 @@
 
 # ManiMux
 
-**Build your policy. Bring your robot. Run your research.**
+**Any embodiment. Any policy. Any inference strategy.**
 
-A composable framework for real-robot inference and experiments.
+**Bring your manipulation research to life on real robots.** ManiMux **standardizes**
+deployment and experiment workflows through shared protocols, bringing your choice of
+embodiment, policy, and inference strategy into **RoboGUI**.
+Designed for **100–200 Hz command execution** alongside **live digital twin visualization**.
 
 **Policy × Runtime × Embodiment**
 
-[![Documentation](https://img.shields.io/badge/Documentation-Guide-246C56?style=flat-square)](https://sii-liulab.github.io/manimux/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-2EA043?style=flat-square)](LICENSE)
+[![Documentation](https://img.shields.io/badge/Documentation-Guide-2563EB?style=flat-square)](https://sii-liulab.github.io/manimux/)
+[![Demo video](https://img.shields.io/badge/Demo-Watch%20video-EF4444?style=flat-square)](https://sii-liulab.github.io/manimux/#manimux)
+[![Agent skills](https://img.shields.io/badge/Develop-Agent%20skills-8B5CF6?style=flat-square)](.agents/skills/manimux-development/SKILL.md)
+
+[![Frameworks: 2](https://img.shields.io/badge/Frameworks-2-F59E0B?style=flat-square)](#architecture)
 [![Python](https://img.shields.io/badge/Python-3.11%20%7C%203.12-3776AB?style=flat-square)](pyproject.toml)
-[![RoboGUI](https://img.shields.io/badge/RoboGUI-Viser-0891B2?style=flat-square)](#robogui)
-[![Agent skills](https://img.shields.io/badge/Develop-Agent%20skills-7C3AED?style=flat-square)](.agents/skills/manimux-development/SKILL.md)
+[![License: MIT](https://img.shields.io/badge/License-MIT-22C55E?style=flat-square)](LICENSE)
+[![Docs build](https://img.shields.io/github/actions/workflow/status/SII-LiuLab/manimux/docs.yml?branch=user_refine&label=Docs&style=flat-square)](https://github.com/SII-LiuLab/manimux/actions/workflows/docs.yml)
 
 [English](README.md) · [简体中文](README.zh-CN.md)
 
