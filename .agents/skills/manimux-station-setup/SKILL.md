@@ -6,7 +6,7 @@ description: Connect a ManiMux installation to a developer's local YAM, Tianji o
 # ManiMux Station Setup
 
 Paths are relative to the repository root. Start with
-[`manimux/configs/local/README.md`](../../../manimux/configs/local/README.md).
+[`docs/usage/station.md`](../../../docs/usage/station.md).
 Installing ManiMux does not discover, name or connect a robot automatically. Bind existing
 components to the actual devices; do not copy a developer's addresses, serials or paths as
 universal defaults.
@@ -14,7 +14,7 @@ universal defaults.
 ## One private station file
 
 The default is `manimux/configs/local/station.yaml`, ignored by Git and excluded from
-packages. Copy either `yam.example.yaml` or `tianji_taccap.example.yaml` from the same
+packages. Copy either `yam_example.yaml` or `tianji_taccap_example.yaml` from the same
 directory if no station file exists. Read an existing file before changing it and preserve
 unrelated bindings. Device keys must match the selected assembly's component names.
 
@@ -52,7 +52,7 @@ does not alter model inputs. Confirm unknown placement with the user or an autho
 
 ## Environments and model paths
 
-Read `envs/README.md` and the component/model runbook. Existing `envs/*/.venv` paths are
+Read `docs/usage/environments.md` and the component/model runbook. Existing `envs/*/.venv` paths are
 local assets, not installed by cloning. Target hardware/model interpreters explicitly with
 `uv pip install --python`; do not point root `uv sync` or `uv run` at those environments.
 Do not invent a single all-hardware dependency extra.
@@ -74,7 +74,7 @@ inspection does not require revalidating its FK/IK or its team's hardware valida
 
 Keep action semantics, TCP/FK/IK, timing, limits and execution switches unchanged when
 binding the same robot model. The current YAM Pi05 RTC 30k experiment enables execution,
-uses a 30 Hz command loop and can move during Prepare; the generic YAM assembly example
+uses a 100 Hz command loop and can move during Prepare; the generic YAM assembly example
 has different execution settings. Do not substitute one for the other without saying so.
 
 Hand off the chosen experiment, interpreter, station file and resolved device/service

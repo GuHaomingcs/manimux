@@ -1,5 +1,5 @@
 # Offline synthetic plant only; no camera or robot hardware.
-local: station.example.yaml
+local: station_example.yaml
 run:
   task: Follow the offline EEF reference.
   output_dir: ./data/experiments/starvla-offline/yam_eef_contract

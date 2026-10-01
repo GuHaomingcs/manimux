@@ -1,12 +1,14 @@
 # ManiMux 实验登记：Settings 与逐任务结果
 
 > 2026-09-29 · v0.1 草案。Pi05 抓瓶子 Serial K=16、RTC 最小源进度阈值16与β=5、双方 blend=0、100 Hz 插值 + Direct、不限速已写入 YAML；推理配置收敛到 `inference/aligned/`。配对入口已接通自动预热、手动Start前RESET、seed0与RTC自动延迟初值。保留用户手调的控制步数预算，不新增严格墙钟时限。仅完成源码、静态与配置检查，完整 setting 尚未冻结，未新增实测结果。最新进度见 §7.1。
-> 本文是当前实验的登记入口；[研究设计](reference/experiment-design.md)解释对照原则，[实验设施](reference/experiment-infra.md)说明操作和数据格式。
+> 本文是当前实验的登记入口；[实验记录](usage/records.md)说明对照原则与数据格式，[研究流程](usage/research.md)说明操作。
 
 **2026-10-01 默认运行基线：主循环 `robot.control_hz=100`，Viewer `--render-hz=30`。**
 当前已对齐的 Pi05 抓瓶子 Serial / RTC 均采用此基线；200 Hz 仅为已完成的性能诊断，RTC 入口已恢复 100 Hz。
 Viewer 默认以 30 Hz 刷新最新状态，接收与绘制分线程，不补播连续旧状态；这不是模型动作频率或相机帧率。
 后续新增或对齐的实验沿用该基线，偏离时显式登记；历史未对齐入口不因本次决定自动改写。
+
+**2026-10-01 分支整合：**实验登记继续保存在 `docs/experiments.md`；Pi05 抓瓶子 Joint 30k Serial / RTC 与 pretrained RTC 入口显式配置 10 个布局 × 3 次、强制参考图的 study template。Free rollout 不受模板限制。Viewer 保留 30 Hz 最新状态显示，并增加历史 rollout 回放入口；pretrained recipe 补齐动作维度与环境数量。配置/代码整合不代表新增真机结果。
 
 ## 1. 本轮范围与记录方式
 
@@ -407,7 +409,7 @@ m 未指定时：m = max(1, floor(H / 2))
 
 每轮评测还需在对应 setting 的 evidence 中登记 **metric profile / judge profile**：指标版本与有效边界类别、judge 模型/权重身份、视角/时间采样、prompt/goal/reference、推理模式、后处理和样本清单。当前 PRM profile 尚未冻结，agent 应先准备输入和列出缺项，不能自行采用默认分数作为正式结果。
 
-记录覆盖及缺口见 [数据审计](reference/experiment-infra.md#recording-coverage-audit--2026-09-28)。Human、seam、PRM 分别检查可用性：某项不足时保留 `—` 和原因，其余项可以独立推进。
+记录覆盖及缺口见 [记录字段说明](usage/records.md#saved-evidence)。Human、seam、PRM 分别检查可用性：某项不足时保留 `—` 和原因，其余项可以独立推进。
 
 ## 9. 评测数量与输出路径登记
 
@@ -457,7 +459,7 @@ Agent 每轮建立唯一分析目录，推荐 `data/analysis/<task>/<setting>/<s
 
 ### 9.4 每个 task 的 HTML 结果报告（已实现）
 
-入口与配置见 [报告使用说明](reference/evaluation-report.md)。每个task的本地索引固定为
+入口与配置见 [报告使用说明](advanced/evaluation-reports.md)。每个task的本地索引固定为
 `/home/ubuntu/manimux/data/evaluation_tasks/<task>/task.yaml`，报告固定输出到
 `/home/ubuntu/manimux/data/analysis/<task>/reports/<UTC时间>-<唯一ID>/index.html`。
 同task的`latest.json`保存最新完成版本的绝对HTML路径；旧版本保留。

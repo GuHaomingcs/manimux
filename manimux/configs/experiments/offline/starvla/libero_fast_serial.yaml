@@ -1,5 +1,5 @@
 # Offline synthetic plant only; no camera or robot hardware.
-local: station.example.yaml
+local: station_example.yaml
 run:
   task: Pick up the red block.
   output_dir: ./data/experiments/starvla-offline/libero_fast

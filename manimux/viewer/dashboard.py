@@ -24,6 +24,7 @@ from .camera_panel import CameraPanel
 from .camera_panel import _camera_panel_html as _camera_panel_html
 from .chunk_timeline import ChunkTimelineView
 from .communication import ControlServer, PolicyPlan, RobotSnapshot, ViewerReceiver
+from .records import RecordsPanel
 from .reference_layouts import DEFAULT_LAYOUT_ROOT
 from .robot_view import RobotGroup, RobotView
 from .top_overlay import TopViewOverlay
@@ -108,9 +109,9 @@ class PolicyViewer:
         self.robot = robot
         self.viewer_config = viewer_config if viewer_config is not None else robot.options
         self.reference_root = reference_root
-        self.server = viser.ViserServer(host=host, port=port, label="Universal Policy Viewer")
+        self.server = viser.ViserServer(host=host, port=port, label="ManiMux RoboGUI")
         _configure_gui(self.server.gui)
-        self.server.gui.set_panel_label("UNIVERSAL · POLICY VIEWER")
+        self.server.gui.set_panel_label("MANIMUX · ROBOGUI")
         self.lock = threading.RLock()
         self.running = True
         self.paused = True
@@ -129,6 +130,7 @@ class PolicyViewer:
         self.preparing_rollout = False
         self.service_ready = False
         self.experiment_mode = False
+        self.experiment_template = None
         self.evaluation_complete = True
         self.evaluation_profile = evaluation_parameters()
         self.episode_active = False
@@ -167,6 +169,8 @@ class PolicyViewer:
         self.episode_finalized = False
         self._build_scene()
         self._build_gui()
+        self.records = RecordsPanel(self.server.gui, robot, host=host, port=port + 1)
+
         def display_message(message: dict[str, Any]) -> None:
             # Batch link poses and overlays so clients do not see a partial update.
             with self.server.atomic():
@@ -270,14 +274,28 @@ class PolicyViewer:
             )
             self.task = self.server.gui.add_text("Task command", "", multiline=True, disabled=True)
             self.scoring_setup = self.server.gui.add_text("Scoring", "General", disabled=True)
-            self.repeat_id = self.server.gui.add_dropdown(
-                "Experiment repeat", ("1", "2", "3"), initial_value="1", disabled=True
-            )
+            with self.server.gui.add_folder("Research details", expand_by_default=False):
+                self.experiment_name = self.server.gui.add_text(
+                    "Experiment name", "", disabled=True
+                )
+                self.condition = self.server.gui.add_text("Condition", "", disabled=True)
+                self.notes = self.server.gui.add_text("Notes", "", multiline=True, disabled=True)
+                self.template_status = self.server.gui.add_markdown("No study template selected.")
+                self.layout_id = self.server.gui.add_text("Layout ID (optional)", "", disabled=True)
+                self.template_layout = self.server.gui.add_dropdown(
+                    "Template layout", ("—",), visible=False, disabled=True
+                )
+                self.repeat_id = self.server.gui.add_number(
+                    "Repeat", 1, min=1, step=1, disabled=True
+                )
+                self.use_reference = self.server.gui.add_checkbox(
+                    "Attach selected reference image", False, disabled=True
+                )
             self.prepare_normal_btn = self.server.gui.add_button(
-                "Prepare normal rollout", color="blue", disabled=True
+                "Prepare free rollout", color="blue", disabled=True
             )
             self.prepare_experiment_btn = self.server.gui.add_button(
-                "🧪 Prepare experiment rollout", color="green", disabled=True
+                "🧪 Prepare study rollout", color="green", disabled=True
             )
         self.policy_control_folder = self.server.gui.add_folder(
             "② Policy control", expand_by_default=True
@@ -303,7 +321,7 @@ class PolicyViewer:
         with self.run_folder:
             self.robot_name = self.server.gui.add_text("Robot", self.robot.label, disabled=True)
             self.recorded_layout = self.server.gui.add_text(
-                "Recorded layout / repeat", "—", disabled=True
+                "Recorded experiment", "—", disabled=True
             )
             self.policy_name = self.server.gui.add_text("Policy", "waiting", disabled=True)
             self.action_space = self.server.gui.add_text("Action space", "waiting", disabled=True)
@@ -925,27 +943,50 @@ class PolicyViewer:
     def _set_experiment_mode(self, enabled: bool) -> None:
         self.experiment_mode = enabled
         self.rollout_setup_status.content = (
-            "🟢 **Experiment rollout** · save or skip evaluation after Finish."
+            "🟢 **Study rollout** · save or skip evaluation after Finish."
             if enabled
-            else "🔵 **Normal rollout** · no human label is required."
+            else "🔵 **Free rollout** · no human label is required."
         )
 
     def _set_setup_controls_enabled(self, enabled: bool) -> None:
         allowed = enabled and self.evaluation_complete and not self._recovery_pending()
         self.prepare_normal_btn.disabled = not allowed
         self.prepare_experiment_btn.disabled = not allowed
-        self.repeat_id.disabled = not allowed
-        self.task.disabled = not allowed
+        for handle in (self.repeat_id, self.task, self.experiment_name, self.condition,
+                       self.notes, self.layout_id, self.template_layout):
+            handle.disabled = not allowed
+        self.use_reference.disabled = not allowed or bool(
+            self.experiment_template and self.experiment_template["require_reference"]
+        )
         if self.top_overlay is not None:
             self.top_overlay.set_selection_enabled(allowed)
 
-    def _show_recorded_identity(self, identity: dict[str, Any]) -> None:
-        reference = identity.get("reference_layout")
-        self.recorded_layout.value = (
-            f"{reference['task']} / {identity['layout_id']} · repeat {identity['repeat_id']}/3"
-            if reference is not None
-            else "—"
+    def _configure_research(self, metadata: dict[str, Any]) -> None:
+        """Apply defaults only on a new service, preserving edits across heartbeats."""
+        self.experiment_template = metadata.get("experiment_template")
+        template = self.experiment_template or {}
+        ids = template.get("layout_ids", [])
+        self.template_layout.options = tuple(ids) or ("—",)
+        self.template_layout.value = self.template_layout.options[0]
+        self.template_layout.visible = bool(ids)
+        self.layout_id.visible = not ids
+        self.layout_id.value = ""
+        self.repeat_id.value = 1
+        self.repeat_id.max = template.get("repeats")
+        self.use_reference.value = template.get("require_reference", False)
+        self.template_status.content = (
+            f"Study template: **{template['name']}**. Free rollouts bypass its constraints."
+            if template else "Free research: layouts, references and evaluation are optional."
         )
+        for key in ("experiment_name", "condition", "notes"):
+            getattr(self, key).value = metadata.get("research_defaults", {}).get(key, "")
+
+    def _show_recorded_identity(self, identity: dict[str, Any]) -> None:
+        parts = [str(identity.get(key) or "") for key in
+                 ("experiment_name", "condition", "layout_id")]
+        if identity.get("repeat_id") is not None:
+            parts.append(f"repeat {identity['repeat_id']}")
+        self.recorded_layout.value = " · ".join(part for part in parts if part) or "Free rollout"
 
     def _prepare_rollout(self, *, experiment_mode: bool) -> None:
         with self.lock:
@@ -955,15 +996,27 @@ class PolicyViewer:
                 selection = {}
                 repeat_id = None
                 if experiment_mode:
-                    if self.top_overlay is None:
-                        raise ValueError(
-                            "Experiment rollouts require a Top reference layout. "
-                            "Use a Viewer configured with a Top camera."
-                        )
                     repeat_id = int(self.repeat_id.value)
-                    selection = self.top_overlay.freeze_selection()
+                    ids = (self.experiment_template or {}).get("layout_ids", [])
+                    selection["layout_id"] = (
+                        self.template_layout.value if ids else self.layout_id.value.strip()
+                    )
+                    if self.use_reference.value:
+                        if self.top_overlay is None:
+                            raise ValueError("Attaching a reference requires a Top camera view.")
+                        reference = self.top_overlay.freeze_selection()
+                        if (selection["layout_id"]
+                                and selection["layout_id"] != reference["layout_id"]):
+                            raise ValueError(
+                                "Selected reference ID must match the study layout ID."
+                            )
+                        selection.update(reference)
                 identity = rollout_identity({
                     "experiment_mode": experiment_mode,
+                    "experiment_template": self.experiment_template,
+                    "experiment_name": self.experiment_name.value.strip(),
+                    "condition": self.condition.value.strip(),
+                    "notes": self.notes.value,
                     "repeat_id": repeat_id,
                     **selection,
                 })
@@ -983,7 +1036,7 @@ class PolicyViewer:
             self.prepare_normal_btn.visible = False
             self.prepare_experiment_btn.visible = False
             self._set_stage("preparing")
-            kind = "experiment" if experiment_mode else "normal"
+            kind = "study" if experiment_mode else "free"
             self.status.content = f"🟠 **Preparing a new {kind} rollout**"
 
     def _set_policy_controls_enabled(self, enabled: bool) -> None:
@@ -1465,6 +1518,7 @@ class PolicyViewer:
             self.launch_mode = str(metadata.get("launch_mode", "run"))
             if incoming_service_id:
                 self.service_id = incoming_service_id
+                self.records.root.value = incoming_service_id
             self.observe_only = metadata.get("control_mode", "observe") == "observe"
             self.paused = True
             self.rollout_started = False
@@ -1475,17 +1529,17 @@ class PolicyViewer:
             self._set_experiment_mode(bool(metadata.get("experiment_mode", False)))
             self._configure_evaluation(metadata.get("evaluation"))
             self.rollout_setup_status.content = (
-                "🟢 **Experiment rollout ready** · press Start rollout below; "
+                "🟢 **Study rollout ready** · press Start rollout below; "
                 "save or skip evaluation after Finish."
                 if self.experiment_mode
-                else "🔵 **Normal rollout ready** · press Start rollout below; "
+                else "🔵 **Free rollout ready** · press Start rollout below; "
                 "Finish saves the episode."
             )
             self.prepare_normal_btn.visible = False
             self.prepare_experiment_btn.visible = False
             self._show_recorded_identity(metadata)
-            if metadata.get("repeat_id") in (1, 2, 3):
-                self.repeat_id.value = str(metadata["repeat_id"])
+            if metadata.get("repeat_id") is not None:
+                self.repeat_id.value = metadata["repeat_id"]
             if self.top_overlay is not None and metadata.get("reference_layout") is not None:
                 self.top_overlay.restore_selection({
                     "layout_id": metadata["layout_id"],
@@ -1556,6 +1610,9 @@ class PolicyViewer:
             first_service_announcement = self.launch_mode != "serve" or new_service
             if new_service:
                 self._reset_for_new_service()
+            if first_service_announcement:
+                self._configure_research(metadata)
+                self.records.root.value = incoming_service_id
             if new_service or first_service_announcement or "camera_map" in metadata:
                 self.camera_view.set_policy_map(
                     metadata.get("camera_map"),
@@ -1577,7 +1634,7 @@ class PolicyViewer:
             self.prepare_normal_btn.visible = True
             self.prepare_experiment_btn.visible = True
             self.rollout_setup_status.content = (
-                "Choose a normal rollout (no scoring) or an experiment rollout "
+                "Choose a free rollout (no scoring) or a study rollout "
                 "(save or skip evaluation)."
             )
             if self.current_episode_dir is None or self.evaluation_complete:
@@ -1640,6 +1697,7 @@ class PolicyViewer:
         )
 
     def close(self) -> None:
+        self.records.close()
         self.running = False
         self.receiver.close()
         self.control_server.close()

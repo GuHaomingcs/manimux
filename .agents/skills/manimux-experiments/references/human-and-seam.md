@@ -1,6 +1,8 @@
 # Human scores and chunk seam metrics
 
-Read the current metric definitions in `docs/experiments.md` first.
+Read the current metric definitions in the user's selected study register first.
+This checkout maintains its register in `docs/experiments.md`. For another study
+without a register, use the user's agreed definitions and identify missing choices.
 Do not turn the examples below into frozen numeric settings.
 
 ## Human

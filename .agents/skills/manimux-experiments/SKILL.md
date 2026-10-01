@@ -10,16 +10,26 @@ Work from the ManiMux checkout. Paths written as `docs/...`, `manimux/...`,
 `AGENTS.md` before editing. This skill owns experiment operation and reporting;
 use the development skill when the request changes recording or runtime behavior.
 
+## User research versus team studies
+
+Read [the research workflow](../../../docs/usage/research.md) for free rollouts and
+optional templates. Do not require a study register, fixed layout count, human
+labels or PRM when the user only wants inference or experiment management. Use the
+SOP below only for a requested evaluation, applying the user's chosen metrics.
+
 ## Read the current agreement
 
-Start with `docs/experiments.md`. It owns the current task roster,
-selected policies, proposed versus confirmed settings, metrics, result rows,
-and progress. Do not copy particular tasks, checkpoints, numeric presets or
-judge defaults into this skill. If the user changes a setting, update the
-register's decision and status without treating unrelated proposals as approved.
+Start with the user's selected experiment and saved session. Read their study
+register when one is provided; this checkout maintains it in `docs/experiments.md`,
+which is excluded from the public documentation site. Preserve the existing file;
+do not recreate its task roster or results from memory. If a requested evaluation
+needs a register and none exists, establish it from the user's actual study choices.
+The register owns selected policies, proposed versus confirmed settings, metrics,
+result rows and progress. Do not copy tasks, checkpoints, numeric presets or judge
+defaults into this skill. If the user changes a setting, update its decision and
+status without treating unrelated proposals as approved.
 
-`docs/reference/experiment-design.md` supplies study principles; some pilot tables are
-historical. `docs/reference/experiment-infra.md` supplies the operation/evidence contract.
+`docs/usage/records.md` supplies study principles and the operation/evidence contract.
 Current source and stored artifacts decide what actually happened. In particular,
 the register describes intended settings; a session manifest describes its run.
 An old rollout is not automatically evidence for a newly confirmed preset.

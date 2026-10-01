@@ -19,9 +19,8 @@
 .pytest_cache/
 .ruff_cache/
 .venv/
-# Local environment contents are machine-specific; keep the setup guide tracked.
-/envs/*
-!/envs/README.md
+# Local Python environments; setup instructions live in docs/usage/environments.md.
+/envs/
 *.egg-info/
 data/
 __pycache__/
@@ -55,3 +54,10 @@ logs/
 
 # Local backup of the pre-refactor package tree; the active package is /manimux.
 /src/
+
+# Generated documentation website.
+/site/
+/.venv-docs/
+
+# Private study decisions and results; preserve the local file.
+/experiments.md

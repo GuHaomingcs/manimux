@@ -94,7 +94,7 @@ robot = TianjiTaccapRobot.from_config("manimux/configs/embodiment/robot/tianji_t
 实验入口位于 `manimux/configs/experiments/pass_ball/umi_dp/tianji_taccap_umi_dp.yaml`。
 通过 `--local` 选择工位；policy 配置位于 `manimux/configs/policy/umi_dp/`。
 仍使用既有 XPolicyLab UMI_DP 模型和 `xpolicylab_ws`，需用原启动脚本绑定 checkpoint
-身份后才可运行。细节见 `docs/reference/umi-dp-tianji-taccap-runbook.md`。
+身份后才可运行。细节见 `docs/deployment/umi-dp-tianji-taccap.md`。
 
 测试覆盖注册到 adapter、原算法数值回归、场景变换不影响控制、子进程解码一致性、
 原时间/运动约束保持，以及 fake SDK 下的只读和执行分发。未启动真实硬件或模型服务。

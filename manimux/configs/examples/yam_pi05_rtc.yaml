@@ -4,11 +4,19 @@ control_profile: ../embodiment/robot/yam_control.yaml
 
 run:
   task: Put the bottles into the bin.
-  output_dir: ./data/experiments/examples/yam-pi05-rtc
+  output_dir: ./data/yam-pi05-rtc
   max_control_steps: 12000
   # Viewer evaluation workflow; independent of inference and robot execution.
   experiment_mode: false
-  layout_id: example
+  experiment_name: my-first-study
+  condition: baseline
+  notes: ""
+  # Optional: constrains only Prepare study rollout, not free rollouts.
+  # experiment_template:
+  #   name: Three scene variants
+  #   layout_ids: [near, far, cluttered]
+  #   repeats: 5
+  #   require_reference: false
 
 robot:
   type: yam

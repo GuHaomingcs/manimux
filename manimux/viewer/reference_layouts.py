@@ -1,4 +1,4 @@
-"""Ten reference images per task, shared by capture and evaluation viewers."""
+"""Named reference images per task, shared by capture and research viewers."""
 
 from __future__ import annotations
 
@@ -13,7 +13,6 @@ import numpy as np
 from PIL import Image
 
 DEFAULT_LAYOUT_ROOT = Path("data/evaluation_layouts")
-REFERENCE_SLOTS = tuple(f"{index:02d}" for index in range(1, 11))
 
 
 class ReferenceLayouts:
@@ -45,12 +44,15 @@ class ReferenceLayouts:
         self.task_path(task).mkdir(parents=True, exist_ok=True)
 
     def image_path(self, task: str, slot: str) -> Path:
-        if slot not in REFERENCE_SLOTS:
-            raise ValueError("Reference image IDs must be 01–10.")
+        if not re.fullmatch(r"[\w-]{1,100}", slot):
+            raise ValueError("Reference IDs must use letters, digits, underscores or hyphens.")
         return self.task_path(task) / f"{slot}.png"
 
     def slots(self, task: str) -> tuple[str, ...]:
-        return tuple(slot for slot in REFERENCE_SLOTS if self.image_path(task, slot).is_file())
+        return tuple(sorted(
+            path.stem for path in self.task_path(task).glob("*.png")
+            if re.fullmatch(r"[\w-]{1,100}", path.stem) and path.is_file()
+        ))
 
     def load(self, task: str, slot: str) -> np.ndarray:
         return self.snapshot(task, slot)[0]

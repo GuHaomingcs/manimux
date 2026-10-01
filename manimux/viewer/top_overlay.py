@@ -179,7 +179,7 @@ class TopViewOverlay:
         """Freeze the reference shown for this Prepare; no work runs on control ticks."""
         with self._lock:
             if self.task.value == EMPTY_TASK or self.slot.value == EMPTY_SLOT:
-                raise ValueError("Select a task and a saved reference image (01–10) first.")
+                raise ValueError("Select a task and a saved reference image first.")
             pixels, identity = self.layouts.snapshot(self.task.value, self.slot.value)
             self._reference = pixels
             self._reference_identity = identity

@@ -7,6 +7,9 @@ rollout recording and offline replay.
 These instructions apply throughout this checkout; also read the instructions in any
 submodule or nested directory before editing it.
 
+Public entry points: [User guide](docs/index.md) · [Integration map](docs/development/README.md).
+Skills route agents to these same maintained protocol guides.
+
 ## Task skills
 
 Read only the skill relevant to the task; paths inside skills are relative to this
@@ -25,7 +28,7 @@ reference before copying an older integration; compatibility paths are not templ
 ## First connection to a local robot
 
 For another installation of a supported robot, start with
-[local station setup](manimux/configs/local/README.md) and its matching template.
+[local station setup](docs/usage/station.md) and its matching template.
 Keep machine-specific CAN interfaces, controller IPs, device serials and service addresses
 in one private station file. Read an existing file before editing it, preserve component
 names, and establish physical device mappings instead of assuming enumeration order means left/right.
@@ -98,7 +101,7 @@ manimux/configs/policy/<model>/<embodiment>/<task>/
 manimux/configs/experiments/<task>/<model>/<embodiment>_<model>_<variant>.yaml
 manimux/configs/inference/
 manimux/configs/executor/
-docs/reference/<model>-<embodiment>-runbook.md
+docs/deployment/<model>-<embodiment>.md
 training/  # Private configurations, launchers and notes; ignored by Git
 ```
 

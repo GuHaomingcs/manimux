@@ -8,7 +8,7 @@ manimux/configs/embodiment/arm/yam.yaml          单臂配置与 SDK 参数
 manimux/configs/embodiment/sensor/realsense.yaml 相机组件采集参数
 manimux/configs/embodiment/robot/yam_dual.yaml   组件、安装关系与控制组
 manimux/configs/embodiment/robot/yam_control.yaml 采集和部署共享的控制参数
-manimux/configs/local/yam.example.yaml          CAN、相机序列号、网络服务绑定
+manimux/configs/local/yam_example.yaml          CAN、相机序列号、网络服务绑定
 ```
 
 `left_arm` 和 `right_arm` 各为 7 维，内置夹爪随 arm 一起控制，末端字段为 `null`。
@@ -44,7 +44,7 @@ from manimux.clock import SystemClock
 from manimux.embodiments.robot import build_robot
 
 config = load_config("manimux/configs/experiments/put_bottles/pi05/yam_pi05_joint.yaml",
-                     local="manimux/configs/local/yam.example.yaml")
+                     local="manimux/configs/local/yam_example.yaml")
 robot = build_robot(config["robot"], SystemClock())
 print({name: model.num_coordinates for name, model in robot.kinematics.models.items()})
 ```

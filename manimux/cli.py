@@ -415,6 +415,7 @@ def run_parameters(**options) -> dict:
     """补齐实验记录目录和控制步数。"""
 
     from manimux.embodiments.sensor.reader import sensor_reading_parameters
+    from manimux.evaluation.identity import research_template
 
     if "max_steps" in options:
         raise ValueError("unsupported run field: max_steps")
@@ -425,6 +426,10 @@ def run_parameters(**options) -> dict:
         "control_timing": False,
         "timing_max_cycles": 20000,
         "sensor_reading": {},
+        "experiment_template": None,
+        "experiment_name": "",
+        "condition": "",
+        "notes": "",
         "experiment_mode": False,
         "layout_id": "",
         "repeat_id": None,
@@ -439,6 +444,7 @@ def run_parameters(**options) -> dict:
         raise ValueError("run.control_timing must be boolean")
     if type(values["timing_max_cycles"]) is not int or values["timing_max_cycles"] <= 0:
         raise ValueError("run.timing_max_cycles must be a positive integer")
+    values["experiment_template"] = research_template(values["experiment_template"])
     values["sensor_reading"] = sensor_reading_parameters(**values["sensor_reading"])
     return values
 

@@ -584,6 +584,11 @@ class RuntimeSessionService:
             "executor": self._config["executor"]["type"],
             "policy_label": self._config["viewer"]["policy_label"],
             "camera_map": self._config["policy"]["adapter"].get("camera_map", {}),
+            "experiment_template": deepcopy(self._config["run"].get("experiment_template")),
+            "research_defaults": {
+                key: self._config["run"].get(key, "")
+                for key in ("experiment_name", "condition", "notes")
+            },
             "default_experiment_mode": self._config["run"]["experiment_mode"],
             "last_episode_dir": (
                 "" if self._last_episode_dir is None else str(self._last_episode_dir.resolve())
@@ -656,13 +661,13 @@ class RuntimeSessionService:
         attempts = 0
         print(f"runtime service ready; run_dir={self._run_dir.resolve()}")
         print(
-            "Viewer flow: Prepare normal/experiment rollout -> Start rollout -> "
+            "Viewer flow: Prepare free/study rollout -> Start rollout -> "
             "Finish & Home / Finish without homing"
         )
         if self._recovery is not None and self._recovery.available:
             print("Manual recovery is always visible: stop a rollout, drag A/B/AB, or Return Home")
         print(
-            "Normal rollouts need no scoring; experiment rollouts offer evaluation "
+            "Free rollouts need no scoring; study rollouts offer evaluation "
             "that can be saved or skipped"
         )
         while max_rollout_attempts is None or attempts < max_rollout_attempts:
@@ -677,6 +682,9 @@ class RuntimeSessionService:
                     rollout_config["run"]["task"] = task_command
                 # Identity comes only from this Prepare, never the preceding attempt.
                 rollout_config["run"].update(
+                    experiment_name=request.get("experiment_name", ""),
+                    condition=request.get("condition", ""),
+                    notes=request.get("notes", ""),
                     experiment_mode=request.get("experiment_mode", False),
                     layout_id=request.get("layout_id", ""),
                     repeat_id=request.get("repeat_id"),

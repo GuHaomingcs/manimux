@@ -1,99 +1,67 @@
 <div align="center">
 
 # ManiMux
-**A unified, composable platform for real-robot experiments.**
 
-Policy × Runtime × Embodiment
+**Any embodiment. Any policy. Any inference strategy.**
 
-[![Platform](https://img.shields.io/badge/Platform-7C3AED?style=flat-square)](#features)
-[![Robo GUI](https://img.shields.io/badge/Robo%20GUI-0891B2?style=flat-square)](docs/reference/viewer-tutorial.html)
-<br/>
-[![Component: XPolicyLab](https://img.shields.io/badge/Component-XPolicyLab-4F46E5?style=flat-square&logo=github&logoColor=white)](XPolicyLab/)
-[![Component: PRM-as-a-Judge](https://img.shields.io/badge/Component-PRM--as--a--Judge-9333EA?style=flat-square&logo=github&logoColor=white)](PRM-as-a-Judge/)
-[![Python 3.11 and 3.12](https://img.shields.io/badge/Python-3.11%20%7C%203.12-3776AB?style=flat-square&logo=python&logoColor=white)](pyproject.toml)
-<br/>
-[![Policies: 10 integrations, including 2 model-only paths](https://img.shields.io/badge/Policies-10%20Integrations-2EA043?style=flat-square)](docs/reference/README.md#support-counts)
-[![Embodiments: hardware components](https://img.shields.io/badge/Embodiments-Hardware%20Components-2563EB?style=flat-square)](docs/reference/README.md#support-counts)
-[![Inference: 8 modes](https://img.shields.io/badge/Inference-8%20Modes-F97316?style=flat-square)](docs/reference/README.md#support-counts)
-<br/>
-[![Evaluation: human feedback and LLM judge](https://img.shields.io/badge/Evaluation-Human%20%2B%20LLM%20Judge-DB2777?style=flat-square)](docs/reference/prm-as-a-judge.md)
+**Bring your manipulation research to life on real robots.** ManiMux **standardizes**
+deployment and experiment workflows through shared protocols, bringing your choice of
+embodiment, policy, and inference strategy into **RoboGUI**.
+Designed for **100–200 Hz command execution** alongside **live digital twin visualization**.
+
+**Policy × Runtime × Embodiment**
+
+[![Documentation](https://img.shields.io/badge/Documentation-Guide-2563EB?style=flat-square)](https://sii-liulab.github.io/manimux/)
+[![Demo video](https://img.shields.io/badge/Demo-Watch%20video-EF4444?style=flat-square)](https://sii-liulab.github.io/manimux/#manimux)
+[![Agent skills](https://img.shields.io/badge/Develop-Agent%20skills-8B5CF6?style=flat-square)](.agents/skills/manimux-development/SKILL.md)
+
+[![Policy recipes: 13](https://img.shields.io/badge/Policy%20recipes-13-F59E0B?style=flat-square)](#included-integrations)
+[![Inference modes: 8](https://img.shields.io/badge/Inference%20modes-8-EC4899?style=flat-square)](#included-integrations)
+[![Embodiments: 2](https://img.shields.io/badge/Embodiments-2-06B6D4?style=flat-square)](#included-integrations)
+[![Actively maintained](https://img.shields.io/badge/Status-Actively%20maintained-14B8A6?style=flat-square)](https://github.com/SII-LiuLab/manimux/commits/main/)
 
 [English](README.md) · [简体中文](README.zh-CN.md)
 
-[**Features**](#features) · [**Video**](#demo) · [**Architecture**](#architecture) · [**Quick Start**](#quick-start) · [**Documentation**](docs/README.md) · [**Citation**](#citation)
+[Quick start](#quick-start) · [Architecture](#architecture) · [Integrate](#integrate) · [Documentation](https://sii-liulab.github.io/manimux/) · [Citation](#citation)
 
 </div>
 
-**ManiMux brings policy deployment and evaluation onto a shared real-robot
-control foundation.** Instead of rebuilding the deployment stack for every model or robot,
-choose the **policy, runtime strategy, executor and embodiment** through configuration.
-Standard interfaces separate model inference from hardware control, making integrations reusable
-across embodiments rather than tied to one model–robot pair.
-
-**One experiment workflow, visible in Robo GUI.** Prepare and run trials, inspect live cameras,
-3D state, trajectories and chunk handoffs, then review predictions, commands and robot feedback.
-**XPolicyLab** and **StarVLA** provide independent policy frameworks; human labels and **PRM-as-a-Judge**
-support evaluation of the recorded experiments.
-
-**Scope:** ManiMux owns policy deployment, runtime recording, replay and evaluation.
-Teleoperation and demonstration collection are maintained outside this repository.
-
-> 📖 Connecting your own YAM or Tianji–TacCap? Start with [local station setup](manimux/configs/local/README.md). Installation and launch commands are in the [Guideline](docs/reference/guideline.md); model and method guides are in [Documentation](docs/README.md).
-
-## First step: connect your own robot
-
-For another installation of a supported robot model, bind the existing components to your
-devices. Users and coding agents should start with the [station guide](manimux/configs/local/README.md):
-
-1. Copy the matching [YAM](manimux/configs/local/yam.example.yaml) or
-   [Tianji–TacCap](manimux/configs/local/tianji_taccap.example.yaml) template to `manimux/configs/local/station.yaml`.
-2. Fill in the actual CAN interfaces, controller IPs, device serials and service addresses.
-   `can_left` is a Linux interface name on the development station; your machine may use `can0`.
-3. Inspect the resolved configuration without connecting devices, then follow the selected
-   model/body runbook. Keep experiment timing, action semantics and execution settings separate.
-
-Runtime startup and the camera, Pi05 and UMI_DP `--experiment` entry points automatically
-read this private, Git-ignored station file. Use `--local <path>` to select another station.
-Viewer network options and other model launchers still have separate entry points;
-the [station guide](manimux/configs/local/README.md#scope-and-remaining-independent-entry-points)
-explains their scope.
+> **[Read the ManiMux Guide →](https://sii-liulab.github.io/manimux/) · [Markdown source](docs/index.md)**
+> Installation, station setup, deployment recipes, RoboGUI workflows and integration protocols.
+> For agent-led development, start with the [development skill](.agents/skills/manimux-development/SKILL.md).
 
 ## News
 
-- **[2026-09-13] Initial version in development.** We are building a shared foundation for configurable policy deployment and GUI-driven real-robot experiments.
+- **2026-10-01** — The [ManiMux Guide](https://sii-liulab.github.io/manimux/) is live, covering setup, deployment, RoboGUI and integration protocols.
+- **2026-10-01** — Updated [research workflows](docs/usage/research.md) and [agent integration guides](docs/development/README.md) for free exploration, study templates and component development.
 
-<a id="features"></a>
+## RoboGUI
 
-## ✨ Features
+![RoboGUI: live cameras, robot state, trajectories and action chunks](assets/manimux-viewer-demo.webp)
 
-| Feature | Status | What it provides |
-|---|:---:|---|
-| Composable deployment | ✅ | Config-driven policy × runtime strategy × executor × embodiment |
-| Cross-embodiment interfaces | ✅ | Shared contracts; component-based hardware assemblies |
-| Inference methods | ✅ | Async, serial, RTC, PAINT and adaptive chunking |
-| Robo GUI | ✅ | Rollout controls, cameras, 3D state, trajectories and chunk timelines |
-| Execution evidence | ✅ | Configs, observations, actions, commands, feedback, events and video |
-| Evaluation | ✅ | Human labels + offline PRM / LLM judging |
+[▶ Watch the real-robot demo](assets/manimux_2026-09-05_23-17-35-00.00.03.144-00.00.34.914-seg1-00.00.02.596-00.00.34.966.mp4)
 
-✅ denotes implemented functionality, not validation of every model / hardware combination.
-[Support counts](docs/reference/README.md#support-counts) also include model-only paths.
+**Prepare → Start → Pause / Finish → Review.** Free rollouts need no scoring.
+Study rollouts can use a template and optional evaluation. Recorded trajectories replay
+in a separate, hardware-free view. [Research workflow →](docs/usage/research.md)
 
-<a id="demo"></a>
+## Included integrations
 
-## 🎬 Demo Video
+- **Policies with robot deployment recipes (8):** Pi05, DP, SAPolicy, GR00T N1.7, LingBot-VLA2, Xiaomi XR-1, UMI DP and OpenWAM.
+- **Policies with offline recipes (5):** Isaac 0.5 and StarVLA's QwenOFT, QwenPI-v3, QwenGR00T and QwenFast.
+- **Inference modes (8):** Serial, asynchronous chunking, RTC, ACT temporal ensembling, AAC, PAINT, AutoHorizon and DVAC.
+- **Embodiments (2):** YAM and Tianji–TacCap. **Executors:** Direct, Smooth and MPC.
 
-Dual-arm YAM rollout with live cameras, 3D robot state and action-chunk handoffs.
+Policy serving uses **XPolicyLab** or **StarVLA**. Counts describe included integrations,
+not all model × method × robot combinations or completed hardware validation.
+See the [support catalog](docs/usage/deployments.md#integration-counts) for scope and recipes.
+Evaluation is optional; choose your own research protocol and metrics.
 
-![ManiMux rollout with live cameras, robot state and action-chunk visualization](assets/manimux-viewer-demo.webp)
+## Architecture
 
-[**▶ Open the MP4 recording**](assets/manimux_2026-09-05_23-17-35-00.00.03.144-00.00.34.914-seg1-00.00.02.596-00.00.34.966.mp4)
-
-<a id="architecture"></a>
-
-## 🧩 Architecture
-
-**Policy inference and hardware execution are separate responsibilities.** The inference strategy
-decides when and how to hand off a chunk; the executor turns its targets into robot commands.
+Model frameworks own inference. ManiMux owns observation/action adaptation, scheduling,
+execution and experiment operation. Strategies decide when to request and hand off chunks;
+executors turn timeline references into commands.
 
 ```mermaid
 %%{init: {"flowchart": {"wrappingWidth": 180, "curve": "basis", "nodeSpacing": 24, "rankSpacing": 28, "padding": 14}}}%%
@@ -107,7 +75,7 @@ flowchart LR
     PLAN["<b>ADAPT & SCHEDULE</b><br/>Async · RTC · PAINT<br/>Serial · adaptive<br/><br/>Adapter → Timeline"]:::handoff
     ACT["<b>EXECUTE</b><br/>Direct · Smooth · MPC<br/><br/>Executor + Safety<br/>Control profile"]:::stage
     ROBOT(["<b>ROBOT</b><br/>RobotBase<br/>Hardware"]):::robot
-    REVIEW(["<b>REVIEW</b><br/>Robo GUI · records<br/>Human labels<br/>PRM-as-a-Judge"]):::side
+    REVIEW(["<b>OPERATE & REVIEW</b><br/>RoboGUI · records · replay<br/>Optional evaluation"]):::side
 
     OBS --> XPOLICY --> PLAN --> ACT --> ROBOT
     OBS --> STARVLA --> PLAN
@@ -120,65 +88,76 @@ flowchart LR
     classDef xpolicy fill:#8957E5,stroke:#6633B8,color:#FFFFFF
 ```
 
-Model servers never command hardware. Runtime recording and offline replay remain part of ManiMux.
-Learned models stay in their owning framework; peer frameworks implement the existing
-[policy client interface](docs/reference/component-policy-development.md). The
-[StarVLA runbook](docs/reference/starvla-offline-runbook.md) covers joint/EEF offline deployment
-and its [validation limits](docs/reference/starvla-validation.md).
+XPolicyLab and StarVLA have independent serving environments and ManiMux clients.
+A new framework can implement the same client interface. A new robot implements component
+and assembly protocols. [Extension map →](docs/development/README.md)
 
-**GitHub:** [ManiMux](https://github.com/SII-LiuLab/manimux) · [XPolicyLab](https://github.com/Cuzyoung/XPolicyLab) · [PRM-as-a-Judge](https://github.com/YuyangLiu2003/PRM-as-a-Judge)
+## Quick start
 
-<a id="quick-start"></a>
+### Explore without hardware
 
-## 🚀 Quick Start · Pi05 on YAM
-
-This example runs **Pi05 pure-joint, step-30000, put-bottles with RTC**. It assumes the YAM and
-OpenPI environments, checkpoint and local device configuration are already prepared;
-see the [setup guide](docs/reference/guideline.md#pi05-30k-on-yam). For a hardware-free display, use the
-[Viewer preview](docs/reference/guideline.md#hardware-free-start).
-
-Complete [local station setup](manimux/configs/local/README.md) first. The camera, Pi05 and
-runtime commands below use the same experiment and automatically read its station bindings.
-This RTC recipe uses a **100 Hz command loop**, interpolating model action points spaced **1/30 s** apart.
-
-From the repository root, run these in **four separate terminals**. Reuse matching camera / Viewer
-services if already running; collection and inference must not control the same robot simultaneously.
+Python 3.11 or 3.12 and [uv](https://docs.astral.sh/uv/) are required for these commands:
 
 ```bash
-# Terminal 1: cameras
-envs/yam/.venv/bin/python -m manimux.servers.camera.server \
-  --experiment manimux/configs/experiments/put_bottles/pi05/yam_pi05_rtc_joint_step30000.yaml
-
-# Terminal 2: Viewer
-envs/yam/.venv/bin/python -m manimux.viewer.dashboard --robot yam --host 127.0.0.1 --port 8086
-
-# Terminal 3: pure-joint 30k model server
-XPolicyLab/policy/Pi_05/openpi/.venv/bin/python \
-  -m manimux.servers.pi05 \
-  --experiment manimux/configs/experiments/put_bottles/pi05/yam_pi05_rtc_joint_step30000.yaml
-
-# Terminal 4: matching RTC runtime
-envs/yam/.venv/bin/python -m manimux serve \
-  --config manimux/configs/experiments/put_bottles/pi05/yam_pi05_rtc_joint_step30000.yaml
+git clone https://github.com/SII-LiuLab/manimux.git
+cd manimux
+uv sync --dev
+uv run manimux-viewer --robot yam --demo --host 127.0.0.1 --port 8086
 ```
 
-Open **http://127.0.0.1:8086**, then **Prepare → Start rollout → Finish & Home**.
-Normal rollouts need no label; experiment rollouts offer Save evaluation or Skip evaluation.
-Keep the server and runtime configs paired: this example uses **joint**, not **joint+EE**.
+Open **http://127.0.0.1:8086**. This demo displays synthetic data and the bundled YAM
+model; it does not connect to a robot. Model-framework submodules and checkpoints are
+only needed for the deployment path you choose.
 
-## 📚 Guides
+### Run on your robot
 
-- **Run:** [Guideline](docs/reference/guideline.md) · [Configuration](manimux/configs/README.md).
-- **Integrate:** [Components and policy runbooks](docs/README.md) · [Inference methods](docs/reference/README.md#inference-and-execution).
-- **Evaluate:** [Experiment workflow](docs/reference/experiment-infra.md) · [PRM guide](docs/reference/prm-as-a-judge.md).
-- **Extend:** [Architecture contracts](docs/reference/architecture.md).
+1. Select a [model/robot runbook](docs/usage/deployments.md)
+   and prepare its hardware and model environments.
+2. Bind devices, service addresses and checkpoint paths in your private
+   [station file](docs/usage/station.md).
+3. Start the camera, RoboGUI, model server and runtime using the
+   [complete Pi05/YAM example](docs/usage/getting-started.md#pi05-30k-on-yam)
+   or the selected model's runbook.
+4. Continue in RoboGUI: enter your task, prepare and run trials, then review records.
 
-<a id="citation"></a>
+`manimux serve` keeps the service available for repeated GUI-driven rollouts.
+`manimux run` executes one rollout. Preparation can connect and move the selected robot
+as configured; use the runbook matching your actual setup.
 
-## 📝 Citation
+[Configuration explained](manimux/configs/README.md) · [Annotated experiment](manimux/configs/examples/README.md)
 
-If ManiMux supports your experiments, please cite the repository. For experiments using its
-XPolicyLab integration, please also cite the [XPolicyLab paper](https://arxiv.org/abs/2608.09892).
+## Integrate
+
+**For users:** configure an existing combination and use RoboGUI.
+**For your coding agent:** start at [AGENTS.md](AGENTS.md), then load the relevant skill.
+
+| Task | Entry point |
+| --- | --- |
+| Add a robot, gripper or camera | [Component protocols](docs/development/components.md) |
+| Add a model, framework or action adapter | [Policy protocols](docs/development/policies.md) |
+| Add scheduling, execution or a GUI feature | [Runtime protocols](docs/development/runtime-config.md) |
+| Connect supported hardware at another lab | [Station setup skill](.agents/skills/manimux-station-setup/SKILL.md) |
+| Analyze your recorded experiments | [Experiment skill](.agents/skills/manimux-experiments/SKILL.md) |
+
+Each integration documents its input/output semantics, owning files, YAML selection and
+validation.
+
+**Build with us.** Contributions are welcome—from new embodiments, policies, and
+inference strategies to documentation and bug fixes. Start with the
+[integration guide](docs/development/README.md), follow the shared protocols, and see
+[Contributing](CONTRIBUTING.md) for the expected handoff.
+
+## Support and evidence
+
+See the [support catalog](docs/usage/deployments.md) for model, hardware and method
+runbooks. Capabilities vary by checkpoint and backend; an integration does not imply
+that every model × robot × algorithm combination has been tested on hardware.
+ManiMux is under active development. Each deployment guide states its validation scope.
+
+## Citation
+
+If ManiMux supports your research, cite the repository. For work using XPolicyLab,
+please also cite its paper and the models/methods you use.
 
 ```bibtex
 @misc{manimux2026,
@@ -198,7 +177,12 @@ XPolicyLab integration, please also cite the [XPolicyLab paper](https://arxiv.or
 }
 ```
 
----
+[Third-party notices](THIRD_PARTY_NOTICES.md) · [Upstream licenses](licenses) · [Documentation](https://sii-liulab.github.io/manimux/)
 
-Physical robots require matching model contracts and hardware safety measures; software checks do not certify safety or task success.
-Upstream attribution: [notices](THIRD_PARTY_NOTICES.md) · [licenses](licenses).
+## License
+
+[![Python](https://img.shields.io/badge/Python-3.11%20%7C%203.12-3776AB?style=flat-square)](pyproject.toml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-22C55E?style=flat-square)](LICENSE)
+
+ManiMux is licensed under [MIT](LICENSE). Third-party frameworks, SDKs and assets
+retain their own licenses; see [third-party notices](THIRD_PARTY_NOTICES.md).

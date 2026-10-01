@@ -34,7 +34,7 @@ Set `background: false` to call `capture()` synchronously without a capture work
 不再像旧网络实现一样在后台自动重启 pipeline，不自动更换设备或分辨率。
 
 配置位于 `manimux/configs/embodiment/sensor/realsense.yaml`。YAM 整机示例中相机序列号在
-`manimux/configs/local/yam.example.yaml`；旧相机服务的 `device_id` 字段也在服务入口转换。
+`manimux/configs/local/yam_example.yaml`；旧相机服务的 `device_id` 字段也在服务入口转换。
 这两个配置入口调用同一个组件，不保留第二套 RealSense pipeline 实现。
 
 For camera services launched with `--experiment` or `--config`, each entry in the camera preset

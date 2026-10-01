@@ -1,4 +1,4 @@
-"""Standalone camera-only tool for collecting ten Top references per task.
+"""Standalone camera-only tool for saving named Top references per task.
 
 Run: python -m manimux.viewer.reference_capture --task put_bottles_into_the_bin
 """
@@ -17,7 +17,7 @@ import viser
 
 from manimux.embodiments.sensor.camera_server.client import CameraSubscriber
 
-from .reference_layouts import DEFAULT_LAYOUT_ROOT, REFERENCE_SLOTS, ReferenceLayouts
+from .reference_layouts import DEFAULT_LAYOUT_ROOT, ReferenceLayouts
 
 EMPTY_TASK = "(Create a task)"
 
@@ -32,12 +32,12 @@ class ReferenceCapture:
         tasks = layouts.tasks()
         gui.add_markdown(
             "## Top reference capture\n"
-            "Camera only. Save ten layouts per task, numbered 01–10."
+            "Camera only. Choose a task and a reference ID, then save."
         )
         self.task = gui.add_dropdown("Task", tasks or (EMPTY_TASK,))
         self.new_task = gui.add_text("New task name", "")
         self.create = gui.add_button("Create task")
-        self.slot = gui.add_dropdown("Reference slot", REFERENCE_SLOTS)
+        self.slot = gui.add_text("Reference ID", "01")
         self.preview = gui.add_image(np.zeros((480, 640, 3), np.uint8), label="Live Top view")
         self.save = gui.add_button("Save to slot (replace existing image)", disabled=True)
         self.status = gui.add_markdown("Waiting for camera service.")
@@ -88,7 +88,7 @@ class ReferenceCapture:
 
     def _selection(self) -> None:
         slots = self.layouts.slots(self.task.value) if self.task.value != EMPTY_TASK else ()
-        self.inventory.content = f"Captured **{len(slots)}/10**: {', '.join(slots) or 'None'}"
+        self.inventory.content = f"Captured **{len(slots)}**: {', '.join(slots) or 'None'}"
         self.saved_preview.visible = self.slot.value in slots
         if self.saved_preview.visible:
             try:
@@ -114,7 +114,7 @@ class ReferenceCapture:
                     f"Waiting for a fresh {self.camera} frame. Check camera service."
                 )
             elif self.status.content.startswith("Waiting"):
-                self.status.content = "Arrange the scene, select a slot from 01–10, then save."
+                self.status.content = "Arrange the scene, enter a reference ID, then save."
 
 
 def main() -> None:
