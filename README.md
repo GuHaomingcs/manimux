@@ -1,6 +1,6 @@
 <div align="center">
 
-<h1><img src="docs/assets/manimux-logo.png" alt="ManiMux" width="800"></h1>
+<p><img src="docs/assets/manimux-logo.png" alt="ManiMux" width="560"></p>
 
 **Any embodiment. Any policy. Any inference strategy.**
 
