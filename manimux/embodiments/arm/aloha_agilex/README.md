@@ -1,7 +1,7 @@
 # RoboTwin ALOHA-AgileX follower-arm model
 
 This component provides offline geometry for the `aloha_agilex` embodiment used
-by the RoboTwin recipes and standalone Viewer. It loads through `RobotModel` and the generic
+by the RoboTwin recipes and standalone RoboGUI. It loads through `RobotModel` and the generic
 `RobotView`; no vendor SDK is needed to view or replay actions.
 
 Each arm has six revolute coordinates in radians followed by `gripper`, a

@@ -2,7 +2,7 @@
 
 ManiMux includes the RoboTwin ALOHA-AgileX follower arms for offline RoboGUI
 preview, absolute-joint replay and FK/IK. The bundled model loads without a
-robot SDK. The Viewer preset has no hardware controller or Home operation.
+robot SDK. The RoboGUI preset has no hardware controller or Home operation.
 
 ## Preview and replay
 

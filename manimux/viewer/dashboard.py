@@ -1,4 +1,4 @@
-"""Universal Viser dashboard for live robot-policy inference."""
+"""RoboGUI dashboard for live robot-policy inference and offline replay."""
 
 from __future__ import annotations
 
@@ -328,7 +328,7 @@ class PolicyViewer:
             self.chunk_info = self.server.gui.add_text("Chunk", "—", disabled=True)
             self.executor_info = self.server.gui.add_text("Executor", "waiting", disabled=True)
             self.latency = self.server.gui.add_text("Inference", "—", disabled=True)
-            self.display_timing = self.server.gui.add_text("Viewer queue / draw", "—", disabled=True)
+            self.display_timing = self.server.gui.add_text("RoboGUI queue / draw", "—", disabled=True)
             self.progress = self.server.gui.add_number("Step", 0, disabled=True)
             self.runtime_name = self.server.gui.add_text("Runtime", "waiting", disabled=True)
             self.episode_path = self.server.gui.add_text("Episode", "waiting", disabled=True)
@@ -1264,7 +1264,7 @@ class PolicyViewer:
     def _update_plan(self, message: dict[str, Any]) -> None:
         action_space = str(message.get("action_space", "joint_position"))
         if action_space != "joint_position":
-            raise ValueError("Viewer expects decoded joint_position plans")
+            raise ValueError("RoboGUI expects decoded joint_position plans")
         grouped_actions = self.robot.validate_groups(message.get("groups"), sequence=True)
         horizon = len(next(iter(grouped_actions.values())))
         metadata = dict(message.get("metadata") or {})
@@ -1769,7 +1769,7 @@ def load_viewer_config(path: Path | None = None, *, robot="tianji") -> dict:
     ).resolve()
     config = read_yaml(source)
     if "model" not in config:
-        raise ValueError("Viewer YAML must reference a RobotModel using model")
+        raise ValueError("RoboGUI YAML must reference a RobotModel using model")
     model_path = (source.parent / config["model"]).resolve()
     # Viewer 和装配 YAML 都随 manimux 发布，源码与 wheel 使用同一相对路径。
     if not model_path.is_file():
@@ -1820,7 +1820,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--config",
         type=Path,
-        help="Viewer YAML; defaults to following policy inputs, supports manual camera preview",
+        help="RoboGUI YAML; defaults to following policy inputs, supports manual camera preview",
     )
     parser.add_argument("--host", default="0.0.0.0")
     parser.add_argument("--port", type=int, default=8086)
@@ -1832,7 +1832,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--robot",
         default="tianji",
-        help="body folder containing viewer.yaml (tianji or yam)",
+        help="RoboGUI preset containing viewer.yaml (yam, tianji, piper or aloha)",
     )
     parser.add_argument(
         "--list-robots",
@@ -1891,7 +1891,7 @@ def main() -> None:
     signal.signal(signal.SIGINT, lambda *_: stop.set())
     signal.signal(signal.SIGTERM, lambda *_: stop.set())
     print(f"Robot model: {robot.name} ({robot.label})")
-    print(f"Viewer camera mode: {viewer_config['camera_mode']}")
+    print(f"RoboGUI camera mode: {viewer_config['camera_mode']}")
     display_host = {"0.0.0.0": "127.0.0.1", "localhost": "127.0.0.1", "::": "::1"}.get(
         args.host, args.host
     )

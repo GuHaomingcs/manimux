@@ -25,7 +25,7 @@ DeepSpeed 模型文件，并通过共享 `xpolicylab_ws` worker 服务 ManiMux�
   `manimux/configs/experiments/pass_ball/xiaomi-xr1/tianji_taccap_xiaomi_xr1_step50000.yaml`
 - server launcher：`manimux/servers/xiaomi_xr1_tianji_server.py`
 
-模板保持 `robot.options.execute: false`、Viewer 关闭。加载配置、检查 checkpoint 或启动
+模板保持 `robot.options.execute: false`、RoboGUI 关闭。加载配置、检查 checkpoint 或启动
 服务都不会令机器人运动。
 
 ## 1. 安装隔离的模型环境

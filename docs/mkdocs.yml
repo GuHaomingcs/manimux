@@ -84,7 +84,7 @@ nav:
       - Architecture: development/architecture.md
       - Robots, tools and cameras: development/components.md
       - Models, clients and adapters: development/policies.md
-      - Runtime, Viewer and YAML: development/runtime-config.md
+      - Runtime, RoboGUI and YAML: development/runtime-config.md
   - Deployment recipes:
       - XPolicyLab bridge: deployment/xpolicylab.md
       - Pi05 / YAM: deployment/pi05-yam.md

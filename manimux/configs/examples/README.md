@@ -34,11 +34,11 @@ addresses and checkpoint roots belong in the [local station file](../../../docs/
 ## `run`, `serve` and experiment mode
 
 `manimux run` constructs one runtime immediately, performs one rollout and exits.
-With the Viewer enabled, the runtime starts paused for Viewer control; it does not wait
+With the RoboGUI enabled, the runtime starts paused for RoboGUI control; it does not wait
 for a service-level Prepare request before constructing and starting the runtime.
 Connection and configured startup motion can therefore happen before Start rollout.
 
-`manimux serve` stays available across rollouts and requires the Viewer. Prepare creates
+`manimux serve` stays available across rollouts and requires the RoboGUI. Prepare creates
 a fresh runtime; Start rollout begins execution; Finish completes that rollout and the
 service waits for the next Prepare. Both commands use `EdgeRuntime.run()` for the actual
 control loop. `serve` does not start camera or model servers for you.
@@ -69,7 +69,7 @@ envs/yam/.venv/bin/python -m manimux.servers.camera.server \
   --experiment manimux/configs/examples/yam_pi05_rtc.yaml
 ```
 
-Viewer (open the printed browser URL; its endpoint must match the station):
+RoboGUI (open the printed browser URL; its endpoint must match the station):
 
 ```bash
 envs/yam/.venv/bin/python -m manimux.viewer.dashboard \

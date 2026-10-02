@@ -1,6 +1,6 @@
 # Run your research in RoboGUI
 
-Start the camera, model, Viewer and `manimux serve` processes using the matching
+Start the camera, model, RoboGUI and `manimux serve` processes using the matching
 [runbook](getting-started.md). The GUI then owns daily rollout operation.
 The task command is the instruction sent to the policy; the experiment name,
 condition and notes describe your research and do not modify model inputs.

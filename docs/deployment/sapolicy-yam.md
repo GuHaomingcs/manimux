@@ -78,7 +78,7 @@ Gemini 按设备序列号定位 UVC RGB 节点。每轮只请求和检查选中�
 GUI 默认 `camera_mode: policy`，跟随 runtime 上报的 `policy.adapter.camera_map`，
 主画面标注模型输入名，左右小画面使用简洁的 `left side` / `right side` 标签；
 模型输入与物理相机的完整对应关系显示在右侧表格中。
-模型配置声明输入视角；部署配置绑定本机相机；Viewer 自动展示，不需要重复绑定。
+模型配置声明输入视角；部署配置绑定本机相机；RoboGUI 自动展示，不需要重复绑定。
 输入按映射顺序排列，第一个是主画面，Top 叠加预览跟随主画面。
 超过三路的输入显示在“更多输入相机”区域。
 未收到模型输入配置时显示默认 `top / left / right` 预览，并注明尚未获取配置。
@@ -87,7 +87,7 @@ GUI 默认 `camera_mode: policy`，跟随 runtime 上报的 `policy.adapter.came
 调试时仍可用 `--config manimux/configs/viewer/yam-top.yaml`、`yam-gemini305.yaml` 或
 `yam-gemini335.yaml`（后两者同在 `manimux/configs/viewer/`）进入 `camera_mode: manual`。
 这只覆盖预览；界面同时列出模型输入，预览选择不改变送入模型的相机。
-若要恢复自动跟随，省略 Viewer 的 `--config` 或显式设置 `camera_mode: policy`。
+若要恢复自动跟随，省略 RoboGUI 的 `--config` 或显式设置 `camera_mode: policy`。
 记录仍保存物理相机名和 `view_profile`。
 
 ## Rollout

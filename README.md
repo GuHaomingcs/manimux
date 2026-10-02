@@ -17,7 +17,7 @@ and a runtime designed for **100–200 Hz command execution**.
 
 [![Policy recipes: 13](https://img.shields.io/badge/Policy%20recipes-13-F59E0B?style=flat-square)](#included-integrations)
 [![Inference modes: 8](https://img.shields.io/badge/Inference%20modes-8-EC4899?style=flat-square)](#included-integrations)
-[![Embodiments: 2](https://img.shields.io/badge/Embodiments-2-06B6D4?style=flat-square)](#included-integrations)
+[![Embodiments: 4](https://img.shields.io/badge/Embodiments-4-06B6D4?style=flat-square)](#included-integrations)
 [![Actively maintained](https://img.shields.io/badge/Status-Actively%20maintained-14B8A6?style=flat-square)](https://github.com/SII-LiuLab/manimux/commits/main/)
 
 [English](README.md) · [简体中文](README.zh-CN.md)
@@ -32,6 +32,7 @@ and a runtime designed for **100–200 Hz command execution**.
 
 ## News
 
+- **2026-10-02** — Added [ALOHA-AgileX](docs/usage/aloha.md) and [PiPER](docs/usage/piper.md) RoboGUI demos, plus experimental [ARX X5 / PiPER controllers](docs/usage/can-arms.md). Hardware validation is pending.
 - **2026-10-01** — The [ManiMux Guide](https://sii-liulab.github.io/manimux/) is live, covering setup, deployment, RoboGUI and integration protocols.
 - **2026-10-01** — Updated [research workflows](docs/usage/research.md) and [agent integration guides](docs/development/README.md) for free exploration, study templates and component development.
 
@@ -50,7 +51,7 @@ in a separate, hardware-free view. [Research workflow →](docs/usage/research.m
 - **Policies with robot deployment recipes (8):** Pi05, DP, SAPolicy, GR00T N1.7, LingBot-VLA2, Xiaomi XR-1, UMI DP and OpenWAM.
 - **Policies with offline recipes (5):** Isaac 0.5 and StarVLA's QwenOFT, QwenPI-v3, QwenGR00T and QwenFast.
 - **Inference modes (8):** Serial, asynchronous chunking, RTC, ACT temporal ensembling, AAC, PAINT, AutoHorizon and DVAC.
-- **Embodiments (2):** YAM and Tianji–TacCap. **Executors:** Direct, Smooth and MPC.
+- **Hardware integrations (4):** YAM, Tianji–TacCap, and experimental ARX X5 / PiPER. **Executors:** Direct, Smooth and MPC.
 
 [ALOHA-AgileX follower-arm assets](docs/usage/aloha.md) and
 [standard PiPER assets](docs/usage/piper.md) are available for offline RoboGUI
@@ -114,6 +115,17 @@ uv run manimux-viewer --robot yam --demo --host 127.0.0.1 --port 8086
 Open **http://127.0.0.1:8086**. This demo displays synthetic data and the bundled YAM
 model; it does not connect to a robot. Model-framework submodules and checkpoints are
 only needed for the deployment path you choose.
+
+Try the new arms in RoboGUI using the same environment:
+
+```bash
+uv run manimux-viewer --robot piper --demo --host 127.0.0.1 --port 8087
+```
+
+Open **http://127.0.0.1:8087**. Use `--robot aloha` for ALOHA-AgileX.
+Both presets animate arms and grippers with synthetic data; no device SDK is needed.
+ARX X5 currently has a kinematic model and experimental controller, without a
+bundled RoboGUI mesh preset.
 
 ### Run on your robot
 

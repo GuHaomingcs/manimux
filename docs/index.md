@@ -69,6 +69,7 @@ flowchart LR
 
 Choose an experiment config, start the services, and work from RoboGUI.
 
+- [PiPER and ALOHA RoboGUI previews](usage/getting-started.md#hardware-free-start)
 - [Configuration: what belongs where](usage/configuration.md)
 - [Free rollouts and study templates](usage/research.md)
 - [Saved records and offline replay](usage/replay.md)

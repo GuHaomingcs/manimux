@@ -28,7 +28,7 @@ runtime uses `envs/yam/.venv` and does not import model code.
 ## Start
 
 Run from the repository root, one terminal per process. Reuse existing camera
-and Viewer processes when their configuration matches.
+and RoboGUI processes when their configuration matches.
 
 ```bash
 envs/yam/.venv/bin/python -m manimux.servers.camera.server \
@@ -53,15 +53,15 @@ envs/yam/.venv/bin/python -m manimux serve \
 
 The policy endpoint is `ws://127.0.0.1:8520`; a private station may override it
 with a `policy_dp` service. The existing station supplies CAN and camera serial
-bindings. Viewer flow is Prepare, Start rollout, Finish & Home. The experiment
+bindings. RoboGUI flow is Prepare, Start rollout, Finish & Home. The experiment
 enables real execution and retains the YAM start/home behavior of the existing
 bottle experiment; Prepare may move the arms.
 
 The history decorator waits for three distinct measured camera/state samples
 approximately 33 ms apart. It never fills history with repeated polling frames.
-The Viewer configuration displays current physical camera frames. DP's `_t0`,
+The RoboGUI configuration displays current physical camera frames. DP's `_t0`,
 `_t1`, and `_t2` model inputs are temporal aliases assembled separately by the
-adapter and are not physical stream names published to the Viewer.
+adapter and are not physical stream names published to the RoboGUI.
 The experiment uses the standard ManiMux defaults: deadline scheduling, a
 0.4-second refill threshold and two blending steps. Accepted decoded results take
 effect immediately at commit, without an additional switch delay.

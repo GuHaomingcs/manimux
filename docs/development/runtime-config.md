@@ -1,4 +1,6 @@
-# Runtime, Viewer and configuration ownership
+<a id="runtime-viewer-and-configuration-ownership"></a>
+
+# Runtime, RoboGUI and configuration ownership
 
 Source paths below are relative to the repository root.
 
@@ -32,9 +34,11 @@ timestamps, overlap, delayed/rejected responses and reset as relevant. For execu
 changes check actual arm/tool limits and output groups. Preserve capability checks;
 an algorithm setting alone does not implement the model's sampling hooks.
 
-## Viewer, replay and recording
+<a id="viewer-replay-and-recording"></a>
 
-The current dashboard loads a Viewer YAML through `load_viewer_config()`, then
+## RoboGUI, replay and recording
+
+The current dashboard loads a RoboGUI YAML through `load_viewer_config()`, then
 constructs `RobotView(RobotModel.from_config(model), config)`. Start from
 `manimux/viewer/robot_view.py` and `viewer/robots/yam/viewer.yaml`.
 A new body normally needs a `viewer/robots/<name>/viewer.yaml` pointing to its
@@ -59,15 +63,15 @@ Do not create a second kinematic definition just for display.
 The default YAM URDF is
 `manimux/embodiments/arm/yam/assets/i2rt/robot_models/arm/yam/yam.urdf`.
 Its path belongs to the component's offline model, not a `yam` branch in the
-Viewer. Both arms reuse that component; the assembly supplies group identities.
+RoboGUI. Both arms reuse that component; the assembly supplies group identities.
 A separate end effector is composed into the group's visual model when present.
 
-During live operation, Viewer receives grouped measured positions in runtime
+During live operation, RoboGUI receives grouped measured positions in runtime
 messages. `RobotView.visual_configuration(group, q)` converts the control vector
 to URDF coordinates and `ViserUrdf.update_cfg()` updates the mesh pose. For example,
 one scalar gripper opening may drive two visual finger joints. This mapping belongs
 to the component model; do not change policy action dimensions to match mesh joints.
-The Viewer provides a visual representation of state and predictions, not a physics
+The RoboGUI provides a visual representation of state and predictions, not a physics
 simulation of contact, forces or dynamics. Demo supplies synthetic positions and
 replay supplies saved positions through the same display model.
 
@@ -76,7 +80,7 @@ replay supplies saved positions through the same display model.
 1. Implement the component's offline `load_model()` and supply its URDF/meshes,
    coordinate definitions and visual mapping. Follow [component ownership](components.md).
    Geometry loading must work without constructing an SDK connection.
-2. Declare components and groups in the robot assembly YAML. Viewer group names and
+2. Declare components and groups in the robot assembly YAML. RoboGUI group names and
    incoming runtime group names must agree; use the same geometry definition as adapters.
 3. Add `manimux/viewer/robots/<name>/viewer.yaml`, referencing that assembly in `model`.
    Set group styles/initial poses, display placement and camera slots. Copy YAM's YAML
@@ -103,7 +107,7 @@ not substituted with invented geometry. Replay should not change live inference,
 recording or session behavior. Verify action replay with a named NPZ and a finalized recorded trajectory.
 
 Record runtime evidence under `manimux/recording/`. Distinguish predicted actions,
-sent commands and measured motion; Viewer refresh rate is not control frequency.
+sent commands and measured motion; RoboGUI refresh rate is not control frequency.
 Do not reintroduce teleoperation or demonstration collection as part of replay.
 
 ## Which YAML owns the setting?

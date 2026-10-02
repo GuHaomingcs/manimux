@@ -386,7 +386,7 @@ def build_parser() -> argparse.ArgumentParser:
     run_parser = subparsers.add_parser("run", help="run one local robot-policy session")
     _add_runtime_arguments(run_parser)
     serve_parser = subparsers.add_parser(
-        "serve", help="keep one runtime service available for Viewer-controlled rollouts"
+        "serve", help="keep one runtime service available for RoboGUI-controlled rollouts"
     )
     _add_runtime_arguments(serve_parser)
     return parser

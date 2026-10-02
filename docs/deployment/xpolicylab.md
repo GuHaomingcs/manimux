@@ -52,7 +52,7 @@ YAM state + 三路 RGB + instruction
 
 - XPolicy model adapter 负责模型输入、输出、norm stats 和模型原生 sampler；
 - ManiMux policy adapter 负责机器人 group、动作语义以及必要的 FK/IK；
-- ManiMux shared runtime 负责时间线、执行、记录和 Viewer；InferenceStrategy 负责普通
+- ManiMux shared runtime 负责时间线、执行、记录和 RoboGUI；InferenceStrategy 负责普通
   chunk 或 RTC 的请求时机与条件；
 - 相机、CAN 和机器人 driver 不进入模型仓库。
 

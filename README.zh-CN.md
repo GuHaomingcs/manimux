@@ -17,7 +17,7 @@ ManiMux 是一个**可扩展的 real-world manipulation harness（真机操作�
 
 [![Policy recipes: 13](https://img.shields.io/badge/Policy%20recipes-13-F59E0B?style=flat-square)](#included-integrations)
 [![Inference modes: 8](https://img.shields.io/badge/Inference%20modes-8-EC4899?style=flat-square)](#included-integrations)
-[![Embodiments: 2](https://img.shields.io/badge/Embodiments-2-06B6D4?style=flat-square)](#included-integrations)
+[![Embodiments: 4](https://img.shields.io/badge/Embodiments-4-06B6D4?style=flat-square)](#included-integrations)
 [![Actively maintained](https://img.shields.io/badge/Status-Actively%20maintained-14B8A6?style=flat-square)](https://github.com/SII-LiuLab/manimux/commits/main/)
 
 [English](README.md) · [简体中文](README.zh-CN.md)
@@ -32,6 +32,7 @@ ManiMux 是一个**可扩展的 real-world manipulation harness（真机操作�
 
 ## 最新动态
 
+- **2026-10-02** — 新增 [ALOHA-AgileX](docs/usage/aloha.md) 和 [PiPER](docs/usage/piper.md) RoboGUI 演示，以及实验性的 [ARX X5 / PiPER 控制器](docs/usage/can-arms.md)，真机验证尚未完成。
 - **2026-10-01** — [ManiMux 在线指南](https://sii-liulab.github.io/manimux/)上线，覆盖安装配置、部署、RoboGUI 使用与接入 protocol。
 - **2026-10-01** — 更新[实验流程](docs/usage/research.md)与 [agent 接入指南](docs/development/README.md)，支持自由探索、模板研究与组件开发。
 
@@ -54,7 +55,7 @@ ManiMux 是一个**可扩展的 real-world manipulation harness（真机操作�
 - **有机器人部署配置的策略（8 类）：** Pi05、DP、SAPolicy、GR00T N1.7、LingBot-VLA2、Xiaomi XR-1、UMI DP、OpenWAM。
 - **有离线配置的策略（5 类）：** Isaac 0.5，以及 StarVLA 的 QwenOFT、QwenPI-v3、QwenGR00T、QwenFast。
 - **推理模式（8 种）：** Serial、异步 chunk、RTC、ACT temporal ensembling、AAC、PAINT、AutoHorizon、DVAC。
-- **本体（2 种）：** YAM、Tianji–TacCap。**执行器：** Direct、Smooth、MPC。
+- **硬件接入（4 种）：** YAM、Tianji–TacCap，以及实验性的 ARX X5 / PiPER。**执行器：** Direct、Smooth、MPC。
 
 另提供 [ALOHA-AgileX 从臂资产](docs/usage/aloha.md)和[标准 PiPER 资产](docs/usage/piper.md)，
 用于离线 RoboGUI 展示和回放，
@@ -119,6 +120,16 @@ uv run manimux-viewer --robot yam --demo --host 127.0.0.1 --port 8086
 
 打开 **http://127.0.0.1:8086**。示例使用合成数据和随项目提供的 YAM 模型，不连接机器人。
 只有选择真实模型部署时，才需要对应的框架子模块和 checkpoint。
+
+同一环境下，可以直接预览新接入的臂：
+
+```bash
+uv run manimux-viewer --robot piper --demo --host 127.0.0.1 --port 8087
+```
+
+打开 **http://127.0.0.1:8087**；将 `--robot piper` 换成 `--robot aloha` 可预览 ALOHA-AgileX。
+两者均用合成数据展示手臂与夹爪运动，不需要设备 SDK。
+ARX X5 目前提供运动学模型和实验性控制器，尚无随项目打包的 RoboGUI 网格预设。
 
 ### 使用自己的机器人
 

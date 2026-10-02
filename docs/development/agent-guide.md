@@ -10,6 +10,13 @@ explicitly; read instructions in any submodule or nested directory before editin
 Public entry points: [User guide](../index.md) · [Integration map](../development/README.md).
 Skills route agents to these same maintained protocol guides.
 
+## Product naming
+
+Use **RoboGUI** as the visualization product name in documentation, UI labels and
+launch messages. Keep existing `viewer` module paths, configuration keys and
+`manimux-viewer` commands compatible. Refer to `viser` only when discussing the
+underlying library or its API, not as the ManiMux product name.
+
 ## Task skills
 
 Read only the skill relevant to the task; paths inside skills are relative to this
@@ -17,7 +24,7 @@ repository root. They describe existing code and workflows, not permission to ru
 
 | Task | Skill |
 |---|---|
-| Integrate or review a component, policy client/adapter, runtime or Viewer feature | [Development](../../.agents/skills/manimux-development/SKILL.md) |
+| Integrate or review a component, policy client/adapter, runtime or RoboGUI feature | [Development](../../.agents/skills/manimux-development/SKILL.md) |
 | Bind an installation to local robots, cameras and SDKs | [Station setup](../../.agents/skills/manimux-station-setup/SKILL.md) |
 | Track experiment progress, evaluate recorded rollouts, run PRM, or update experiment result tables | [Experiments](../../.agents/skills/manimux-experiments/SKILL.md) |
 

@@ -115,7 +115,7 @@ independently maintained SDK's automatic motor-state clearing.
 
 Both component `model.urdf` files retain their respective upstream joint
 origins, axes and inertia. X5 has a kinematic-only model; PiPER also bundles
-the official visual meshes and an [offline Viewer preset](piper.md).
+the official visual meshes and an [offline RoboGUI preset](piper.md).
 Neither model provides collision checking. Source pins and licenses are in
 the component READMEs. By default `tcp_frame: link6` names
 the flange frame; it does not invent a task-specific grasp centre or tool offset.
@@ -123,8 +123,8 @@ Select the checkpoint's actual TCP and calibrated bounds before EEF deployment.
 The X5 source's broad `[-10, 10]` bounds are not physical device limits; set
 `options.joint_limits` in its component recipe when using bounded hardware IK.
 
-This contribution does not add live hardware Viewer presets. The current
-Viewer's Home gating partly depends on robot names; it needs a capability-aware
+This contribution does not add live hardware RoboGUI presets. The current
+RoboGUI's Home gating partly depends on robot names; it needs a capability-aware
 extension before exposing Home controls for these assemblies. The ALOHA and PiPER presets provide offline display and replay.
 A hardware deployment needs its own experiment and station configuration. Keep `home_on_close: false` for these factories.
 
@@ -132,7 +132,7 @@ Offline checks cover real pyAgxArm codecs with virtual CAN, X5 binding signature
 fake X5 process lifetime, read-only guards, calibrated targets, cached/stale
 feedback, stop followed by another command, failed/partial cleanup, actual
 assembly loading and bounded FK/IK. They do not establish real-robot readiness.
-The [RoboTwin ALOHA Viewer](aloha.md#preview-and-replay) remains a separate asset
+The [RoboTwin ALOHA RoboGUI](aloha.md#preview-and-replay) remains a separate asset
 preset and is not substituted for these physical arm models.
 
 ## Code map

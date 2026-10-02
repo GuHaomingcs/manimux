@@ -78,7 +78,7 @@ The following recipes all support the shared station file:
 | --- | --- |
 | `tianji_taccap_umi_dp.yaml` | Component-based experiment with `manimux` scheduling |
 | `tianji_taccap_umi_dp_diff.yaml` | Component-based `manimux` experiment using differential IK |
-| `tianji_taccap_umi_dp_diff_live.yaml` | Execution-enabled DiffIK experiment with Viewer-controlled rollouts |
+| `tianji_taccap_umi_dp_diff_live.yaml` | Execution-enabled DiffIK experiment with RoboGUI-controlled rollouts |
 | `tianji_umi_dp_default.yaml` | Existing `manimux` recipe and shared control profile |
 | `tianji_umi_dp_rtc.yaml` | RTC recipe with process action decoding |
 
@@ -111,7 +111,7 @@ envs/umi_dp/.venv/bin/python -m manimux.servers.umi_dp \
 ```
 
 The live recipe selects `tianji_control_live.yaml`, enables arm and end-effector commands,
-and enables Viewer-controlled rollouts. It does not copy controller addresses, serials or
+and enables RoboGUI-controlled rollouts. It does not copy controller addresses, serials or
 checkpoint paths out of the private station. The non-live recipes remain read-only defaults.
 
 Binding reads the actual artifacts and records checkpoint identity, horizon, observation
@@ -160,7 +160,7 @@ envs/tianji/.venv/bin/python -m manimux serve \
   --config manimux/configs/local/deployments/tianji_taccap_umi_dp_diff_live.yaml
 ```
 
-Start Viewer after the runtime is listening:
+Start RoboGUI after the runtime is listening:
 
 ```bash
 envs/tianji/.venv/bin/python -m manimux.viewer.dashboard \
@@ -170,7 +170,7 @@ envs/tianji/.venv/bin/python -m manimux.viewer.dashboard \
 The camera and runtime read the station referenced by the bound experiment. The model
 command intentionally uses the standalone server snapshot whose checkpoint identity was
 verified while binding. For another station, regenerate the pair with that station before
-starting the services. `manimux serve` keeps the runtime available for Viewer-controlled
+starting the services. `manimux serve` keeps the runtime available for RoboGUI-controlled
 rollouts; use `manimux run` only for an immediate single session.
 Open `http://127.0.0.1:8086`, then use **Prepare normal rollout → Start rollout →
 Finish rollout**. `Start rollout` begins real command execution; Tianji Home remains a
@@ -181,7 +181,7 @@ The non-live experiments default to `robot.options.execute: false` and
 The explicit `tianji_taccap_umi_dp_diff_live.yaml` recipe sets both fields and
 `viewer.enabled` to true. Execution settings belong to the experiment, not the station.
 Tianji connection does not Home; the existing controller enables on the first executed
-command. See [Viewer](../development/runtime-config.md) for its separate display and control interface.
+command. See [RoboGUI](../development/runtime-config.md) for its separate display and control interface.
 
 ## Preserved action and timing conventions
 
@@ -189,7 +189,7 @@ command. See [Viewer](../development/runtime-config.md) for its separate display
   normalized gripper opening, zero closed and one open. Arm A is left; arm B is right.
 - UMI outputs absolute TCP poses in each arm's own base frame, with translation in
   metres and quaternion order WXYZ. ManiMux applies the configured tool transform
-  and IK. Viewer placement does not enter FK/IK.
+  and IK. RoboGUI placement does not enter FK/IK.
 - These experiments command at `robot.control_hz: 100` with model action spacing
   `policy.action_dt_s: 1/30` seconds. Model action spacing and command frequency are
   independent. The first-action offset is bound from the matching checkpoint.

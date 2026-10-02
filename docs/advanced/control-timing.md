@@ -6,11 +6,11 @@ control frequency, sleep policy, or model sampling settings.
 
 ## Record a timing run
 
-The default experiment baseline is a 100 Hz host control loop and a 30 Hz Viewer
+The default experiment baseline is a 100 Hz host control loop and a 30 Hz RoboGUI
 display cap. Higher-rate control runs are explicit diagnostics, not a new default.
 
 Finish the current rollout and restart only the ManiMux runtime with the diagnostic
-flag. Existing camera, Viewer and policy services can stay running:
+flag. Existing camera, RoboGUI and policy services can stay running:
 
 ```bash
 envs/yam/.venv/bin/python -m manimux serve \
@@ -57,7 +57,7 @@ Interpret the measurements separately:
   CAN packet arrival or physical motion.
 - Work duration excludes the deliberate sleep. Sleep overshoot and deadline lag
   use the original schedule only when its clock is comparable to host monotonic time.
-- Camera reads, Viewer control/publishing, worker queues, adapter decoding,
+- Camera reads, RoboGUI control/publishing, worker queues, adapter decoding,
   timeline/executor, robot I/O and recording have separate spans.
 - Robot spans include the assembly-lock acquisition and per-controller SDK calls.
   SDK call duration is not a direct measurement of an internal SDK lock.
@@ -82,7 +82,7 @@ background work still consumes CPU and can contend for interpreter scheduling.
 
 For a paired comparison, change only `run.sensor_reading.mode` to `inline`, run the
 same command and finish the rollout. The session manifest retains resolved reader
-settings and source hashes. Viewer control polling, robot reads/submission, executor,
+settings and source hashes. RoboGUI control polling, robot reads/submission, executor,
 inference settings are unchanged by the camera reader change. Keep the same
 scheduling implementation in both runs when comparing reader modes.
 
@@ -103,7 +103,9 @@ another full control period or replay missed ticks. At 100 Hz, 6 ms of work leav
 4 ms to sleep, while 12 ms of work leaves no sleep. The following cycle gets a new
 10 ms budget. Timeline sampling still uses current monotonic time.
 
-## Runtime Viewer controls
+<a id="runtime-viewer-controls"></a>
+
+## Runtime RoboGUI controls
 
 The runtime's `ViewerBridge` uses one background control client. Its thread owns
 the REQ socket throughout creation, polling, reconnect and close. The main-loop
@@ -133,18 +135,18 @@ The preparation service retains its synchronous fail-closed `poll()` API.
 Received Pause pulses and Home/Finish events remain latched until the loop consumes them. Finish
 takes priority over Home, retains its `finish_home` value and stops the polling
 thread. The mailbox cannot recover an event lost before a transport reply arrives;
-the existing Viewer protocol does not acknowledge individual button events.
+the existing RoboGUI protocol does not acknowledge individual button events.
 The reply retention bound is the larger of `timeout_s` and `max_age_s` and is checked
 after each wait. The freshness check runs independently in the control loop.
 
 `events.jsonl` records `viewer_control_state` when control reason, transport status
 or error/timeout counts change. It includes sample age, last reply round-trip time,
-and Viewer lock/read timing. `stale_control`, `viewer_pause`, `home`, `finish` and
+and RoboGUI lock/read timing. `stale_control`, `viewer_pause`, `home`, `finish` and
 `control_thread_stopped` are distinct. Rejected model responses also distinguish
 pause/Home invalidation, session mismatch, supersession, deadline expiry and missing
 actions. These records diagnose failure origin without relaxing inference deadlines.
 
-The Viewer still shares its dashboard lock with rendering. Moving requests off
+The RoboGUI still shares its dashboard lock with rendering. Moving requests off
 the control loop removes the synchronous wait from that loop, but does not prove
 a bound on button-to-robot response time. Measure this separately from loop Hz.
 
@@ -155,7 +157,9 @@ reject late warmup messages. Warmup never commits these preview actions to the
 robot timeline.
 
 
-## Viewer display cadence
+<a id="viewer-display-cadence"></a>
+
+## RoboGUI display cadence
 
 Live display reception and rendering run in separate threads. The receiver merges
 adjacent robot-state messages into the newest sample; it retains the latest images
@@ -164,15 +168,15 @@ merge across robot/episode identity, plan messages or lifecycle events. Received
 plans and events retain their order. This does not add reliable delivery to the
 existing best-effort transport.
 
-The renderer consumes these batches at a default cap of 30 Hz. Set the Viewer CLI
+The renderer consumes these batches at a default cap of 30 Hz. Set the RoboGUI CLI
 `--render-hz 60` to try 60 Hz; this never changes runtime, camera or motor rates.
 Rendering over budget skips missed display ticks rather than replaying them.
 Prediction FK is cached per chunk; the remaining path is redrawn when its cursor
-changes. Each message's scene changes are batched with Viser's atomic update.
+changes. Each message's scene changes are batched with RoboGUI's atomic update.
 
-The English `Viewer queue / draw` field reports receiver-to-callback age (including
+The English `RoboGUI queue / draw` field reports receiver-to-callback age (including
 waiting for the dashboard lock) and Python callback work, in milliseconds. These
-numbers use the Viewer process's monotonic clock. They exclude upstream network
+numbers use the RoboGUI process's monotonic clock. They exclude upstream network
 queueing and browser/WebSocket presentation latency; they are not end-to-end age.
-Viewer controls still share the dashboard lock with a display callback, so this
+RoboGUI controls still share the dashboard lock with a display callback, so this
 change reduces work and callback frequency but does not eliminate that lock.

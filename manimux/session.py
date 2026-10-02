@@ -661,7 +661,7 @@ class RuntimeSessionService:
         attempts = 0
         print(f"runtime service ready; run_dir={self._run_dir.resolve()}")
         print(
-            "Viewer flow: Prepare free/study rollout -> Start rollout -> "
+            "RoboGUI flow: Prepare free/study rollout -> Start rollout -> "
             "Finish & Home / Finish without homing"
         )
         if self._recovery is not None and self._recovery.available:

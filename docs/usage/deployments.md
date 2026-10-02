@@ -15,7 +15,7 @@ recipes, not checkpoints, YAML files or every model in an upstream framework.
 | Policies with robot deployment recipes | 8 | Pi05, DP, SAPolicy, GR00T N1.7, LingBot-VLA2, Xiaomi XR-1, UMI DP, OpenWAM |
 | Policies with offline recipes | 5 | Isaac 0.5; StarVLA QwenOFT, QwenPI-v3, QwenGR00T, QwenFast |
 | Inference modes | 8 | Serial, asynchronous chunking, RTC, ACT temporal ensembling, AAC, PAINT, AutoHorizon, DVAC |
-| Robot assemblies | 2 | YAM, Tianji–TacCap |
+| Hardware assembly integrations | 4 | YAM, Tianji–TacCap; experimental ARX X5 (2023), standard PiPER |
 
 The **13 policy integrations** are selected through `policy_name` for XPolicyLab
 and `framework` for StarVLA under `manimux/configs/policy/`. QwenGR00T and GR00T N1.7
@@ -29,16 +29,29 @@ chunking both select `algorithm: manimux`, with different `inference_schedule` s
 This count excludes executors (Direct, Smooth, MPC), blending parameters and history wrappers.
 See [scheduling](../advanced/inference.md) for behavior and model-side sampler requirements.
 
-The **2 embodiments** are registered hardware assembly integrations. Offline ALOHA,
-ARX and LIBERO recipe contracts do not add hardware drivers. Counts describe integration
-scope, not a benchmark result or support for every combination. Use each runbook's
-checkpoint, SDK, asset and validation requirements.
+The **4 hardware integrations** count assemblies with selectable controllers:
+YAM, Tianji–TacCap, ARX X5 (2023) and standard PiPER. The latter two are
+experimental: they have offline interface checks and station templates, but no
+validated physical deployment or checked-in real-robot policy experiment.
+X5 device feedback freshness remains an explicit limitation of the official binding.
+This count does not imply hardware validation or support for every model/robot pairing.
 
-Experimental [X5 (2023) and standard PiPER SDK adapters](can-arms.md) provide
-component models, controllers and a selectable assembly factory. They have offline
-interface validation but no checked-in real-robot policy deployment, so they are
-listed separately from the two deployed assemblies above. X5 device feedback
-freshness remains an explicit limitation of the official binding.
+## RoboGUI previews and hardware scope
+
+| Embodiment | RoboGUI preset | Hardware scope |
+| --- | --- | --- |
+| YAM | `--robot yam` | Assembly and policy deployment recipes |
+| Tianji–TacCap | `--robot tianji` (local assets required) | Assembly and policy deployment recipes |
+| Standard PiPER | `--robot piper` | Experimental SDK controller; physical validation pending |
+| ALOHA-AgileX | `--robot aloha` | Offline follower-arm assets only; no hardware controller |
+| ARX X5 (2023) | No bundled mesh preset | Kinematic model and experimental SDK controller; physical validation pending |
+
+Use `--demo` with PiPER or ALOHA to animate synthetic joint trajectories without
+hardware. Both include gripper visuals. [Try the presets](getting-started.md#hardware-free-start).
+ALOHA's RoboTwin geometry is separate from the physical X5 and PiPER models;
+its offline preset does not add another hardware integration. LIBERO policy contracts
+also do not add a hardware driver. See the [SDK adapter guide](can-arms.md) for
+feedback, calibration and lifecycle limitations.
 
 ## Model and robot recipes
 

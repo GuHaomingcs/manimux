@@ -15,7 +15,7 @@ need to write Python to select another supported checkpoint, camera set or execu
 | Model action spacing and predicted horizon | Experiment `policy` |
 | Request cadence and chunk handoff | `inference` |
 | Command generation, smoothing and configured limits | `executor` / shared control profile |
-| Scene layout and display-only initial poses | Viewer YAML |
+| Scene layout and display-only initial poses | RoboGUI YAML |
 
 See the [annotated experiment](../../manimux/configs/examples/yam_pi05_rtc.yaml)
 and the [configuration field reference](../../manimux/configs/README.md).
