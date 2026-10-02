@@ -10,6 +10,7 @@ and ignored by Git; follow the selected deployment guide to create them.
 | Root `.venv/` | ManiMux core, development tools and offline Viewer; managed by the root project |
 | `envs/yam/.venv/` | YAM runtime, i2rt, cameras, Viewer and optional offline replay dependencies |
 | `envs/tianji/.venv/` | Tianji/TacCap hardware dependencies, prepared with the body runbook |
+| `envs/aloha/.venv/` | ALOHA/PiPER Viewer and optional ARX/PiPER SDKs; hardware validation pending |
 | Model-specific environment | XPolicyLab model inference/training, such as `XPolicyLab/policy/Pi_05/openpi/.venv/` |
 | Existing `envs/umi_dp/`, `envs/xr1/`, etc. | Local environment conventions still referenced by some model launchers; follow their runbooks |
 
@@ -22,6 +23,8 @@ appropriate environment instead of treating an old interpreter path as a source 
 
 - First connection to your own robot: [local station setup](station.md).
 - YAM SDK: [YAM component README](../../manimux/embodiments/arm/yam/README.md).
+- Offline assets: [ALOHA](aloha.md) · [PiPER](piper.md).
+- ARX/PiPER: [SDK installation](robot-sdks.md) · [controller adapters](can-arms.md).
 - Cameras: [RealSense README](../../manimux/embodiments/sensor/realsense/README.md).
 - Tianji/TacCap: [deployment runbook](../deployment/umi-dp-tianji-taccap.md).
 - Models: [deployment runbook index](deployments.md#model-and-robot-recipes).

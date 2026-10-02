@@ -21,6 +21,8 @@ environment with the selected hardware dependencies installed.
 | --- | --- | --- |
 | YAM with integrated grippers | [yam_example.yaml](../../manimux/configs/local/yam_example.yaml) | [YAM component](../../manimux/embodiments/arm/yam/README.md), [RealSense](../../manimux/embodiments/sensor/realsense/README.md), [Pi05 runbook](../deployment/pi05-yam.md) |
 | Tianji–TacCap | [tianji_taccap_example.yaml](../../manimux/configs/local/tianji_taccap_example.yaml) | [UMI-DP runbook](../deployment/umi-dp-tianji-taccap.md) · [Xiaomi XR-1 runbook](../deployment/xiaomi-xr1-tianji-taccap.md) |
+| Standard PiPER adapter | [piper_example.yaml](../../manimux/configs/local/piper_example.yaml) | [SDK adapters and validation scope](can-arms.md) |
+| X5 (2023) adapter | [arx_x5_example.yaml](../../manimux/configs/local/arx_x5_example.yaml) | [SDK adapters and feedback limits](can-arms.md) |
 
 Hardware and model environments are separate; see [Python environments](environments.md).
 A clone does not install private SDKs, create CAN interfaces or download checkpoints.
