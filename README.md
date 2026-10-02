@@ -158,8 +158,9 @@ ManiMux is under active development. Each deployment guide states its validation
 
 ## Citation
 
-If ManiMux supports your research, cite the repository. For work using XPolicyLab,
-please also cite its paper and the models/methods you use.
+If ManiMux supports your research, please cite:
+
+**ManiMux: An Extensible Real-World Manipulation Harness**
 
 ```bibtex
 @misc{manimux2026,
@@ -168,16 +169,63 @@ please also cite its paper and the models/methods you use.
   howpublished = {GitHub repository},
   url = {https://github.com/SII-LiuLab/manimux}
 }
+```
 
+Please also cite the components, models and methods used in your work:
+[XPolicyLab](https://github.com/XPolicyLab/XPolicyLab), [StarVLA](https://github.com/starVLA/starVLA) and [PRM-as-a-Judge](https://github.com/YuyangLiu2003/PRM-as-a-Judge).
+
+<details>
+<summary>Official BibTeX for related projects (cite those you use)</summary>
+
+[XPolicyLab](https://arxiv.org/abs/2608.09892)
+
+```bibtex
 @article{community2026xpolicylab,
-  title = {{XPolicyLab}: A Unified Standard and Open Ecosystem for Robot Policy Evaluation and Deployment},
-  author = {{XPolicyLab Community} and Chen, Tianxing and Chen, Yue and Nian, Tian and others},
-  journal = {arXiv preprint arXiv:2608.09892},
-  year = {2026},
-  doi = {10.48550/arXiv.2608.09892},
-  url = {https://arxiv.org/abs/2608.09892}
+  title={{XPolicyLab}: A Unified Standard and Open Ecosystem for Robot Policy Evaluation and Deployment},
+  author={Community, XPolicyLab and Chen, Tianxing and Chen, Yue and Nian, Tian and Cai, Zijian and Chen, Guangyu and Lin, Wenwei and Liang, Qiwei and Xiang, Peicheng and Su, Kailun and others},
+  journal={arXiv preprint arXiv:2608.09892},
+  year={2026}
 }
 ```
+
+[StarVLA](https://arxiv.org/abs/2604.05014)
+
+```bibtex
+@article{community2026starvla,
+  title={StarVLA: A Lego-like Codebase for Vision-Language-Action Model Developing},
+  author={Community, StarVLA},
+  journal={arXiv preprint arXiv:2604.05014},
+  year={2026},
+  eprint={2604.05014},
+  archivePrefix={arXiv},
+  primaryClass={cs.RO}
+}
+```
+
+[PRM-as-a-Judge 1.5 — toolkit report](https://arxiv.org/pdf/2608.14284)
+
+```bibtex
+@article{liu2026prmjudge15,
+  title   = {PRM-as-a-Judge 1.5: A Toolkit for Robot Process Assessment},
+  author  = {Liu, Yuyang and Shen, Yanqing and Chen, Ruike and Zhao, Jifan and Tian, Yuxuan and Zhang, Yichi and Long, Tianfeng and Yin, Zixuan and Wang, Yipu and Qin, Ziheng and Tan, Wenxing and Shi, Yang and Cao, Mingyu and Xiao, Runze and Wang, Ziqi and Yin, Zhixin and Chu, Shiwei and Zhang, Yi-Fan and Mu, Yao and Ji, Yuheng and Wang, Yihao and Yan, Jun and Wang, Zhongyuan and Wang, Pengwei and Zheng, Xiaolong},
+  journal = {arXiv preprint arXiv:2608.14284},
+  year    = {2026},
+  url     = {https://arxiv.org/pdf/2608.14284}
+}
+```
+
+[PRM-as-a-Judge — original method](https://arxiv.org/abs/2603.21669)
+
+```bibtex
+@article{ji2026prmjudge,
+  title   = {PRM-as-a-Judge: A Dense Evaluation Paradigm for Fine-Grained Robotic Auditing},
+  author  = {Ji, Yuheng and Liu, Yuyang and Tan, Huajie and Huang, Xuchuan and Huang, Fanding and Xu, Yijie and Chi, Cheng and Zhao, Yuting and Lyu, Huaihai and Co, Peterson and others},
+  journal = {arXiv preprint arXiv:2603.21669},
+  year    = {2026}
+}
+```
+
+</details>
 
 [Third-party notices](licenses/THIRD_PARTY_NOTICES.md) · [Upstream licenses](licenses) · [Documentation](https://sii-liulab.github.io/manimux/)
 

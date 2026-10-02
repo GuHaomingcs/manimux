@@ -92,3 +92,10 @@ It routes each integration to its existing interface and protocol.
 
 Model training and demonstration collection remain in their own tools.
 Choose your own research questions, experiment plans and evaluation criteria.
+
+## Citation
+
+**[ManiMux: An Extensible Real-World Manipulation Harness](../README.md#citation)**
+
+Find ready-to-copy BibTeX in the [citation guide](../README.md#citation), including
+XPolicyLab, StarVLA and PRM-as-a-Judge. Cite the components used in your research.
