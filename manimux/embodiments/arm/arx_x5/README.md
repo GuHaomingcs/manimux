@@ -2,7 +2,7 @@
 
 `ArxX5Arm` loads its model offline. `ArxX5Controller` adapts the official X5
 binding behind an owned process. The common arm assembly uses it through
-`ArmController`; vendor operations never enter the runtime or Viewer.
+`ArmController`; vendor operations never enter the runtime or RoboGUI.
 
 See the [SDK adapter guide](../../../../docs/usage/can-arms.md) for configuration,
 calibration, lifecycle and the explicit device-freshness limitation.

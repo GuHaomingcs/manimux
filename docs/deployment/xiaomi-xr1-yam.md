@@ -157,7 +157,9 @@ cd /home/ubuntu/manimux
 envs/yam/.venv/bin/manimux-camera-server --config manimux/configs/embodiment/sensor/cameras/realsense_3_views.yaml
 ```
 
-### Terminal 3：Viewer
+<a id="terminal-3viewer"></a>
+
+### Terminal 3：RoboGUI
 
 ```bash
 cd /home/ubuntu/manimux
@@ -183,7 +185,7 @@ envs/yam/.venv/bin/manimux run \
 
 连接后的前 `5.0 s` 是配置规定的起始姿态移动，不是模型动作；之后才执行 XR-1 经
 XPolicy 输出、再由 YAM FK/IK 转换得到的关节命令。正常停止时只在 runtime 终端按一次
-`Ctrl-C`，等待 `5.0 s` 回 Home 和 Recorder 收尾，再停止相机、模型服务和 Viewer。
+`Ctrl-C`，等待 `5.0 s` 回 Home 和 Recorder 收尾，再停止相机、模型服务和 RoboGUI。
 
 ## RTC 对照
 
@@ -202,7 +204,7 @@ envs/yam/.venv/bin/manimux run --config manimux/configs/experiments/assemble_scr
 envs/yam/.venv/bin/manimux run --config manimux/configs/experiments/assemble_screwdriver/xiaomi-xr1/yam_xiaomi_xr1_rtc_step15000.yaml
 ```
 
-不要同时运行 ManiMux 与 RTC。相机与 Viewer 操作见 [Viewer](../development/runtime-config.md)，CAN 检查和
+不要同时运行 ManiMux 与 RTC。相机与 RoboGUI 操作见 [RoboGUI](../development/runtime-config.md)，CAN 检查和
 停止顺序见 [CAN 总线说明](../usage/station.md)。
 
 ## 当前边界

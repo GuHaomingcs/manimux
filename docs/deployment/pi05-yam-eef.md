@@ -36,7 +36,7 @@ continue to return 14 joint/gripper dimensions with their existing capabilities.
 ## Startup
 
 From `/home/ubuntu/manimux`, use separate terminals. Finish the old rollout and
-exit its runtime before starting a new robot owner. Matching camera and Viewer
+exit its runtime before starting a new robot owner. Matching camera and RoboGUI
 services can be reused.
 
 ```bash
@@ -60,7 +60,7 @@ envs/yam/.venv/bin/python -m manimux serve \
   --config manimux/configs/experiments/put_bottles/pi05/yam_pi05_manimux_eef_step30000.yaml
 ```
 
-The model endpoint is `ws://127.0.0.1:8530`. Viewer flow is Prepare, Start rollout,
+The model endpoint is `ws://127.0.0.1:8530`. RoboGUI flow is Prepare, Start rollout,
 Finish & Home. The experiment retains the existing initial/home pose behavior;
 Prepare can move the arms. JAX compiles on the first request, so that first plan
 may exceed the age budget and be rejected before subsequent warm requests.

@@ -10,7 +10,7 @@ The runtime, camera and Pi05 commands below read this file automatically. Use th
 
 ## Hardware-free start
 
-The project supports Python 3.11 and 3.12. Start an independent Viewer demo without a
+The project supports Python 3.11 and 3.12. Start an independent RoboGUI demo without a
 checkpoint or hardware connection:
 
 ```bash
@@ -18,9 +18,21 @@ uv sync --dev
 uv run manimux-viewer --robot yam --demo --port 8086
 ```
 
-Open `http://127.0.0.1:8086`. The demo uses Viewer data without creating a robot connection.
+Open `http://127.0.0.1:8086`. The demo uses RoboGUI data without creating a robot connection.
 Production robot entry points no longer include simulated robot drivers; test doubles
 remain under `tests/`.
+
+To preview the new arms and grippers with bundled assets:
+
+```bash
+uv run manimux-viewer --robot piper --demo --host 127.0.0.1 --port 8087
+```
+
+Open `http://127.0.0.1:8087`. Replace `--robot piper` with `--robot aloha` for
+ALOHA-AgileX. To compare them in separate terminals, use port `8088` for the second
+process. These demos need no camera server, model checkpoint, station file or device SDK.
+They show synthetic motion, not a physics simulation. See the [support table](deployments.md#robogui-previews-and-hardware-scope)
+for hardware scope; ARX X5 does not yet have a bundled mesh preset.
 
 ## Pi05 30k on YAM
 
@@ -32,7 +44,7 @@ and weights using the [Pi05 runbook](../deployment/pi05-yam.md). Other models ha
 Complete the [station guide](station.md), including
 `paths.checkpoints`, and inspect the resolved configuration first.
 The checkpoint's model identity and normalization must match this experiment.
-Reuse matching camera/Viewer services when appropriate; collection and inference must
+Reuse matching camera/RoboGUI services when appropriate; collection and inference must
 not control the same robot concurrently.
 
 Run these in four separate terminals:
@@ -42,7 +54,7 @@ Run these in four separate terminals:
 envs/yam/.venv/bin/python -m manimux.servers.camera.server \
   --experiment manimux/configs/experiments/put_bottles/pi05/yam_pi05_rtc_joint_step30000.yaml
 
-# Terminal 2: Viewer (its network options remain independent)
+# Terminal 2: RoboGUI (its network options remain independent)
 envs/yam/.venv/bin/python -m manimux.viewer.dashboard \
   --robot yam --host 127.0.0.1 --port 8086
 
@@ -58,7 +70,7 @@ envs/yam/.venv/bin/python -m manimux serve \
 
 Open `http://127.0.0.1:8086`, then use **Prepare → Start rollout → Finish & Home**.
 This experiment enables execution and moves to its configured start pose during Prepare.
-The Viewer follows `policy.adapter.camera_map` reported by the runtime and labels model
+The RoboGUI follows `policy.adapter.camera_map` reported by the runtime and labels model
 inputs with their camera sources. Before receiving that mapping, it shows its labeled
 default previews. For an explicit manual preview, use
 `--config manimux/configs/viewer/yam-top.yaml`.

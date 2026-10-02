@@ -7,10 +7,10 @@ and ignored by Git; follow the selected deployment guide to create them.
 
 | Location | Purpose |
 | --- | --- |
-| Root `.venv/` | ManiMux core, development tools and offline Viewer; managed by the root project |
-| `envs/yam/.venv/` | YAM runtime, i2rt, cameras, Viewer and optional offline replay dependencies |
+| Root `.venv/` | ManiMux core, development tools and offline RoboGUI; managed by the root project |
+| `envs/yam/.venv/` | YAM runtime, i2rt, cameras, RoboGUI and optional offline replay dependencies |
 | `envs/tianji/.venv/` | Tianji/TacCap hardware dependencies, prepared with the body runbook |
-| `envs/aloha/.venv/` | ALOHA/PiPER Viewer and optional ARX/PiPER SDKs; hardware validation pending |
+| `envs/aloha/.venv/` | ALOHA/PiPER RoboGUI and optional ARX/PiPER SDKs; hardware validation pending |
 | Model-specific environment | XPolicyLab model inference/training, such as `XPolicyLab/policy/Pi_05/openpi/.venv/` |
 | Existing `envs/umi_dp/`, `envs/xr1/`, etc. | Local environment conventions still referenced by some model launchers; follow their runbooks |
 

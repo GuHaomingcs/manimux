@@ -19,7 +19,9 @@ if TYPE_CHECKING:
     import can
 
 # Standard PiPER position packets and low-speed motor-status packets.
-_POSITION_PACKET_IDS = frozenset({0x2A5, 0x2A6, 0x2A7, 0x2A8})
+_JOINT_PACKET_IDS = frozenset({0x2A5, 0x2A6, 0x2A7})
+_GRIPPER_PACKET_IDS = frozenset({0x2A8})
+_POSITION_PACKET_IDS = _JOINT_PACKET_IDS | _GRIPPER_PACKET_IDS
 _MOTOR_STATUS_PACKET_IDS = frozenset(range(0x261, 0x267))
 _FEEDBACK_PACKET_IDS = _POSITION_PACKET_IDS | _MOTOR_STATUS_PACKET_IDS
 _JOINT_FEEDBACK_FIELDS = (
@@ -242,15 +244,34 @@ class PiperController(ArmController):
         """Called under the receive lock after all position packets have arrived."""
         # The SDK aggregate getter timestamps only joint_56. Assemble all three
         # cached packets and use their oldest receipt, including the gripper.
+        return ArmState(
+            np.r_[self._measured_joints(), self._measured_opening()],
+            min(self._receipts.values()),
+            self._sequence + 1,
+        )
+
+    def _measured_joints(self) -> list[float]:
         joints = []
         for name, fields in _JOINT_FEEDBACK_FIELDS:
             part = getattr(self._driver._parser, name).msg
             joints.extend(getattr(part, field) for field in fields)
+        return joints
+
+    def _measured_opening(self) -> float:
         gripper = self._gripper.get_gripper_status().msg
         if gripper.mode != "width":
             raise RuntimeError("standard PiPER integration requires width-mode feedback")
-        opening = self.calibration.opening(gripper.value)
-        return ArmState(np.r_[joints, opening], min(self._receipts.values()), self._sequence + 1)
+        return self.calibration.opening(gripper.value)
+
+    def _require_hold_feedback(self, packets: frozenset[int], component: str) -> None:
+        """A hold needs fresh positions only for the component being stopped."""
+        now_ns = self.clock.now_ns()
+        if any(
+            packet not in self._receipts
+            or not 0 <= now_ns - self._receipts[packet] <= self.feedback_timeout_s * 1e9
+            for packet in packets
+        ):
+            raise RuntimeError(f"PiPER {component} hold requires fresh measured feedback")
 
     def get_states(self) -> dict[str, ArmState]:
         with self._lock:
@@ -308,9 +329,32 @@ class PiperController(ArmController):
             self._submit(q)
 
     def stop(self) -> None:
-        if self.execute and self._driver is not None:
-            with self._lock:
-                self._submit(self.get_states()[self.channel].joints)
+        """Attempt both measured holds without the normal motion readiness gate.
+
+        Never use stale targets or an electronic emergency stop as a fallback:
+        the vendor emergency stop permits a raised arm to descend under damping.
+        Report each failed hold after attempting the other owned component.
+        """
+        if not self.execute or self._driver is None:
+            return
+        errors = []
+        with self._lock:
+            try:
+                self._require_hold_feedback(_JOINT_PACKET_IDS, "arm")
+                self._driver.set_speed_percent(self.speed_percent)
+                self._driver.move_j(self._measured_joints())
+            except Exception as error:
+                errors.append(error)
+            try:
+                self._require_hold_feedback(_GRIPPER_PACKET_IDS, "gripper")
+                self._gripper.move_gripper_m(
+                    self.calibration.raw_opening(self._measured_opening()),
+                    force=self.gripper_force_n,
+                )
+            except Exception as error:
+                errors.append(error)
+        if errors:
+            raise ExceptionGroup("PiPER stop incomplete", errors)
 
     def close(self) -> None:
         self._stop_read.set()
@@ -342,5 +386,5 @@ class PiperController(ArmController):
             "gripper_closed_m": self.calibration.closed,
             "gripper_open_m": self.calibration.open,
             "dispatch": "arm frames then gripper; not atomic",
-            "stop": "measured hold",
+            "stop": "independent measured arm/gripper holds; failures reported",
         }

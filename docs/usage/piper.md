@@ -74,6 +74,6 @@ envs/aloha/.venv/bin/python scripts/assets/prepare_piper.py \
 ```
 
 Offline validation covers every real mesh after relocation, visual joint
-mapping, rendering/FK agreement, actual Viewer loading, synthetic targets,
+mapping, rendering/FK agreement, actual RoboGUI loading, synthetic targets,
 replay seeking and wheel packaging. It does not establish physical calibration
 or real-robot readiness.

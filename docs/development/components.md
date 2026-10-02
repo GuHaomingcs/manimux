@@ -12,12 +12,12 @@ drivers against the interfaces and callers; do not copy a vendor exception as a 
 
 | Operation / owner | Required public behavior | Vendor-specific implementation |
 | --- | --- | --- |
-| `ArmBase.load_model()` / offline model | Provide geometry, coordinate definitions and display resources without opening hardware. Adapters and Viewer use the same robot definition. | URDF/mesh loading, FK/IK solver and visual joint mapping. |
+| `ArmBase.load_model()` / offline model | Provide geometry, coordinate definitions and display resources without opening hardware. Adapters and RoboGUI use the same robot definition. | URDF/mesh loading, FK/IK solver and visual joint mapping. |
 | `ArmController.connect()` / session owner | Establish the configured session without implicit homing or fault recovery. Document readiness and any explicitly enabled actuator side effects. | SDK construction, discovery, connection and device readiness checks. |
 | `get_states()` / controller; `get_state()` / assembly | Return measured feedback with declared group order, units and sample identity. Never substitute commanded targets for measured positions. | SDK reads and conversion to `ArmState` / `RobotState`. |
 | `send_commands()` / controller; `send_command()` / assembly | Accept the declared absolute joint-position targets. Tool coordinates retain their declared meaning. Returning means submission, not arrival. Surface dispatch failure. | SDK command encoding, configured limits and mode preparation; document internal interpolation and batch dispatch guarantees. |
 | `stop()` / session owner | Stop ongoing execution on owned channels; attempt all owned channels and report failures. Document completion and the state required for subsequent commands. | Vendor stop/hold and mode transitions. Do not silently equate stop with homing or releasing actuator torque. |
-| `home()` / robot assembly | Perform the explicitly defined home operation when supported. State the destination, tool behavior, completion guarantee and post-home control state. | Configured joint trajectory or a documented vendor Home operation. A Viewer initial pose does not define hardware Home. |
+| `home()` / robot assembly | Perform the explicitly defined home operation when supported. State the destination, tool behavior, completion guarantee and post-home control state. | Configured joint trajectory or a documented vendor Home operation. A RoboGUI initial pose does not define hardware Home. |
 | `close()` / resource owner | Release owned resources, including after partial startup. Repeated cleanup must be safe; incomplete cleanup remains visible and retryable. Borrowers do not close shared sessions. | SDK shutdown, worker termination and connection release. |
 
 Document these lifecycle details in the integration's runbook:
@@ -53,7 +53,7 @@ Read-only sessions skip unavailable cleanup Home and record the reason, preservi
 existing YAM observation behavior. Finish preserves the
 configured cleanup behavior; a button click does not implicitly enable Home.
 Idle service recovery is separate and continues to use its explicit
-`recovery.actions` contract. A Viewer initial pose never declares hardware Home.
+`recovery.actions` contract. A RoboGUI initial pose never declares hardware Home.
 
 For a focused review, trace configuration -> factory -> controller/assembly ->
 runtime caller. Record the required behavior, actual SDK mapping, discrepancy and
@@ -164,7 +164,7 @@ not removal of an integrated arm's gripper.
 Robot geometry, tool offsets and coordinate definitions belong here. Solver
 requirements must remain explicit through supported solver configuration/API;
 never drop bounds, tolerances or failure behavior to fit a common signature.
-Viewer display placement is not a calibrated arm-base transform.
+RoboGUI display placement is not a calibrated arm-base transform.
 
 Verify the new group's actual layout, FK/IK and component command split; include
 no-gripper or mixed layouts if supported. A known tool offset is a useful offline

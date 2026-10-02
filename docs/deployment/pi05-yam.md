@@ -12,7 +12,7 @@ server 和 infra 配置。以下命令从仓库根目录执行，要求已安装
 ### 纯 joint + RTC
 
 完整的四终端启动命令集中在 [使用指南](../usage/getting-started.md#pi05-30k-on-yam)：
-相机 → Viewer → `server/put-bottles/joint-step30000.yaml` 模型服务
+相机 → RoboGUI → `server/put-bottles/joint-step30000.yaml` 模型服务
 → `infra/put-bottles/rtc-joint-step30000.yaml` runtime。
 
 该配对使用 `pi05-yam-put-bottles-joint-step30000` 权重，模型 horizon 为 50，轨迹点间隔
@@ -247,7 +247,9 @@ nvidia-smi
 
 必须看到 `127.0.0.1:8500` 处于 `LISTEN`。
 
-## 3. 相机与 Viewer
+<a id="3-viewer"></a>
+
+## 3. 相机与 RoboGUI
 
 相机服务：
 
@@ -256,7 +258,7 @@ cd /home/ubuntu/manimux
 envs/yam/.venv/bin/manimux-camera-server --config manimux/configs/embodiment/sensor/cameras/realsense_3_views.yaml
 ```
 
-已有 `5555` 服务时不要重复启动。Viewer 可选：
+已有 `5555` 服务时不要重复启动。RoboGUI 可选：
 
 ```bash
 envs/yam/.venv/bin/manimux-viewer --robot yam --host 0.0.0.0 --port 8086
@@ -354,17 +356,17 @@ envs/yam/.venv/bin/manimux serve \
 data/experiments/pi05-red-ball-box-step1000/rtc/session-*/rollout-*/
 ```
 
-Viser 在 episode 正常落盘后开放 `Task result`、failure tags 和 note，
+RoboGUI 在 episode 正常落盘后开放 `Task result`、failure tags 和 note，
 保存到 `rollout-*/evaluation/human-label.json`。这里的 task result 与 `result.json` 中表示 runtime
 正常收尾的 `success` 完全分开。
 
-Viewer 通过 Prepare normal / Prepare experiment 选择模式：普通模式不显示评分步骤；实验模式结束后，
+RoboGUI 通过 Prepare normal / Prepare experiment 选择模式：普通模式不显示评分步骤；实验模式结束后，
 可以保存人工评测，也可以直接点击 `Skip evaluation` 进入下一条。跳过不会生成评分文件。
 正式实验在 Top 参考布局选择 Task 和位置 `01`–`10`，并选择 `Experiment repeat=1/2/3`。
 Prepare 固定位置、重复次数和参考图路径/hash；页面中的 task command 会真实发送给 Pi05，不只是显示文本。
 
-`serve` 不加载模型、不启动相机，也不替代 Viewer。用户先分别启动 camera server、Pi05 model
-server 和 `manimux-viewer`，再启动一次 `serve`。Viser 显示 service ready 后：
+`serve` 不加载模型、不启动相机，也不替代 RoboGUI。用户先分别启动 camera server、Pi05 model
+server 和 `manimux-viewer`，再启动一次 `serve`。RoboGUI 显示 service ready 后：
 
 1. 确认 task；正式实验再选择参考图和重复次数。
 2. 点击 `Prepare normal rollout` 或 `Prepare experiment rollout`；ManiMux 创建全新 episode、连接机器人并移动到 start pose。
@@ -378,7 +380,7 @@ server 和 `manimux-viewer`，再启动一次 `serve`。Viser 显示 service rea
 [experiment infrastructure](../usage/records.md)。
 
 每条 episode 都创建新的 worker session，并重置 Timeline、RTC delay history、Executor、Recorder 和
-Viewer trail；不会继承上一条 rollout 的推理状态。camera/model/viewer/service 进程保持运行。
+RoboGUI trail；不会继承上一条 rollout 的推理状态。camera/model/viewer/service 进程保持运行。
 
 只需要单条 rollout 或用于脚本兼容时，原 CLI 入口仍保留：
 
@@ -389,8 +391,8 @@ envs/yam/.venv/bin/manimux run \
 
 ## 停止
 
-单次 `run` 在前台按一次 `Ctrl-C`，等待 Home 并退出。长期 `serve` 应先在 Viser 完成当前
-rollout；回到 service idle 后，再在 serve 终端按 `Ctrl-C`。随后才停止 Viewer、模型和相机。
+单次 `run` 在前台按一次 `Ctrl-C`，等待 Home 并退出。长期 `serve` 应先在 RoboGUI 完成当前
+rollout；回到 service idle 后，再在 serve 终端按 `Ctrl-C`。随后才停止 RoboGUI、模型和相机。
 不要使用模糊 `pkill`。
 
 ## Pi05 base + RTC

@@ -1,4 +1,6 @@
-# Viewer body configuration
+<a id="viewer-body-configuration"></a>
+
+# RoboGUI body configuration
 
 The live YAM and Tianji dashboards load their `viewer.yaml` through the generic
 `RobotView` and the assembled offline `RobotModel`. Add a new body with a model

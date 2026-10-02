@@ -115,7 +115,7 @@ The current camera templates use different transport modes:
 
 The cameras connect over USB to the camera server's computer; the runtime connects to that
 service over the network. Cross-machine cameras also need the clock alignment required by
-the timestamped client. Viewer network options remain separate, as listed below.
+the timestamped client. RoboGUI network options remain separate, as listed below.
 
 ### Local paths and model identity
 
@@ -205,7 +205,7 @@ Binding a station does not switch these experiment settings.
 | XR-1 Tianji launcher | Uses the selected station's policy service, checkpoint, normalization and optional processor bindings |
 | Camera `--config` or `--experiment` | Uses the same camera recipe schema and selected station bindings |
 | UMI_DP standalone `--config` | Reads that standalone server configuration; use `--experiment` for shared station bindings |
-| Viewer process | Still uses its own launch options for network addresses and the web port |
+| RoboGUI process | Still uses its own launch options for network addresses and the web port |
 | Other model launchers | Follow their model runbooks; this change does not add shared station loading to every launcher |
 
 UMI_DP's `--bind-runtime-config` generates a paired runtime and server configuration.

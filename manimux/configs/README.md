@@ -38,7 +38,7 @@ resolved through the experiment's `policy_server` section. No root `env_cfg/` re
 is required by the shipped ManiMux deployment recipes.
 
 Start with the [annotated Pi05 RTC example](examples/README.md) for component references,
-`run` versus `serve`, and the Viewer experiment workflow.
+`run` versus `serve`, and the RoboGUI experiment workflow.
 
 ## Action spacing and command frequency
 
@@ -180,10 +180,10 @@ not conflict. See [Tianji motion-limit provenance](../../docs/advanced/tianji-co
 
 | Field | Meaning |
 | --- | --- |
-| `run.task` | Task instruction sent to the policy and recorded for the Viewer/Recorder. |
+| `run.task` | Task instruction sent to the policy and recorded for the RoboGUI/Recorder. |
 | `run.output_dir` | Parent directory for `session-<timestamp>-<id>/` and rollout records. |
 | `run.max_control_steps` | Maximum control ticks; for example, 120 ticks at 100 Hz are about 1.2 s. |
-| `run.experiment_mode` | Default Viewer experiment mode; normally false and selectable before Prepare. |
+| `run.experiment_mode` | Default RoboGUI experiment mode; normally false and selectable before Prepare. |
 | `run.layout_id` | Optional initial-layout or experimental-condition identifier. |
 | `robot.type` | Assembly implementation, such as `yam` or `tianji_taccap`. |
 | `robot.config` | Robot assembly YAML. |
@@ -284,14 +284,16 @@ See the [DVAC audit](../../docs/advanced/reproductions/dvac-pi05.md) for the pap
 | `executor.mpc.command_delta_weight` | Cost of command changes between ticks. |
 | `executor.mpc.max_velocity` / `max_acceleration` / `position_limit_abs` | Limits applied after optimization. |
 
-### Viewer and recording
+<a id="viewer-and-recording"></a>
+
+### RoboGUI and recording
 
 | Field | Meaning |
 | --- | --- |
-| `viewer.enabled` | Publish state, cameras, plans and events for the Viewer. |
+| `viewer.enabled` | Publish state, cameras, plans and events for the RoboGUI. |
 | `viewer.robot` | Robot geometry/joint mapping used for display. |
-| `viewer.policy_label` | Label displayed in the Viewer and stored by the Recorder. |
-| `viewer.camera_hz` | Maximum camera publication rate to the Viewer, default 5 Hz. |
+| `viewer.policy_label` | Label displayed in the RoboGUI and stored by the Recorder. |
+| `viewer.camera_hz` | Maximum camera publication rate to the RoboGUI, default 5 Hz. |
 | `recording.enabled` | Real runs require recording of episodes, events and command lineage. |
 | `recording.video_fps` | Video encoding target rate; zero disables video without changing policy/camera rates. |
 | `recording.video_codec` | OpenCV four-character codec, default `mp4v`. |

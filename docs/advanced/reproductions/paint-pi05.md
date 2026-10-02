@@ -115,7 +115,7 @@ while the next PAINT request still conditions on its pre-blend values. Smooth/MP
 Safety remain explicit outer hardware layers; their effect must be reported separately from PAINT's
 chunk-space prefix consistency.
 
-RobotBase, SensorBase, Smooth/MPC Executor, Safety, Recorder and Viewer remain unchanged.
+RobotBase, SensorBase, Smooth/MPC Executor, Safety, Recorder and RoboGUI remain unchanged.
 
 ## 6. Delay Forecast Adaptation
 

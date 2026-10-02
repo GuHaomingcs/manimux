@@ -28,7 +28,7 @@ rollout lifecycle and displays evidence through runtime messages.
 | Scheduling → timeline | `InferenceStrategy`, `ActionTimeline` | [Runtime](runtime-config.md) |
 | Reference → command | `Executor`, `RobotCommand` | [Execution](runtime-config.md#inference-algorithm-versus-executor) |
 | Robot → hardware | `RobotBase`, `ArmController`, `SensorBase` | [Components](components.md) |
-| Runtime → user | Viewer messages, saved rollout records | [Research workflow](../usage/research.md) |
+| Runtime → user | RoboGUI messages, saved rollout records | [Research workflow](../usage/research.md) |
 
 Units, timestamps, group order and action meaning are part of each contract.
 The same interface does not imply identical device capabilities or that every

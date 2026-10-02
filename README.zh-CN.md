@@ -4,9 +4,10 @@
 
 **任何本体，任何策略，任何推理算法。**
 
-**让你的机器人操作研究在真机上落地。** ManiMux 通过统一 protocol，让部署与实验流程**标准化**，
-将你选择的本体、策略与推理算法接入 **RoboGUI**。
-运行时以**实时数字孪生可视化**下的 **100–200 Hz 命令执行**为设计目标。
+ManiMux 是一个**可扩展的 real-world manipulation harness（真机操作运行与实验框架）**，
+让不同本体、策略和推理算法的部署与实验流程**标准化**。
+以 **RoboGUI** 为操作入口，结合**实时数字孪生可视化**，
+运行时的设计目标是在实时可视化的同时支持 **100–200 Hz 命令执行**。
 
 **Policy × Runtime × Embodiment**
 
@@ -16,7 +17,7 @@
 
 [![Policy recipes: 13](https://img.shields.io/badge/Policy%20recipes-13-F59E0B?style=flat-square)](#included-integrations)
 [![Inference modes: 8](https://img.shields.io/badge/Inference%20modes-8-EC4899?style=flat-square)](#included-integrations)
-[![Embodiments: 2](https://img.shields.io/badge/Embodiments-2-06B6D4?style=flat-square)](#included-integrations)
+[![Embodiments: 4](https://img.shields.io/badge/Embodiments-4-06B6D4?style=flat-square)](#included-integrations)
 [![Actively maintained](https://img.shields.io/badge/Status-Actively%20maintained-14B8A6?style=flat-square)](https://github.com/SII-LiuLab/manimux/commits/main/)
 
 [English](README.md) · [简体中文](README.zh-CN.md)
@@ -31,6 +32,7 @@
 
 ## 最新动态
 
+- **2026-10-02** — 新增 [ALOHA-AgileX](docs/usage/aloha.md) 和 [PiPER](docs/usage/piper.md) RoboGUI 演示，以及实验性的 [ARX X5 / PiPER 控制器](docs/usage/can-arms.md)，真机验证尚未完成。
 - **2026-10-01** — [ManiMux 在线指南](https://sii-liulab.github.io/manimux/)上线，覆盖安装配置、部署、RoboGUI 使用与接入 protocol。
 - **2026-10-01** — 更新[实验流程](docs/usage/research.md)与 [agent 接入指南](docs/development/README.md)，支持自由探索、模板研究与组件开发。
 
@@ -53,7 +55,7 @@
 - **有机器人部署配置的策略（8 类）：** Pi05、DP、SAPolicy、GR00T N1.7、LingBot-VLA2、Xiaomi XR-1、UMI DP、OpenWAM。
 - **有离线配置的策略（5 类）：** Isaac 0.5，以及 StarVLA 的 QwenOFT、QwenPI-v3、QwenGR00T、QwenFast。
 - **推理模式（8 种）：** Serial、异步 chunk、RTC、ACT temporal ensembling、AAC、PAINT、AutoHorizon、DVAC。
-- **本体（2 种）：** YAM、Tianji–TacCap。**执行器：** Direct、Smooth、MPC。
+- **硬件接入（4 种）：** YAM、Tianji–TacCap，以及实验性的 ARX X5 / PiPER。**执行器：** Direct、Smooth、MPC。
 
 另提供 [ALOHA-AgileX 从臂资产](docs/usage/aloha.md)和[标准 PiPER 资产](docs/usage/piper.md)，
 用于离线 RoboGUI 展示和回放，
@@ -119,6 +121,16 @@ uv run manimux-viewer --robot yam --demo --host 127.0.0.1 --port 8086
 打开 **http://127.0.0.1:8086**。示例使用合成数据和随项目提供的 YAM 模型，不连接机器人。
 只有选择真实模型部署时，才需要对应的框架子模块和 checkpoint。
 
+同一环境下，可以直接预览新接入的臂：
+
+```bash
+uv run manimux-viewer --robot piper --demo --host 127.0.0.1 --port 8087
+```
+
+打开 **http://127.0.0.1:8087**；将 `--robot piper` 换成 `--robot aloha` 可预览 ALOHA-AgileX。
+两者均用合成数据展示手臂与夹爪运动，不需要设备 SDK。
+ARX X5 目前提供运动学模型和实验性控制器，尚无随项目打包的 RoboGUI 网格预设。
+
 ### 使用自己的机器人
 
 1. 选择[模型／本体指南](docs/usage/deployments.md)，安装相应的硬件和模型环境。
@@ -162,25 +174,74 @@ Prepare 可能根据配置连接机器人并移动到起始姿态，请使用与
 
 ## 引用
 
-如果 ManiMux 支持了你的研究，请引用项目。使用 XPolicyLab 时，也请引用其论文及实际使用的模型与算法。
+如果 ManiMux 支持了你的研究，请引用：
+
+**ManiMux: An Extensible Real-World Manipulation Harness**
 
 ```bibtex
 @misc{manimux2026,
-  title = {{ManiMux}: A Composable Platform for Real-Robot Experiments},
+  title = {{ManiMux}: An Extensible Real-World Manipulation Harness},
   year = {2026},
   howpublished = {GitHub repository},
   url = {https://github.com/SII-LiuLab/manimux}
 }
+```
 
+使用相关组件时，也请引用对应项目及实际使用的模型或算法：
+[XPolicyLab](https://github.com/XPolicyLab/XPolicyLab)、[StarVLA](https://github.com/starVLA/starVLA)、[PRM-as-a-Judge](https://github.com/YuyangLiu2003/PRM-as-a-Judge)。
+
+<details>
+<summary>相关项目的官方 BibTeX（按实际使用选择）</summary>
+
+[XPolicyLab](https://arxiv.org/abs/2608.09892)
+
+```bibtex
 @article{community2026xpolicylab,
-  title = {{XPolicyLab}: A Unified Standard and Open Ecosystem for Robot Policy Evaluation and Deployment},
-  author = {{XPolicyLab Community} and Chen, Tianxing and Chen, Yue and Nian, Tian and others},
-  journal = {arXiv preprint arXiv:2608.09892},
-  year = {2026},
-  doi = {10.48550/arXiv.2608.09892},
-  url = {https://arxiv.org/abs/2608.09892}
+  title={{XPolicyLab}: A Unified Standard and Open Ecosystem for Robot Policy Evaluation and Deployment},
+  author={Community, XPolicyLab and Chen, Tianxing and Chen, Yue and Nian, Tian and Cai, Zijian and Chen, Guangyu and Lin, Wenwei and Liang, Qiwei and Xiang, Peicheng and Su, Kailun and others},
+  journal={arXiv preprint arXiv:2608.09892},
+  year={2026}
 }
 ```
+
+[StarVLA](https://arxiv.org/abs/2604.05014)
+
+```bibtex
+@article{community2026starvla,
+  title={StarVLA: A Lego-like Codebase for Vision-Language-Action Model Developing},
+  author={Community, StarVLA},
+  journal={arXiv preprint arXiv:2604.05014},
+  year={2026},
+  eprint={2604.05014},
+  archivePrefix={arXiv},
+  primaryClass={cs.RO}
+}
+```
+
+[PRM-as-a-Judge 1.5 — 工具包技术报告](https://arxiv.org/pdf/2608.14284)
+
+```bibtex
+@article{liu2026prmjudge15,
+  title   = {PRM-as-a-Judge 1.5: A Toolkit for Robot Process Assessment},
+  author  = {Liu, Yuyang and Shen, Yanqing and Chen, Ruike and Zhao, Jifan and Tian, Yuxuan and Zhang, Yichi and Long, Tianfeng and Yin, Zixuan and Wang, Yipu and Qin, Ziheng and Tan, Wenxing and Shi, Yang and Cao, Mingyu and Xiao, Runze and Wang, Ziqi and Yin, Zhixin and Chu, Shiwei and Zhang, Yi-Fan and Mu, Yao and Ji, Yuheng and Wang, Yihao and Yan, Jun and Wang, Zhongyuan and Wang, Pengwei and Zheng, Xiaolong},
+  journal = {arXiv preprint arXiv:2608.14284},
+  year    = {2026},
+  url     = {https://arxiv.org/pdf/2608.14284}
+}
+```
+
+[PRM-as-a-Judge — 原始方法论文](https://arxiv.org/abs/2603.21669)
+
+```bibtex
+@article{ji2026prmjudge,
+  title   = {PRM-as-a-Judge: A Dense Evaluation Paradigm for Fine-Grained Robotic Auditing},
+  author  = {Ji, Yuheng and Liu, Yuyang and Tan, Huajie and Huang, Xuchuan and Huang, Fanding and Xu, Yijie and Chi, Cheng and Zhao, Yuting and Lyu, Huaihai and Co, Peterson and others},
+  journal = {arXiv preprint arXiv:2603.21669},
+  year    = {2026}
+}
+```
+
+</details>
 
 [第三方声明](licenses/THIRD_PARTY_NOTICES.md) · [上游许可证](licenses) · [完整文档](docs/index.md)
 

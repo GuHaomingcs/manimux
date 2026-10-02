@@ -81,7 +81,7 @@ robot.close()
 | `connect()` | Starts an owned CAN receiver and waits for all joint/gripper packets. No motion, reset or enable by default. | Requires `execute: true` and explicit `feedback_policy: sdk_poll`. Creates an owned SDK process, selects PROTECT before starting the vendor loop. Passive connection is unavailable. |
 | Feedback | Oldest host receipt time across joint_12, joint_34, joint_56 and gripper. Cached reads retain timestamp and sequence. | Cached SDK polls retain timestamp and sequence. Timestamp means getter completion; the binding does not expose device sample identity or receipt time. |
 | `send_commands()` | Checks fresh measured position and motor-enable feedback; sends `move_j` then width/force. Requires enabled motors; does not reset faults. | Prepares joint and calibrated gripper targets, then selects POSITION_CONTROL. Requires current SDK polling. |
-| `stop()` | Submits a measured hold using current feedback. Motors remain enabled; subsequent commands use normal joint mode. | Selects vendor PROTECT. A subsequent authorized command prepares targets before selecting POSITION_CONTROL. |
+| `stop()` | Attempts arm and gripper holds independently using their own fresh position feedback. Reports incomplete stops. Subsequent commands retain normal readiness checks. | Selects vendor PROTECT. A subsequent authorized command prepares targets before selecting POSITION_CONTROL. |
 | `close()` | Stops/joins the owned receiver, closes the bus and detaches the driver. Cleanup errors preserve resources for retry. No disable, Home or reset. | Requests PROTECT then exits the owned process, releasing its threads and CAN handles. Forced termination reports an unconfirmed protective stop. |
 | `home()` | Unsupported; inherited explicit `NotImplementedError`. | Unsupported; inherited explicit `NotImplementedError`. |
 
@@ -90,7 +90,18 @@ stop/close read-only as well. `enable_on_connect: true` is accepted only with
 `execute: true`; it sends one enable request and waits for feedback, without Home
 or fault reset. `move_j` retains firmware interpolation and `speed_percent`.
 Its measured hold is not an emergency stop and submission does not prove arrival.
-Stale feedback, fault flags and failed dispatch/cleanup remain visible errors.
+Stop attempts the arm and gripper independently: missing/stale gripper feedback
+cannot block an arm hold, and an arm feedback or send failure cannot block a
+gripper hold. Normal motion readiness checks (enable/status/fault feedback) do not
+gate these stop attempts. A hold still requires fresh measured positions for its
+own component; missing or stale positions are never replaced by old targets.
+All failures are reported together after both components have been attempted.
+A successful submission does not establish that a faulted motor physically stopped.
+The adapter does not disable motors, reset faults or fall back to the SDK's
+electronic emergency stop, which allows a raised arm to descend under damping.
+Subsequent motion retains the normal feedback, enable and fault checks; recovery
+remains explicit. Stale feedback, fault flags and failed dispatch/cleanup remain
+visible errors.
 
 For X5, the SDK's polling clock proves the process is reading, **not that motors
 are still reporting**. Therefore the adapter rejects connection unless the caller
@@ -110,7 +121,7 @@ protective stop; it is not evidence that an in-flight vendor call was cancelled.
 
 Both component `model.urdf` files retain their respective upstream joint
 origins, axes and inertia. X5 has a kinematic-only model; PiPER also bundles
-the official visual meshes and an [offline Viewer preset](piper.md).
+the official visual meshes and an [offline RoboGUI preset](piper.md).
 Neither model provides collision checking. Source pins and licenses are in
 the component READMEs. By default `tcp_frame: link6` names
 the flange frame; it does not invent a task-specific grasp centre or tool offset.
@@ -143,7 +154,7 @@ fake X5 process lifetime, read-only guards, calibrated targets, cached/stale
 feedback, send errors, motor faults, RPC timeout/late replies, broken transport,
 stop followed by another command, failed/partial cleanup, actual
 assembly loading and bounded FK/IK. They do not establish real-robot readiness.
-The [RoboTwin ALOHA Viewer](aloha.md#preview-and-replay) remains a separate asset
+The [RoboTwin ALOHA RoboGUI](aloha.md#preview-and-replay) remains a separate asset
 preset and is not substituted for these physical arm models.
 
 ## Code map

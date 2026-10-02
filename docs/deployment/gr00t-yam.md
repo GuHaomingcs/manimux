@@ -40,7 +40,7 @@ envs/yam/.venv/bin/python -m manimux serve \
   --config manimux/configs/experiments/pick_red_object/groot/yam_groot_rtc_joint_step10000.yaml
 ```
 
-The experiment enables real YAM execution when a rollout is started in the Viewer.
+The experiment enables real YAM execution when a rollout is started in the RoboGUI.
 All three commands resolve the private station's camera and policy endpoints.
 The GR00T model environment uses Python 3.10; its launcher delegates experiment
 resolution to `envs/yam/.venv/bin/python`, then loads the model in its own environment.

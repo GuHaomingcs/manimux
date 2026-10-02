@@ -315,7 +315,9 @@ envs/yam/.venv/bin/manimux-camera-server --config manimux/configs/embodiment/sen
 
 确认三台 RealSense 均已打开，并看到 `REP bound` 与 `PUB bound`。
 
-### Terminal 3：Viewer
+<a id="terminal-3viewer"></a>
+
+### Terminal 3：RoboGUI
 
 ```bash
 cd /home/ubuntu/manimux
@@ -345,7 +347,7 @@ envs/yam/.venv/bin/manimux run \
 
 连接后机械臂按配置用 `3.5 s` 移到起始姿态，结束时用 `3.5 s` 回 Home。正常停止时只在
 runtime 终端按一次 `Ctrl-C`，等待回零和 Recorder 收尾，再依次停止相机、模型服务和
-Viewer。新 rollout 保存在 config 指定的 `data/experiments/.../session-*/rollout-*`；未完整收尾的
+RoboGUI。新 rollout 保存在 config 指定的 `data/experiments/.../session-*/rollout-*`；未完整收尾的
 记录带 `.partial` 后缀。2026-08-24 之前的探索记录统一归档在
 `data/archive/pre-campaign-20260824/root-runs/`。
 

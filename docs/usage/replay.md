@@ -1,8 +1,8 @@
 # Offline action replay
 
-The Viewer can play a sequence of absolute robot joint configurations without a
+The RoboGUI can play a sequence of absolute robot joint configurations without a
 runtime, policy server, camera service or robot connection. It displays targets,
-not measured execution. Launch it on a separate port when a live Viewer is running.
+not measured execution. Launch it on a separate port when a live RoboGUI is running.
 
 Save one `(steps, coordinates)` NumPy array per robot group:
 
@@ -48,7 +48,7 @@ viewer = ActionReplayViewer(
 # Call viewer.tick() regularly from your event loop; call viewer.close() on exit.
 ```
 
-Without `--replay-actions`, the existing live Viewer startup and runtime control
+Without `--replay-actions`, the existing live RoboGUI startup and runtime control
 protocol are unchanged. Replay does not construct `PolicyViewer`, bind its control
 socket, connect a runtime subscriber, write rollout data, or send robot commands.
 Only the robot's offline model dependencies are required. The NPZ playback path
@@ -56,7 +56,7 @@ has no video or PyAV requirement.
 
 ## Replay a ManiMux recording from RoboGUI
 
-The live Viewer's **Recorded rollouts** panel reads a finalized episode and opens
+The live RoboGUI's **Recorded rollouts** panel reads a finalized episode and opens
 state, scheduled reference or executor-command playback in a separate view. It uses
 recorded tick times instead of a fixed NPZ action interval. See the
 [research guide](research.md#review-in-the-gui).

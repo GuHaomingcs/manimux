@@ -53,7 +53,7 @@ T_arm_flange_target = T_arm_tcp_target × inverse(T_flange_tool × T_tool_tcp)
 本体配置不再声明 `root_frame` 或机械臂底座的显示变换，也不增加 body 坐标系。
 显示位置与朝向放在 `viewer/robots/tianji/viewer.yaml` 的
 `groups.<name>.viewer_display_frame`，静态支架放在该文件的 `scene.meshes`。
-这些参数只由 Viewer 读取，改变它们不会改变 FK/IK 结果。
+这些参数只由 RoboGUI 读取，改变它们不会改变 FK/IK 结果。
 末端执行器的 `mount` 和自身 TCP 偏移参与控制计算，且只应用一次。
 
 IK 保留原版官方 `ik + ik_nsp`、回代检查、关节限位和余量、实测 J6/J7 干涉约束及
@@ -98,5 +98,5 @@ robot = TianjiTaccapRobot.from_config("manimux/configs/embodiment/robot/tianji_t
 
 测试覆盖注册到 adapter、原算法数值回归、场景变换不影响控制、子进程解码一致性、
 原时间/运动约束保持，以及 fake SDK 下的只读和执行分发。未启动真实硬件或模型服务。
-Viewer 从同一 `RobotModel` 加载显示模型与独立的显示变换。
+RoboGUI 从同一 `RobotModel` 加载显示模型与独立的显示变换。
 新整机尚未实现回零/拖动恢复；旧驱动及恢复模块已删除，服务明确发布恢复不可用。

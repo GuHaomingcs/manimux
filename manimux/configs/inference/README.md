@@ -36,7 +36,7 @@ The paired Pi05 Joint 30k bottle experiments enable `run.warmup_before_start`.
 Prepare runs inference continuously while holding the measured robot state; Start
 drains warmup requests and waits for a backend RESET acknowledgement before fresh
 formal inference. There is no minimum count, countdown, or automatic stability gate.
-The Viewer displays warmup chunks, predicted end-effector paths and an E2E latency
+The RoboGUI displays warmup chunks, predicted end-effector paths and an E2E latency
 curve as display-only previews. Start and Finish clear them. Finish stops new model
 requests and invalidates queued WS work; an already-running model call may finish,
 but its output is discarded. Warmup resumes only after another Prepare.

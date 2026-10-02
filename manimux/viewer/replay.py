@@ -499,7 +499,7 @@ def serve_collection_replay(
         previous_handlers[sig] = signal.signal(sig, lambda *_: stop.set())
     address = "127.0.0.1" if host == "0.0.0.0" else host
     print(f"Read-only {source} replay: {data.episode}")
-    print(f"Open http://{address}:{port} — paused; press Play in Viser")
+    print(f"Open http://{address}:{port} — paused; press Play in RoboGUI")
     try:
         while not stop.wait(0.005):
             viewer.tick()

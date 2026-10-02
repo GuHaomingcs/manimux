@@ -8,8 +8,8 @@ use their own register; everyday inference does not require one.
 
 `manimux serve` keeps one configuration available for repeated GUI-driven Prepare
 requests. Each creates a fresh rollout. `manimux run` creates one runtime immediately;
-with Viewer enabled it starts paused, but connection/startup motion can already occur.
-Neither command launches camera, model or Viewer services for you.
+with RoboGUI enabled it starts paused, but connection/startup motion can already occur.
+Neither command launches camera, model or RoboGUI services for you.
 
 ## Saved evidence
 
@@ -39,7 +39,7 @@ data/experiments/<campaign>/<algorithm>/session-*/
 - `meta.json` records task, layout, algorithm, experiment mode and the Policy Server fingerprint.
   New experiment rollouts also record `repeat_id` and `reference_layout` (`task`, absolute `path`,
   `sha256`). The gallery task is distinct from the policy prompt and canonical evaluation task.
-  These per-attempt fields are frozen at Prepare and also published for Viewer reconnection.
+  These per-attempt fields are frozen at Prepare and also published for RoboGUI reconnection.
   Ordinary rollouts have no formal layout/repeat identity. Image hashes do not preserve overwritten
   files; keep formal references unchanged. Legacy episodes without these fields remain unknown.
 - `canonical_raw` is the decoded policy chunk before the inference strategy.
