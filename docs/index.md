@@ -8,10 +8,13 @@ hide:
 
 # ManiMux
 
-<p class="guide-lead">A shared framework for running policies on real robots.</p>
+<p class="guide-lead">An extensible real-world manipulation harness.</p>
 
-Connect your model and hardware, compose the runtime in YAML, and manage experiments
-in RoboGUI. Reuse the same workflow when your robot, policy or research question changes.
+**Any embodiment. Any policy. Any inference strategy.**
+
+ManiMux **standardizes** deployment and experiment workflows across embodiments,
+policies, and inference strategies. Built around **RoboGUI**, it brings together
+**live digital twin visualization** and a runtime designed for **100–200 Hz command execution**.
 
 <div class="guide-links">
 <a href="usage/getting-started.md">Get started <span aria-hidden="true">↗</span></a>

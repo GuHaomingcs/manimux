@@ -1,5 +1,5 @@
 site_name: ManiMux Guide
-site_description: Real-robot inference, experiment operation, and integration protocols.
+site_description: An extensible real-world manipulation harness that standardizes deployment and experiment workflows across embodiments, policies, and inference strategies.
 site_url: https://sii-liulab.github.io/manimux/
 repo_url: https://github.com/SII-LiuLab/manimux
 repo_name: SII-LiuLab / ManiMux

@@ -4,10 +4,10 @@
 
 **Any embodiment. Any policy. Any inference strategy.**
 
-**Bring your manipulation research to life on real robots.** ManiMux **standardizes**
-deployment and experiment workflows through shared protocols, bringing your choice of
-embodiment, policy, and inference strategy into **RoboGUI**.
-Designed for **100–200 Hz command execution** alongside **live digital twin visualization**.
+ManiMux is an **extensible real-world manipulation harness** that **standardizes**
+deployment and experiment workflows across embodiments, policies, and inference strategies.
+Built around **RoboGUI**, it brings together **live digital twin visualization**
+and a runtime designed for **100–200 Hz command execution**.
 
 **Policy × Runtime × Embodiment**
 
@@ -163,7 +163,7 @@ please also cite its paper and the models/methods you use.
 
 ```bibtex
 @misc{manimux2026,
-  title = {{ManiMux}: A Composable Platform for Real-Robot Experiments},
+  title = {{ManiMux}: An Extensible Real-World Manipulation Harness},
   year = {2026},
   howpublished = {GitHub repository},
   url = {https://github.com/SII-LiuLab/manimux}

@@ -1,6 +1,6 @@
 # ManiMux Agent Guide
 
-ManiMux is a composable real-robot experiment platform. Keep model inference, runtime
+ManiMux is an extensible real-world manipulation harness. Keep model inference, runtime
 scheduling, embodiment control and experiment interfaces separate.
 Teleoperation and demonstration collection are outside this repository; retain runtime
 rollout recording and offline replay.

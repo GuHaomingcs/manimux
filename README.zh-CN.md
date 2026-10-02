@@ -4,9 +4,10 @@
 
 **任何本体，任何策略，任何推理算法。**
 
-**让你的机器人操作研究在真机上落地。** ManiMux 通过统一 protocol，让部署与实验流程**标准化**，
-将你选择的本体、策略与推理算法接入 **RoboGUI**。
-运行时以**实时数字孪生可视化**下的 **100–200 Hz 命令执行**为设计目标。
+ManiMux 是一个**可扩展的 real-world manipulation harness（真机操作运行与实验框架）**，
+让不同本体、策略和推理算法的部署与实验流程**标准化**。
+以 **RoboGUI** 为操作入口，结合**实时数字孪生可视化**，
+运行时的设计目标是在实时可视化的同时支持 **100–200 Hz 命令执行**。
 
 **Policy × Runtime × Embodiment**
 
@@ -160,7 +161,7 @@ Prepare 可能根据配置连接机器人并移动到起始姿态，请使用与
 
 ```bibtex
 @misc{manimux2026,
-  title = {{ManiMux}: A Composable Platform for Real-Robot Experiments},
+  title = {{ManiMux}: An Extensible Real-World Manipulation Harness},
   year = {2026},
   howpublished = {GitHub repository},
   url = {https://github.com/SII-LiuLab/manimux}
