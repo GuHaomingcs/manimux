@@ -82,6 +82,8 @@ uv run manimux-robogui --robot yam --host 127.0.0.1 --port 8086
 uv run manimux run --config-list manimux/configs/lists/example-synthetic.yaml
 ```
 
+Serial 和 Async 可以[按请求回放同一组推理延迟](manimux/configs/experiments/example-synthetic/README.md#replay-inference-delays)。
+
 模型环境与 checkpoint 仅在真实机器人部署时需要。
 
 ### 第一次上真机前

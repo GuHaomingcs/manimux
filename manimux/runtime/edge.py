@@ -509,6 +509,7 @@ class EdgeRuntime(PlanningContext):
         rejected_plans = 0
         request_seq = 0
         last_submitted_seq = -1
+        final_response_received = False
         last_request_deadline_ns = 0
         request_in_flight = False
         last_inference_ms: float | None = None
@@ -662,6 +663,7 @@ class EdgeRuntime(PlanningContext):
                     self._decoder.start()
             self._validate_policy_capabilities()
             capabilities = getattr(self._worker, "capabilities", PolicyCapabilities())
+            request_limit = capabilities.request_limit
             recorder.update_metadata(
                 policy_backend=dict(capabilities.backend_metadata),
             )
@@ -1071,6 +1073,15 @@ class EdgeRuntime(PlanningContext):
                 with stage("worker_poll"):
                     response = None if self._worker is None else self._worker.poll()
                 if response is not None:
+                    if response.session_id == self._session_id and response.request_seq > 0:
+                        recorder.event(
+                            "inference_response",
+                            request_seq=response.request_seq,
+                            inference_ms=response.inference_ms,
+                            error=response.error,
+                        )
+                        if response.request_seq == request_limit:
+                            final_response_received = True
                     logger.info(
                         "policy_response seq=%d inference_ms=%.1f error=%s raw=%s",
                         response.request_seq,
@@ -1547,6 +1558,7 @@ class EdgeRuntime(PlanningContext):
                 if (
                     self._worker is not None
                     and self._worker.is_alive
+                    and (request_limit is None or request_seq < request_limit)
                     and not (
                         (
                             self._decoder is not None
@@ -1841,6 +1853,15 @@ class EdgeRuntime(PlanningContext):
                     next_tick_ns = finished_tick_ns
                 timing.sleep_until(self._clock, next_tick_ns)
                 timing.end()
+                if (
+                    final_response_received
+                    and self._state == RuntimeState.RUNNING
+                    and not request_in_flight
+                    and pending_response is None
+                    and self._timeline.remaining_ns(now_ns) == 0
+                ):
+                    terminal_reason = "request_limit_reached"
+                    break
 
             timing.end(completed=False)
             # Keep the rollout duration independent of Home and cleanup latency.

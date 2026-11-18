@@ -36,6 +36,25 @@ To try one method without counting trials, pass `--config` instead:
 uv run manimux run --config manimux/configs/experiments/example-synthetic/demo/serial.yaml
 ```
 
+### Replay inference delays
+
+Set the following in the shared `_base_.yaml` and run each demo variant. Each formal
+request uses the next duration in milliseconds. Both rollouts finish after the fourth
+request and the end of the active chunk, unless a rollout limit or operator stops them first.
+
+```yaml
+policy:
+  options:
+    delay_trace_ms: [80, 90, 320, 85]
+```
+
+To replay measured latency, replace the list with the path to a rollout's `events.jsonl`,
+relative to the YAML that declares it. The loader reads `inference_response` events in
+request order, skipping requests that expired before inference started. The resolved config
+stores the input durations. The worker records its actual inference time separately, so
+operating-system scheduling can add a small overhead. Warmup replays the same sequence independently and can repeat it.
+Older recordings need an explicit list if they lack per-request measurements.
+
 `manimux up` manages XPolicyLab and hosted-API deployments; this study has no model
 service, so the two commands above are the whole deployment. The RoboGUI and runtime
 ports are the defaults (8086, 5568, 5569); stop any other RoboGUI on this machine first.

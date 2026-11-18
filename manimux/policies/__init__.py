@@ -14,7 +14,8 @@ def _fake_model_factory(config: dict) -> PolicyModel:
     return FakePolicyModel(
         action_dt_ns=int(action_interval(config) * 1_000_000_000),
         horizon_steps=config["horizon_policy_steps"],
-        delay_s=config["inference_delay_s"],
+        delay_s=config.get("inference_delay_s", 0.0),
+        delay_trace_ms=config.get("options", {}).get("delay_trace_ms"),
     )
 
 

@@ -134,6 +134,7 @@ def read_experiment(
     from manimux.policies.base import backend_identity_from_recipe
 
     backend_identity = None
+    policy_directory = source.parent
     for name in ("policy", "inference", "executor", "policy_server", "camera_server", "evaluation"):
         section = raw.get(name, {})
         if name == "evaluation" and section is None:
@@ -144,6 +145,8 @@ def read_experiment(
                 raw[name] = section
         if "config" in section:
             reference = (source.parent / section.pop("config")).resolve()
+            if name == "policy":
+                policy_directory = reference.parent
             sources[str(reference)] = hashlib.sha256(reference.read_bytes()).hexdigest()
             base = (
                 read_camera_recipe(reference) if name == "camera_server" else read_yaml(reference)
@@ -205,6 +208,13 @@ def read_experiment(
     for dependency in list(raw["config_sources"]):
         record_references(read_yaml(dependency), Path(dependency).parent)
     record_references(raw, source.parent)
+    policy = raw.get("policy", {})
+    options = policy.get("options", {})
+    trace = options.get("delay_trace_ms")
+    if policy.get("worker") == "fake" and isinstance(trace, str):
+        from manimux.policies.fake import read_delay_trace
+
+        options["delay_trace_ms"] = read_delay_trace(policy_directory / Path(trace).expanduser())
     return raw
 
 

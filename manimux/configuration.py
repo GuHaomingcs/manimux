@@ -63,6 +63,8 @@ def compose(path: str | Path, stack: tuple[Path, ...] = ()) -> tuple[dict, dict[
         result = _merge(result, base)
         sources.update(dependencies)
 
+    path_keys = {"config", "control_profile", "delay_trace_ms", "local"}
+
     def resolve(value):
         if isinstance(value, list):
             return [resolve(v) for v in value]
@@ -70,7 +72,7 @@ def compose(path: str | Path, stack: tuple[Path, ...] = ()) -> tuple[dict, dict[
             return value
         return {
             key: str((source.parent / Path(v).expanduser()).resolve())
-            if key in {"config", "control_profile", "local"} and isinstance(v, str)
+            if key in path_keys and isinstance(v, str)
             else resolve(v)
             for key, v in value.items()
         }

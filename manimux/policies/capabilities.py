@@ -10,6 +10,7 @@ class PolicyCapabilities:
     sampling_modes: frozenset[str] = frozenset({"default"})
     backend_metadata: dict[str, object] = field(default_factory=dict)
     multi_inflight: bool = False
+    request_limit: int | None = None
 
     def supports(self, sampling_mode: str) -> bool:
         return sampling_mode in self.sampling_modes

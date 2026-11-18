@@ -184,6 +184,8 @@ uv run manimux-robogui --robot yam --host 127.0.0.1 --port 8086
 uv run manimux run --config-list manimux/configs/lists/example-synthetic.yaml
 ```
 
+Serial and Async can [replay the same per-request inference delays](manimux/configs/experiments/example-synthetic/README.md#replay-inference-delays).
+
 Model environments and checkpoints are needed only for real-robot deployment below.
 
 ### Before the first robot run

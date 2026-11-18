@@ -45,6 +45,10 @@ first, then run each command in its own terminal:</p>
 <pre><code class="language-bash">uv run manimux-robogui --robot yam --host 127.0.0.1 --port 8086
 uv run manimux run --config-list manimux/configs/lists/example-synthetic.yaml
 </code></pre>
+<p>To compare Serial and Async under the same inference delays, set
+<code>policy.options.delay_trace_ms</code> in the shared fake-policy config to a list of
+milliseconds or a recorded <code>events.jsonl</code> path. Each formal request consumes
+one entry. See the <a href="manimux/configs/experiments/example-synthetic/README.md#replay-inference-delays">replay example</a>.</p>
 <h3 id="cli-reference">Command reference</h3>
 <p>Every command accepts <code>--help</code>. A runtime config is one experiment YAML
 (<code>--config</code>); a config list (<code>--config-list</code>) adds the trial plan and
