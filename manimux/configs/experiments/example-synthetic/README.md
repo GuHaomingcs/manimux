@@ -44,3 +44,27 @@ The synthetic robot is not a kinematic model of any arm; the arms in RoboGUI mov
 poses carry no physical meaning. For a real station, continue with
 [example-yam-pi05](../example-yam-pi05/README.md) or
 [example-tianji-pi05](../example-tianji-pi05/README.md).
+
+## Moving target benchmark
+
+Run both demo schedules against a target on a 0.1 m radius circle, using a virtual clock:
+
+```bash
+python -m scripts.experiments.benchmark_tracking --delay-ms 80 90 320 85 --duration-s 12
+```
+
+Each run starts on target. At request time a scripted policy samples the current target
+and plans a straight line from the measured position toward that sample at 0.4 m/s,
+holding the sampled target once reached. The planar plant follows the executed command with a 0.1 s time constant.
+Serial uses the demo's first-step-when-ready schedule. Async uses its progress trigger
+and trims elapsed action steps. Both run the ManiMux preview scheduler, timeline and
+direct executor without starting devices or a model server.
+
+Delays repeat in request order. A response becomes available on the first control tick
+at or after its delay, following submission. The fixed scoring window includes startup
+and holds. Different request counts are expected. JSON gives time-weighted tracking
+RMSE in millimeters, seconds outside the tolerance, and request counts, including any
+response still pending at the end. The scores describe this simulated plant and policy.
+
+Use one value such as `--delay-ms 100` for constant latency, `--speed-m-s 0` for a
+stationary control, and `--tolerance-mm` to set the tracking tolerance (default 30).

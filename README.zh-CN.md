@@ -82,6 +82,8 @@ uv run manimux-robogui --robot yam --host 127.0.0.1 --port 8086
 uv run manimux run --config-list manimux/configs/lists/example-synthetic.yaml
 ```
 
+用[移动目标跟踪实验](manimux/configs/experiments/example-synthetic/README.md#moving-target-benchmark)比较 Serial 和 Async 在相同推理延迟条件下的跟踪误差。
+
 模型环境与 checkpoint 仅在真实机器人部署时需要。
 
 RoboGUI 页面获得焦点时，可使用按钮文字后的[快捷键](https://sii-liulab.github.io/manimux/guideline.html#robogui-shortcuts)。

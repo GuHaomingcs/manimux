@@ -184,6 +184,8 @@ uv run manimux-robogui --robot yam --host 127.0.0.1 --port 8086
 uv run manimux run --config-list manimux/configs/lists/example-synthetic.yaml
 ```
 
+Compare Serial and Async on a [moving target](manimux/configs/experiments/example-synthetic/README.md#moving-target-benchmark) using simulated inference delays.
+
 Model environments and checkpoints are needed only for real-robot deployment below.
 
 In the focused RoboGUI page, experiment buttons show their [keyboard shortcuts](https://sii-liulab.github.io/manimux/guideline.html#robogui-shortcuts).
